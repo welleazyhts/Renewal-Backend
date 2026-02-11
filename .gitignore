@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+**/__pycache__/
+*.py[cod]
+**/*.pyc
+*.egg
+*.egg-info/
+*.eggs/
+*.pyo
+*.pyd
+*.pdb
+
+# Virtual environment
+venv/
+ENV/
+.env
+*.env
+
+# Logs
+logs/
+*.log
+
+# Django specific
+db.sqlite3
+media/
+staticfiles/
+static/
+
+# Migrations cache
+*/migrations/__pycache__/
+*/migrations/*.pyc
+
+# VSCode / PyCharm
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Backup / temp
+*.bak
+*.swp
