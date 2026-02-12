@@ -19,7 +19,6 @@ router.register(
     basename="knowledge-websites",
 )
 
-# THIS IS MISSING (ADD THIS)
 router.register(
     r"document-modules",
     DocumentModuleViewSet,

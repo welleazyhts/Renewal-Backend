@@ -22,7 +22,6 @@ except ImportError as e:
 
 
 def is_ocr_available() -> bool:
-    """Check if OCR libraries are installed and available"""
     if not OCR_AVAILABLE:
         return False
     
@@ -37,7 +36,6 @@ def is_ocr_available() -> bool:
 
 
 def _configure_tesseract_path():
-    """Configure Tesseract path for Windows"""
     if OCR_AVAILABLE and pytesseract is not None:
         try:
             pytesseract.get_tesseract_version()

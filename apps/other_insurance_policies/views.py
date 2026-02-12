@@ -1,7 +1,3 @@
-"""
-Views for Other Insurance Policies app.
-"""
-
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -14,9 +10,6 @@ from .serializers import (
 )
 
 class OtherInsurancePolicyViewSet(viewsets.ModelViewSet):
-    """
-    ViewSet for Other Insurance Policies with store and list functionality.
-    """
     queryset = OtherInsurancePolicy.objects.filter(is_deleted=False)
 
     def get_serializer_class(self):
@@ -27,10 +20,8 @@ class OtherInsurancePolicyViewSet(viewsets.ModelViewSet):
         return OtherInsurancePolicySerializer
 
     def get_queryset(self):
-        """Get filtered queryset for list action"""
         queryset = OtherInsurancePolicy.objects.filter(is_deleted=False)
 
-        # Apply optional filters for list action
         if self.action == 'list':
             customer_id = self.request.query_params.get('customer_id')
             if customer_id:
@@ -52,7 +43,6 @@ class OtherInsurancePolicyViewSet(viewsets.ModelViewSet):
             if switching_potential:
                 queryset = queryset.filter(switching_potential=switching_potential)
 
-            # Search functionality
             search = self.request.query_params.get('search')
             if search:
                 queryset = queryset.filter(
@@ -69,17 +59,11 @@ class OtherInsurancePolicyViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'])
     def store(self, request):
-        """
-        Store/Create new other insurance policy.
-        Simple API for storing other insurance policy with success response.
-        """
         try:
             serializer = self.get_serializer(data=request.data)
             if serializer.is_valid():
-                # Save the other insurance policy
                 policy = serializer.save(created_by=request.user)
 
-                # Return success response with created data
                 response_serializer = OtherInsurancePolicySerializer(policy)
                 return Response({
                     'success': True,
@@ -101,15 +85,9 @@ class OtherInsurancePolicyViewSet(viewsets.ModelViewSet):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def list(self, request, *args, **kwargs):
-        """
-        List all other insurance policies.
-        Simple API for listing other insurance policies with success response.
-        """
         try:
-            # Get filtered queryset
             queryset = self.get_queryset()
 
-            # Serialize the data
             serializer = self.get_serializer(queryset, many=True)
 
             return Response({
@@ -125,6 +103,3 @@ class OtherInsurancePolicyViewSet(viewsets.ModelViewSet):
                 'message': f'Error retrieving other insurance policies: {str(e)}',
                 'data': []
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-

@@ -14,9 +14,7 @@ from .serializers import (
 from apps.core.pagination import StandardResultsSetPagination
 
 
-class PolicyAdditionalBenefitViewSet(viewsets.ModelViewSet):
-    """ViewSet for managing policy additional benefits"""
-    
+class PolicyAdditionalBenefitViewSet(viewsets.ModelViewSet):    
     queryset = PolicyAdditionalBenefit.objects.select_related(
         'policy_coverages', 'policy_coverages__policy_type'
     ).filter(is_deleted=False)
@@ -41,21 +39,17 @@ class PolicyAdditionalBenefitViewSet(viewsets.ModelViewSet):
     ordering = ['-created_at']
     
     def get_serializer_class(self):
-        """Return appropriate serializer based on action"""
         if self.action == 'list':
             return PolicyAdditionalBenefitListSerializer
         return PolicyAdditionalBenefitSerializer
     
     def perform_create(self, serializer):
-        """Set created_by when creating a new policy additional benefit"""
         serializer.save(created_by=self.request.user)
     
     def perform_update(self, serializer):
-        """Set updated_by when updating a policy additional benefit"""
         serializer.save(updated_by=self.request.user)
     
     def create(self, request, *args, **kwargs):
-        """Create a new policy additional benefit"""
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
@@ -67,7 +61,6 @@ class PolicyAdditionalBenefitViewSet(viewsets.ModelViewSet):
         }, status=status.HTTP_201_CREATED)
     
     def list(self, request, *args, **kwargs):
-        """List all policy additional benefits with filtering and pagination"""
         queryset = self.filter_queryset(self.get_queryset())
         page = self.paginate_queryset(queryset)
         
@@ -88,7 +81,6 @@ class PolicyAdditionalBenefitViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def by_policy_coverage(self, request):
-        """Get all additional benefits for a specific policy coverage"""
         policy_coverage_id = request.query_params.get('policy_coverage_id')
 
         if not policy_coverage_id:
@@ -113,7 +105,6 @@ class PolicyAdditionalBenefitViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def by_policy_type(self, request):
-        """Get all additional benefits for a specific policy type"""
         policy_type_id = request.query_params.get('policy_type_id')
 
         if not policy_type_id:
@@ -138,7 +129,6 @@ class PolicyAdditionalBenefitViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def benefit_types(self, request):
-        """Get all available benefit types"""
         benefit_types = [
             {'value': choice[0], 'label': choice[1]}
             for choice in PolicyAdditionalBenefit.BENEFIT_TYPE_CHOICES
@@ -152,17 +142,14 @@ class PolicyAdditionalBenefitViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'])
     def store(self, request):
-        """Store new policy additional benefit based on image structure"""
         serializer = PolicyAdditionalBenefitStoreSerializer(data=request.data)
 
         if serializer.is_valid():
-            # Set created_by if user is authenticated
             benefit = serializer.save()
             if hasattr(request, 'user') and request.user.is_authenticated:
                 benefit.created_by = request.user
                 benefit.save()
 
-            # Return detailed response
             response_serializer = PolicyAdditionalBenefitDetailSerializer(benefit)
             return Response({
                 'success': True,
@@ -178,26 +165,21 @@ class PolicyAdditionalBenefitViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def list_benefits(self, request):
-        """List policy additional benefits based on image structure with filtering"""
         queryset = self.get_queryset()
 
-        # Filter by policy_coverage_id if provided
         policy_coverage_id = request.query_params.get('policy_coverage_id')
         if policy_coverage_id:
             queryset = queryset.filter(policy_coverages_id=policy_coverage_id)
 
-        # Filter by benefit_category if provided
         benefit_category = request.query_params.get('benefit_category')
         if benefit_category:
             queryset = queryset.filter(benefit_category__icontains=benefit_category)
 
-        # Filter by is_active if provided
         is_active = request.query_params.get('is_active')
         if is_active is not None:
             is_active_bool = is_active.lower() in ['true', '1', 'yes']
             queryset = queryset.filter(is_active=is_active_bool)
 
-        # Apply pagination
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = PolicyAdditionalBenefitDetailSerializer(page, many=True)
@@ -217,7 +199,6 @@ class PolicyAdditionalBenefitViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def grouped_by_category(self, request):
-        """Get benefits grouped by category for frontend display like in the image"""
         policy_coverage_id = request.query_params.get('policy_coverage_id')
 
         if not policy_coverage_id:
@@ -231,7 +212,6 @@ class PolicyAdditionalBenefitViewSet(viewsets.ModelViewSet):
             is_active=True
         ).order_by('benefit_category', 'display_order', 'benefit_name')
 
-        # Group benefits by category
         grouped_benefits = {}
         for benefit in queryset:
             category = benefit.benefit_category or 'Other'

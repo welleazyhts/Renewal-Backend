@@ -6,9 +6,6 @@ from .services import ClosedCaseChatbotAnalyticsService
 
 @shared_task
 def cleanup_old_chatbot_sessions():
-    """
-    Clean up old inactive chatbot sessions
-    """
     cutoff_date = timezone.now() - timedelta(days=90)
     
     old_sessions = ClosedCaseChatbot.objects.filter(
@@ -23,9 +20,6 @@ def cleanup_old_chatbot_sessions():
 
 @shared_task
 def generate_daily_analytics():
-    """
-    Generate daily analytics for all active chatbot sessions
-    """
     analytics_service = ClosedCaseChatbotAnalyticsService()
     today = timezone.now().date()
     
@@ -61,9 +55,6 @@ def generate_daily_analytics():
 
 @shared_task
 def send_chatbot_reminders():
-    """
-    Send reminders to customers who haven't interacted with chatbot recently
-    """
     cutoff_date = timezone.now() - timedelta(days=7)
     
     inactive_sessions = ClosedCaseChatbot.objects.filter(
@@ -82,9 +73,6 @@ def send_chatbot_reminders():
 
 @shared_task
 def update_chatbot_interaction_counts():
-    """
-    Update interaction counts for all chatbot sessions
-    """
     sessions = ClosedCaseChatbot.objects.all()
     updated_count = 0
     
@@ -100,9 +88,6 @@ def update_chatbot_interaction_counts():
 
 @shared_task
 def generate_weekly_report():
-    """
-    Generate weekly analytics report
-    """
     analytics_service = ClosedCaseChatbotAnalyticsService()
     
     category_stats = analytics_service.get_category_wise_stats()
@@ -124,9 +109,6 @@ def generate_weekly_report():
 
 @shared_task
 def archive_old_messages():
-    """
-    Archive old messages to reduce database size
-    """
     cutoff_date = timezone.now() - timedelta(days=365)
     
     old_messages = ClosedCaseChatbotMessage.objects.filter(

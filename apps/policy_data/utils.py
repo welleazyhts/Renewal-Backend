@@ -5,7 +5,6 @@ from apps.policies.models import Policy
 import datetime
 
 def generate_customer_code():
-    """Generate unique customer code like CUS2025001"""
     current_year = datetime.datetime.now().year
     year_prefix = f"CUS{current_year}"
 
@@ -25,7 +24,6 @@ def generate_customer_code():
     return f"{year_prefix}{next_number:03d}"
 
 def generate_case_number():
-    """Generate unique case number like CASE-001"""
     prefix = "CASE-"
 
     case_numbers = RenewalCase.objects.filter(
@@ -46,7 +44,6 @@ def generate_case_number():
     return f"{prefix}{next_number:03d}"
 
 def generate_policy_number():
-    """Generate unique policy number like POL-00001"""
     import datetime
     current_year = datetime.datetime.now().year
     year_prefix = f"POL-{current_year}-"

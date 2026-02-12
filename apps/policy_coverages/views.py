@@ -13,9 +13,7 @@ from .serializers import (
 from apps.core.pagination import StandardResultsSetPagination
 
 
-class PolicyCoverageViewSet(viewsets.ModelViewSet):
-    """ViewSet for managing policy coverages"""
-    
+class PolicyCoverageViewSet(viewsets.ModelViewSet):    
     queryset = PolicyCoverage.objects.select_related(
         'policy_type'
     ).filter(is_deleted=False)
@@ -40,7 +38,6 @@ class PolicyCoverageViewSet(viewsets.ModelViewSet):
     ordering = ['coverage_type', 'display_order', 'coverage_name']
     
     def get_serializer_class(self):
-        """Return appropriate serializer based on action"""
         if self.action == 'list':
             return PolicyCoverageListSerializer
         elif self.action in ['coverage_summary', 'by_policy_summary']:
@@ -48,15 +45,12 @@ class PolicyCoverageViewSet(viewsets.ModelViewSet):
         return PolicyCoverageSerializer
     
     def perform_create(self, serializer):
-        """Set created_by when creating a new policy coverage"""
         serializer.save(created_by=self.request.user)
     
     def perform_update(self, serializer):
-        """Set updated_by when updating a policy coverage"""
         serializer.save(updated_by=self.request.user)
     
     def create(self, request, *args, **kwargs):
-        """Create a new policy coverage"""
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
@@ -68,7 +62,6 @@ class PolicyCoverageViewSet(viewsets.ModelViewSet):
         }, status=status.HTTP_201_CREATED)
     
     def list(self, request, *args, **kwargs):
-        """List all policy coverages with filtering and pagination"""
         queryset = self.filter_queryset(self.get_queryset())
         page = self.paginate_queryset(queryset)
         
@@ -89,7 +82,6 @@ class PolicyCoverageViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def by_policy(self, request):
-        """Get all coverages for a specific policy"""
         policy_id = request.query_params.get('policy_id')
         
         if not policy_id:
@@ -101,7 +93,6 @@ class PolicyCoverageViewSet(viewsets.ModelViewSet):
         coverages = self.get_queryset().filter(policy_id=policy_id)
         serializer = PolicyCoverageListSerializer(coverages, many=True)
         
-        # Calculate totals
         totals = coverages.aggregate(
             total_coverage_amount=Sum('coverage_amount'),
             total_premium_impact=Sum('premium_impact'),
@@ -117,7 +108,6 @@ class PolicyCoverageViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def by_policy_summary(self, request):
-        """Get coverage summary for a specific policy"""
         policy_id = request.query_params.get('policy_id')
         
         if not policy_id:
@@ -137,7 +127,6 @@ class PolicyCoverageViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def coverage_types(self, request):
-        """Get all available coverage types"""
         coverage_types = [
             {'value': choice[0], 'label': choice[1]} 
             for choice in PolicyCoverage.COVERAGE_TYPE_CHOICES
@@ -151,7 +140,6 @@ class PolicyCoverageViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def coverage_categories(self, request):
-        """Get all available coverage categories"""
         coverage_categories = [
             {'value': choice[0], 'label': choice[1]} 
             for choice in PolicyCoverage.COVERAGE_CATEGORY_CHOICES

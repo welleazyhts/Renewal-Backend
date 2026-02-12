@@ -5,10 +5,6 @@ from .models import WhatsAppConfiguration, WhatsAppAccessPermission
 
 @admin.register(WhatsAppConfiguration)
 class WhatsAppConfigurationAdmin(admin.ModelAdmin):
-    """
-    Custom Admin to make the model behave like a 'Settings Page'.
-    """
-    # Group fields to match the sections in your Video
     fieldsets = (
         ("API Credentials", {
             "fields": ("phone_number_id", "access_token", "webhook_url", "verify_token", "is_enabled"),
@@ -23,14 +19,11 @@ class WhatsAppConfigurationAdmin(admin.ModelAdmin):
     )
 
     def has_add_permission(self, request):
-        # Disable "Add" button if a config object already exists
         if WhatsAppConfiguration.objects.exists():
             return False
         return super().has_add_permission(request)
 
     def changelist_view(self, request, extra_context=None):
-        # If a config exists, redirect straight to the 'Edit' page. 
-        # Skip the list view entirely.
         config = WhatsAppConfiguration.objects.first()
         if config:
             return redirect(reverse('admin:whatsapp_flow_settings_whatsappconfiguration_change', args=[config.id]))
@@ -42,4 +35,3 @@ class WhatsAppAccessPermissionAdmin(admin.ModelAdmin):
     list_display = ('user', 'role')
     list_filter = ('role',)
     search_fields = ('user__username', 'user__email')
-    # autocomplete_fields = ['user']  # Requires a search_field on User model

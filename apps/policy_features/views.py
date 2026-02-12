@@ -10,10 +10,7 @@ from .models import PolicyFeature
 from .serializers import PolicyFeatureSerializer, PolicyFeatureListSerializer
 from apps.core.pagination import StandardResultsSetPagination
 
-
-class PolicyFeatureViewSet(viewsets.ModelViewSet):
-    """ViewSet for managing policy features"""
-    
+class PolicyFeatureViewSet(viewsets.ModelViewSet):    
     queryset = PolicyFeature.objects.select_related(
         'policy_type'
     ).filter(is_deleted=False)
@@ -22,39 +19,32 @@ class PolicyFeatureViewSet(viewsets.ModelViewSet):
     pagination_class = StandardResultsSetPagination
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     
-    # Filter fields
     filterset_fields = [
         'policy_type', 'feature_type', 'is_active', 'is_mandatory'
     ]
 
-    # Search fields
     search_fields = [
         'feature_name', 'feature_description', 'policy_type__name',
         'policy_type__code', 'policy_type__category'
     ]
     
-    # Ordering fields
     ordering_fields = [
         'created_at', 'updated_at', 'feature_name', 'display_order'
     ]
     ordering = ['-created_at']
     
     def get_serializer_class(self):
-        """Return appropriate serializer based on action"""
         if self.action == 'list':
             return PolicyFeatureListSerializer
         return PolicyFeatureSerializer
     
     def perform_create(self, serializer):
-        """Set created_by when creating a new policy feature"""
         serializer.save(created_by=self.request.user)
     
     def perform_update(self, serializer):
-        """Set updated_by when updating a policy feature"""
         serializer.save(updated_by=self.request.user)
     
     def create(self, request, *args, **kwargs):
-        """Create a new policy feature"""
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
@@ -66,7 +56,6 @@ class PolicyFeatureViewSet(viewsets.ModelViewSet):
         }, status=status.HTTP_201_CREATED)
     
     def list(self, request, *args, **kwargs):
-        """List all policy features with filtering and pagination"""
         queryset = self.filter_queryset(self.get_queryset())
         page = self.paginate_queryset(queryset)
 
@@ -86,7 +75,6 @@ class PolicyFeatureViewSet(viewsets.ModelViewSet):
         })
 
     def retrieve(self, request, *args, **kwargs):
-        """Retrieve a specific policy feature by ID"""
         try:
             instance = self.get_object()
             serializer = self.get_serializer(instance)
@@ -104,7 +92,6 @@ class PolicyFeatureViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def by_policy_type(self, request):
-        """Get all features for a specific policy type"""
         policy_type_id = request.query_params.get('policy_type_id')
 
         if not policy_type_id:
@@ -132,7 +119,6 @@ class PolicyFeatureViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def feature_types(self, request):
-        """Get all available feature types"""
         feature_types = [
             {'value': choice[0], 'label': choice[1]} 
             for choice in PolicyFeature.FEATURE_TYPE_CHOICES

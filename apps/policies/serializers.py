@@ -8,9 +8,7 @@ from apps.customers.models import Customer
 
 User = get_user_model()
 
-class PolicyTypeSerializer(serializers.ModelSerializer):
-    """Serializer for PolicyType model"""
-    
+class PolicyTypeSerializer(serializers.ModelSerializer):    
     class Meta:
         model = PolicyType
         fields = [
@@ -19,9 +17,7 @@ class PolicyTypeSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
 
-class PolicyBeneficiarySerializer(serializers.ModelSerializer):
-    """Serializer for PolicyBeneficiary model"""
-    
+class PolicyBeneficiarySerializer(serializers.ModelSerializer):    
     class Meta:
         model = PolicyBeneficiary
         fields = [
@@ -32,7 +28,6 @@ class PolicyBeneficiarySerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at']
 
 class PolicyDocumentSerializer(serializers.ModelSerializer):
-    """Serializer for PolicyDocument model"""
     uploaded_by_name = serializers.CharField(source='uploaded_by.get_full_name', read_only=True)
     verified_by_name = serializers.CharField(source='verified_by.get_full_name', read_only=True)
     file_url = serializers.SerializerMethodField()
@@ -54,7 +49,6 @@ class PolicyDocumentSerializer(serializers.ModelSerializer):
         return None
 
 class PolicyPaymentSerializer(serializers.ModelSerializer):
-    """Serializer for PolicyPayment model"""
     processed_by_name = serializers.CharField(source='processed_by.get_full_name', read_only=True)
     
     class Meta:
@@ -68,7 +62,6 @@ class PolicyPaymentSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at']
 
 class PolicyNoteSerializer(serializers.ModelSerializer):
-    """Serializer for PolicyNote model"""
     created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
     
     class Meta:
@@ -80,7 +73,6 @@ class PolicyNoteSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_by', 'created_at', 'updated_at']
 
 class PolicySerializer(serializers.ModelSerializer):
-    """Main Policy serializer"""
     customer_name = serializers.CharField(source='customer.full_name', read_only=True)
     customer_email = serializers.CharField(source='customer.email', read_only=True)
     customer_phone = serializers.CharField(source='customer.phone_number', read_only=True)
@@ -88,13 +80,11 @@ class PolicySerializer(serializers.ModelSerializer):
     created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
     last_modified_by_name = serializers.CharField(source='last_modified_by.get_full_name', read_only=True)
     
-    # Nested relationships
     beneficiaries = PolicyBeneficiarySerializer(many=True, read_only=True)
     documents = PolicyDocumentSerializer(many=True, read_only=True, context={'request': None})
     payments = PolicyPaymentSerializer(many=True, read_only=True)
     notes = PolicyNoteSerializer(many=True, read_only=True)
     
-    # Computed fields
     is_due_for_renewal = serializers.ReadOnlyField()
     days_to_expiry = serializers.ReadOnlyField()
     complete_coverage_details = serializers.SerializerMethodField()
@@ -114,11 +104,9 @@ class PolicySerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at', 'is_due_for_renewal', 'days_to_expiry']
 
     def get_complete_coverage_details(self, obj):
-        """Get complete coverage details combining policy type and policy-specific coverage"""
         return obj.get_complete_coverage_details()
 
 class PolicyListSerializer(serializers.ModelSerializer):
-    """Simplified serializer for policy lists"""
     customer_name = serializers.CharField(source='customer.full_name', read_only=True)
     policy_type_name = serializers.CharField(source='policy_type.name', read_only=True)
     is_due_for_renewal = serializers.ReadOnlyField()
@@ -133,7 +121,6 @@ class PolicyListSerializer(serializers.ModelSerializer):
         ]
 
 class PolicyRenewalSerializer(serializers.ModelSerializer):
-    """Serializer for PolicyRenewal model"""
     policy_number = serializers.CharField(source='policy.policy_number', read_only=True)
     customer_name = serializers.CharField(source='policy.customer.full_name', read_only=True)
     assigned_to_name = serializers.CharField(source='assigned_to.get_full_name', read_only=True)
@@ -150,7 +137,6 @@ class PolicyRenewalSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at']
 
 class PolicyClaimSerializer(serializers.ModelSerializer):
-    """Serializer for PolicyClaim model"""
     policy_number = serializers.CharField(source='policy.policy_number', read_only=True)
     customer_name = serializers.CharField(source='policy.customer.full_name', read_only=True)
     assigned_to_name = serializers.CharField(source='assigned_to.get_full_name', read_only=True)
@@ -166,10 +152,7 @@ class PolicyClaimSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
 
-# Create/Update serializers with validation
-class PolicyCreateSerializer(serializers.ModelSerializer):
-    """Serializer for creating new policies"""
-    
+class PolicyCreateSerializer(serializers.ModelSerializer):    
     class Meta:
         model = Policy
         fields = [
@@ -180,13 +163,11 @@ class PolicyCreateSerializer(serializers.ModelSerializer):
         ]
     
     def validate_policy_number(self, value):
-        """Ensure policy number is unique"""
         if Policy.objects.filter(policy_number=value).exists():
             raise serializers.ValidationError("Policy number already exists.")
         return value
     
     def validate(self, data):
-        """Cross-field validation"""
         if data['end_date'] <= data['start_date']:
             raise serializers.ValidationError("End date must be after start date.")
         
@@ -198,9 +179,7 @@ class PolicyCreateSerializer(serializers.ModelSerializer):
         
         return data
 
-class PolicyRenewalCreateSerializer(serializers.ModelSerializer):
-    """Serializer for creating policy renewals"""
-    
+class PolicyRenewalCreateSerializer(serializers.ModelSerializer):    
     class Meta:
         model = PolicyRenewal
         fields = [
@@ -218,9 +197,7 @@ class PolicyRenewalCreateSerializer(serializers.ModelSerializer):
         
         return data
 
-class PolicyClaimCreateSerializer(serializers.ModelSerializer):
-    """Serializer for creating policy claims"""
-    
+class PolicyClaimCreateSerializer(serializers.ModelSerializer):    
     class Meta:
         model = PolicyClaim
         fields = [
@@ -229,13 +206,11 @@ class PolicyClaimCreateSerializer(serializers.ModelSerializer):
         ]
     
     def validate_claim_number(self, value):
-        """Ensure claim number is unique"""
         if PolicyClaim.objects.filter(claim_number=value).exists():
             raise serializers.ValidationError("Claim number already exists.")
         return value
     
     def validate(self, data):
-        """Cross-field validation"""
         if data['claim_amount'] <= 0:
             raise serializers.ValidationError("Claim amount must be greater than 0.")
         
@@ -243,10 +218,7 @@ class PolicyClaimCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Claim date cannot be before incident date.")
         
         return data
-
-# Dashboard serializers
 class PolicyDashboardSerializer(serializers.Serializer):
-    """Serializer for policy dashboard statistics"""
     total_policies = serializers.IntegerField()
     active_policies = serializers.IntegerField()
     expired_policies = serializers.IntegerField()
@@ -256,7 +228,6 @@ class PolicyDashboardSerializer(serializers.Serializer):
     recent_claims = serializers.IntegerField()
 
 class RenewalDashboardSerializer(serializers.Serializer):
-    """Serializer for renewal dashboard statistics"""
     pending_renewals = serializers.IntegerField()
     in_progress_renewals = serializers.IntegerField()
     completed_renewals = serializers.IntegerField()
@@ -264,9 +235,7 @@ class RenewalDashboardSerializer(serializers.Serializer):
     renewal_rate = serializers.DecimalField(max_digits=5, decimal_places=2)
 
 
-class PolicyMemberSerializer(serializers.ModelSerializer):
-    """Serializer for PolicyMember model"""
-    
+class PolicyMemberSerializer(serializers.ModelSerializer):    
     age = serializers.SerializerMethodField()
     initials = serializers.ReadOnlyField()
     relation_display = serializers.CharField(source='get_relation_display', read_only=True)
@@ -285,20 +254,15 @@ class PolicyMemberSerializer(serializers.ModelSerializer):
                            'policy_number', 'customer_name', 'created_at', 'updated_at']
     
     def get_age(self, obj):
-        """Calculate age using SQL query or fallback to Python calculation"""
-        # Check if age was already calculated by SQL in the queryset
         if hasattr(obj, 'age') and obj.age is not None:
             return int(obj.age)
         
-        # Fallback to Python calculation for individual objects
         from datetime import date
         today = date.today()
         age = today.year - obj.dob.year - ((today.month, today.day) < (obj.dob.month, obj.dob.day))
         return age
     
     def validate(self, data):
-        """Validate policy member data"""
-        # Ensure customer and policy are related
         if 'customer' in data and 'policy' in data:
             if data['customer'] != data['policy'].customer:
                 raise serializers.ValidationError(
@@ -307,9 +271,7 @@ class PolicyMemberSerializer(serializers.ModelSerializer):
         return data
 
 
-class PolicyMemberCreateSerializer(serializers.ModelSerializer):
-    """Serializer for creating PolicyMember instances"""
-    
+class PolicyMemberCreateSerializer(serializers.ModelSerializer):    
     class Meta:
         model = PolicyMember
         fields = [
@@ -318,8 +280,6 @@ class PolicyMemberCreateSerializer(serializers.ModelSerializer):
         ]
     
     def validate(self, data):
-        """Validate policy member data"""
-        # Ensure customer and policy are related
         if 'customer' in data and 'policy' in data:
             if data['customer'] != data['policy'].customer:
                 raise serializers.ValidationError(
@@ -328,9 +288,7 @@ class PolicyMemberCreateSerializer(serializers.ModelSerializer):
         return data
 
 
-class PolicyMemberUpdateSerializer(serializers.ModelSerializer):
-    """Serializer for updating PolicyMember instances"""
-    
+class PolicyMemberUpdateSerializer(serializers.ModelSerializer):    
     class Meta:
         model = PolicyMember
         fields = [

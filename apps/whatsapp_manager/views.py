@@ -13,33 +13,24 @@ from .serializers import (
     StartNewChatSerializer,
     WhatsAppTemplateSerializer
 )
-# --- FIX 1: Import the service ---
 from .services import send_agent_message 
 
-# --- 1. The Main Dashboard List (Left Sidebar) ---
 class WhatsAppChatListView(generics.ListAPIView):
-    """
-    API for the Left Sidebar Chat List.
-    Supports: Filtering (Status, Priority) AND Searching (Name, Phone, Policy, Message Text).
-    Endpoint: GET /api/whatsapp/chats/?search=anything
-    """
     serializer_class = WhatsAppChatListSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [filters.SearchFilter]
     
-    # --- SEARCH CONFIGURATION ---
     search_fields = [
         'customer__first_name', 
         'customer__last_name', 
         'customer__phone', 
         'policy__policy_number', 
         'case_number',
-        'whatsapp_messages__content'  # <--- THIS enables searching inside chat history!
+        'whatsapp_messages__content' 
     ]
 
 
     def get_queryset(self):
-        # Use distinct() to avoid duplicate results if a search term appears in multiple messages
         queryset = RenewalCase.objects.all().select_related('customer', 'policy').distinct()
         
         status_param = self.request.query_params.get('status')
@@ -54,7 +45,6 @@ class WhatsAppChatListView(generics.ListAPIView):
         return queryset.order_by('-updated_at')
 
 
-# --- 2. Chat History & Sending Messages ---
 class WhatsAppMessageListView(generics.ListCreateAPIView):
     serializer_class = WhatsAppMessageSerializer
     permission_classes = [IsAuthenticated]
@@ -63,28 +53,22 @@ class WhatsAppMessageListView(generics.ListCreateAPIView):
         case_number = self.kwargs['case_number']
         return WhatsAppMessage.objects.filter(case__case_number=case_number).order_by('created_at')
 
-    # --- FIX 2: Logic placed correctly here ---
     def perform_create(self, serializer):
         case_number = self.kwargs['case_number']
         case = get_object_or_404(RenewalCase, case_number=case_number)
         
-        # 1. Save to DB
         instance = serializer.save(
             case=case,
             sender_type='agent',
             sender_user=self.request.user
         )
         
-        # 2. Send Real Message via Twilio
-        # Uses the service you created
         if case.customer and case.customer.phone:
             send_agent_message(
                 to_number=case.customer.phone, 
                 message_content=instance.content
             )
 
-
-# --- 3. Start New Chat (Modal) ---
 class StartNewChatView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -103,7 +87,6 @@ class StartNewChatView(APIView):
                     "message": f"No active renewal case found for policy {policy_number}"
                 }, status=status.HTTP_404_NOT_FOUND)
 
-            # Create the first WhatsApp Message in the DB
             if initial_message:
                 WhatsAppMessage.objects.create(
                     case=case,
@@ -113,7 +96,6 @@ class StartNewChatView(APIView):
                     is_read=True
                 )
                 
-                # --- FIX 3: Also send the *Initial* message via Twilio ---
                 if case.customer and case.customer.phone:
                     send_agent_message(
                         to_number=case.customer.phone,
@@ -129,7 +111,6 @@ class StartNewChatView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-# --- 4. Message Updates (Starring) ---
 class WhatsAppMessageUpdateView(generics.RetrieveUpdateDestroyAPIView):
     queryset = WhatsAppMessage.objects.all()
     serializer_class = WhatsAppMessageSerializer
@@ -137,14 +118,12 @@ class WhatsAppMessageUpdateView(generics.RetrieveUpdateDestroyAPIView):
     lookup_field = 'id'
 
 
-# --- 5. Template List ---
 class WhatsAppTemplateListView(generics.ListAPIView):
     queryset = Template.objects.filter(channel='whatsapp')
     serializer_class = WhatsAppTemplateSerializer
     permission_classes = [IsAuthenticated]
 
 
-# --- 6. Customer Lookup ---
 class CustomerLookupView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -153,13 +132,11 @@ class CustomerLookupView(APIView):
         if not phone:
             return Response({"error": "Phone number required"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # 1. Find ALL cases matching this phone number (not just .first())
         cases = RenewalCase.objects.filter(customer__phone__icontains=phone).select_related('customer', 'policy')
 
         if not cases.exists():
             return Response({"found": False, "message": "No customer found"})
 
-        # 2. Build a List of Results
         results = []
         for case in cases:
             results.append({
@@ -170,21 +147,15 @@ class CustomerLookupView(APIView):
                 "renewal_date": case.policy.end_date
             })
 
-        # 3. Return the List (Frontend will map this to a dropdown)
         return Response(results, status=status.HTTP_200_OK)
 
 class TwilioWebhookView(APIView):
-    """
-    Receives incoming WhatsApp messages from Twilio.
-    """
-    permission_classes = [AllowAny] # Twilio doesn't have your login token
-    parser_classes = [FormParser,JSONParser]   # Twilio sends data as 'Form', not JSON
+    permission_classes = [AllowAny] 
+    parser_classes = [FormParser,JSONParser]  
 
     def post(self, request):
         data = request.data
         
-        # 1. Get Data from Twilio
-        # Twilio sends 'From' as 'whatsapp:+919999999999'
         raw_from = data.get('From', '') 
         body = data.get('Body', '')
         message_sid = data.get('MessageSid', '')
@@ -192,26 +163,19 @@ class TwilioWebhookView(APIView):
         if not raw_from:
             return Response({"status": "ignored"}, status=status.HTTP_200_OK)
 
-        # 2. Clean Phone Number (Remove 'whatsapp:' and '+')
-        # We need to match it with your Database format
         clean_phone = raw_from.replace('whatsapp:', '').replace('+', '')
-        # E.g., "919999999999"
 
-        # 3. Find the Customer & Active Case
-        # We look for a case connected to this phone number
         case = RenewalCase.objects.filter(
-            customer__phone__icontains=clean_phone[-10:] # Search last 10 digits to be safe
+            customer__phone__icontains=clean_phone[-10:]
         ).order_by('-updated_at').first()
 
         if not case:
             print(f"Received message from {clean_phone} but no Case found.")
-            # We still return 200 so Twilio doesn't retry
             return Response({"status": "no_case_found"}, status=status.HTTP_200_OK)
 
-        # 4. Save Message to Database
         WhatsAppMessage.objects.create(
             case=case,
-            sender_type='customer', # &lt;--- It's from the Customer
+            sender_type='customer', 
             content=body,
             wa_message_id=message_sid,
             is_read=False

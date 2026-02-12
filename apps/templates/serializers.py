@@ -2,9 +2,7 @@ from rest_framework import serializers
 from .models import Template
 
 
-class TemplateSerializer(serializers.ModelSerializer):
-    """Serializer for Template model"""
-    
+class TemplateSerializer(serializers.ModelSerializer):    
     class Meta:
         model = Template
         fields = [
@@ -27,9 +25,7 @@ class TemplateSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_by', 'created_at', 'updated_at']
 
 
-class TemplateCreateSerializer(serializers.ModelSerializer):
-    """Serializer for creating Template instances"""
-    
+class TemplateCreateSerializer(serializers.ModelSerializer):    
     class Meta:
         model = Template
         fields = [
@@ -47,13 +43,11 @@ class TemplateCreateSerializer(serializers.ModelSerializer):
         ]
     
     def validate_name(self, value):
-        """Validate template name uniqueness"""
         if Template.objects.filter(name=value).exists():
             raise serializers.ValidationError("A template with this name already exists.")
         return value
 
     def validate_tags(self, value):
-        """Ensure provided tags are within the allowed list."""
         if value is None:
             return []
         if not isinstance(value, (list, tuple)):
@@ -74,9 +68,7 @@ class TemplateCreateSerializer(serializers.ModelSerializer):
         return deduped
 
 
-class TemplateUpdateSerializer(serializers.ModelSerializer):
-    """Serializer for updating Template instances"""
-    
+class TemplateUpdateSerializer(serializers.ModelSerializer):    
     class Meta:
         model = Template
         fields = [
@@ -94,13 +86,11 @@ class TemplateUpdateSerializer(serializers.ModelSerializer):
         ]
     
     def validate_name(self, value):
-        """Validate template name uniqueness (excluding current instance)"""
         if self.instance and Template.objects.filter(name=value).exclude(id=self.instance.id).exists():
             raise serializers.ValidationError("A template with this name already exists.")
         return value
 
     def validate_tags(self, value):
-        """Ensure provided tags are within the allowed list."""
         if value is None:
             return []
         if not isinstance(value, (list, tuple)):
@@ -112,7 +102,6 @@ class TemplateUpdateSerializer(serializers.ModelSerializer):
                 f"Invalid tag(s): {', '.join(invalid)}. Allowed tags are: {', '.join(Template.TAG_OPTIONS)}."
             )
 
-        # Return unique tags preserving order
         seen = set()
         deduped = []
         for tag in value:

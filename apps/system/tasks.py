@@ -8,9 +8,6 @@ logger = logging.getLogger(__name__)
 
 @shared_task
 def perform_system_backup():
-    """
-    Periodic task to perform system backup if enabled.
-    """
     try:
         settings = SystemSettings.get_settings()
         

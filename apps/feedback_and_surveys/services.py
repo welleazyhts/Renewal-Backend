@@ -5,11 +5,6 @@ from django.core.mail import send_mail
 from apps.email_provider.services import EmailProviderService
 
 class DistributionService:
-    """
-    Handles the logic of sending surveys via different channels.
-    Integrates with your Email/SMS/WhatsApp providers.
-    """
-
     def __init__(self, survey):
         self.survey = survey
         self.audience = survey.audience
@@ -25,8 +20,6 @@ class DistributionService:
         sent_count = 0
 
         for contact in contacts:
-            # 1. Generate Unique Link (So we know WHO filled it out)
-            # We append ?c=CONTACT_ID to the public URL
             unique_link = f"{settings.SITE_URL}/feedback/public/{self.survey.id}/?c={contact.id}"
             
             # 2. Send based on selected channels
@@ -44,7 +37,6 @@ class DistributionService:
 
         return {"status": "success", "sent_count": sent_count}
 
-    # --- PROVIDER INTEGRATIONS (Fill these with your actual provider code) ---
 
     def _send_email(self, contact, link):
         subject = f"We'd love your feedback, {contact.name}!"
@@ -60,7 +52,7 @@ class DistributionService:
             send_mail(
                 subject,
                 message,
-                settings.DEFAULT_FROM_EMAIL, # e.g., 'noreply@yourcompany.com'
+                settings.DEFAULT_FROM_EMAIL,
                 [contact.email],
                 fail_silently=False,
             )
@@ -70,8 +62,6 @@ class DistributionService:
     def _send_sms(self, contact, link):
         body = f"Hi {contact.name}, rate us here: {link}"
         
-        # EXAMPLE: Calling Twilio or similar
-        # sms_provider.send(to=contact.phone, body=body)
         print(f"[SMS Sent] To: {contact.phone} | Link: {link}")
 
     def _send_whatsapp(self, contact, link):

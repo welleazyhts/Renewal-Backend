@@ -24,7 +24,6 @@ from apps.billing.services import log_communication
 logger = logging.getLogger(__name__)
 
 class WhatsAppAPIError(Exception):
-    """Custom exception for WhatsApp API errors"""
     pass
 class BaseWhatsAppService:
    
@@ -154,7 +153,6 @@ class MetaProviderService(BaseWhatsAppService):
         try:
             response = self._make_api_request(url, 'POST', data)
             
-            # Log the message
             phone_number = self.provider.get_primary_phone_number()
             msg = WhatsAppMessage.objects.create(
                 provider=self.provider,
@@ -172,7 +170,6 @@ class MetaProviderService(BaseWhatsAppService):
             )
             self._update_usage_counters(phone_number)
             
-            # --- BILLING INTEGRATION ---
             log_communication(
                 vendor_name=self.provider.name,
                 service_type='whatsapp',
@@ -242,7 +239,6 @@ class MetaProviderService(BaseWhatsAppService):
             template.last_used = timezone.now()
             template.save(update_fields=['usage_count', 'last_used'])
             
-            # --- BILLING INTEGRATION ---
             log_communication(
                 vendor_name=self.provider.name,
                 service_type='whatsapp',
@@ -296,7 +292,6 @@ class MetaProviderService(BaseWhatsAppService):
             return {'status': 'unhealthy', 'error': str(e)}
 
     def handle_webhook(self, event_data: Dict[str, Any]) -> Any:
-        # 1. Log the raw event for debugging
         WhatsAppWebhookEvent.objects.create(
             provider=self.provider,
             event_type='webhook',
@@ -305,7 +300,6 @@ class MetaProviderService(BaseWhatsAppService):
         )
 
         try:
-            # Meta Webhook Structure Traversal
             entry = event_data.get('entry', [])
             if not entry: return {'status': 'ignored'}
             
@@ -314,15 +308,13 @@ class MetaProviderService(BaseWhatsAppService):
             
             value = changes[0].get('value', {})
             
-            # --- Handle Status Updates (Sent, Delivered, Read, Failed) ---
             if 'statuses' in value:
-                from apps.billing.models import CommunicationLog # Import here to avoid circular dependency
+                from apps.billing.models import CommunicationLog 
                 
                 for status_item in value['statuses']:
                     wamid = status_item.get('id')
-                    new_status = status_item.get('status') # sent, delivered, read, failed
+                    new_status = status_item.get('status') 
                     
-                    # 1. Update Local WhatsAppMessage
                     try:
                         msg = WhatsAppMessage.objects.get(message_id=wamid)
                         msg.status = new_status
@@ -334,8 +326,6 @@ class MetaProviderService(BaseWhatsAppService):
                                 msg.error_message = errors[0].get('title')
                         msg.save()
                         
-                        # 2. Sync to Billing Log
-                        # Map Meta status to Billing status (delivered/failed)
                         billing_status = 'delivered' if new_status in ['delivered', 'read'] else 'failed' if new_status == 'failed' else None
                         
                         if billing_status:
@@ -377,7 +367,6 @@ class TwilioProviderService(BaseWhatsAppService):
             )
             self._update_usage_counters()
             
-            # --- BILLING INTEGRATION ---
             log_communication(
                 vendor_name=self.provider.name,
                 service_type='whatsapp',
@@ -458,7 +447,6 @@ class GupshupProviderService(BaseWhatsAppService):
         )
         self._update_usage_counters()
         
-        # --- BILLING INTEGRATION ---
         log_communication(
             vendor_name=self.provider.name,
             service_type='whatsapp',
@@ -493,7 +481,6 @@ class Dialog360ProviderService(BaseWhatsAppService):
     
     def __init__(self, provider_model: WhatsAppProvider):
         super().__init__(provider_model)
-        # Map generic fields to 360Dialog requirements
         self.api_key = self._decrypt(provider_model.access_token)
         self.channel_id = provider_model.phone_number_id
         self.api_url = provider_model.api_url or "https://waba.360dialog.io/v1"
@@ -538,7 +525,6 @@ class Dialog360ProviderService(BaseWhatsAppService):
         )
         self._update_usage_counters()
         
-        # --- BILLING INTEGRATION ---
         log_communication(
             vendor_name=self.provider.name,
             service_type='whatsapp',
@@ -611,7 +597,6 @@ class WhatsAppService:
         return ProviderClass(provider_model)
     
     def get_analytics(self, provider: WhatsAppProvider, start_date=None, end_date=None) -> Dict[str, Any]:
-        """Get analytics for a specific WABA account"""
         if not start_date:
             start_date = timezone.now().date() - timezone.timedelta(days=30)
         if not end_date:

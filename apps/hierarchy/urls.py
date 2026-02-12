@@ -14,5 +14,5 @@ router.register(r'teams', TeamViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('summary/', HierarchySummaryView.as_view()), # API for the Table
+    path('summary/', HierarchySummaryView.as_view()),
 ]

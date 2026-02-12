@@ -16,12 +16,10 @@ class Command(BaseCommand):
         self.stdout.write("🔍 Testing Excel processing...")
         
         try:
-            # Get latest upload
             latest_upload = UploadsFileUpload.objects.latest('created_at')
             self.stdout.write(f"📁 Latest upload: {latest_upload.original_name}")
             self.stdout.write(f"📊 Current status: {latest_upload.status}")
             
-            # Get user
             user = User.objects.first()
             if not user:
                 self.stdout.write(self.style.ERROR("❌ No user found!"))
@@ -29,7 +27,6 @@ class Command(BaseCommand):
                 
             self.stdout.write(f"👤 Using user: {user.email}")
             
-            # Check counts before
             customers_before = Customer.objects.count()
             policies_before = Policy.objects.count()
             renewals_before = RenewalCase.objects.count()
@@ -39,7 +36,6 @@ class Command(BaseCommand):
             self.stdout.write(f"   - Policies: {policies_before}")
             self.stdout.write(f"   - Renewal Cases: {renewals_before}")
             
-            # Process the Excel file
             viewset = FileUploadViewSet()
             
             self.stdout.write(f"\n🔄 Processing Excel file...")
@@ -47,7 +43,6 @@ class Command(BaseCommand):
             
             self.stdout.write(self.style.SUCCESS(f"✅ Processing result: {result}"))
             
-            # Check counts after
             customers_after = Customer.objects.count()
             policies_after = Policy.objects.count()
             renewals_after = RenewalCase.objects.count()
@@ -57,7 +52,6 @@ class Command(BaseCommand):
             self.stdout.write(f"   - Policies: {policies_after} (+{policies_after - policies_before})")
             self.stdout.write(f"   - Renewal Cases: {renewals_after} (+{renewals_after - renewals_before})")
             
-            # Show recent records
             recent_customers = Customer.objects.filter(created_at__gte=latest_upload.created_at)
             if recent_customers.exists():
                 self.stdout.write(f"\n👥 New customers created:")

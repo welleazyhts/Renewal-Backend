@@ -43,7 +43,6 @@ class SurveySerializer(serializers.ModelSerializer):
             setattr(instance, attr, value)
         instance.save()
 
-        # 2. Update Questions (Delete old -> Create new)
         if questions_data is not None:
             instance.questions.all().delete()
             for q_data in questions_data:
@@ -187,8 +186,7 @@ class FeedbackDetailSerializer(serializers.ModelSerializer):
         if obj.customer:
             name = obj.customer.name or "Anonymous"
             email = obj.customer.email or "N/A"
-            phone = getattr(obj.customer, 'phone', "N/A") # Check if phone exists
-            # Assuming your customer model has city/country fields
+            phone = getattr(obj.customer, 'phone', "N/A")
             city = getattr(obj.customer, 'city', "")
             country = getattr(obj.customer, 'country', "")
             location = f"{city}, {country}".strip(', ') or "Unknown"
@@ -208,8 +206,8 @@ class FeedbackDetailSerializer(serializers.ModelSerializer):
         return {
             "message": obj.comment,
             "rating": obj.rating,
-            "category": obj.category, # e.g., "Service Quality"
-            "tags": ["Appreciation"] if obj.rating >= 4 else ["Complaint"], # Logic for auto-tags
+            "category": obj.category,
+            "tags": ["Appreciation"] if obj.rating >= 4 else ["Complaint"], 
             "status": obj.status
         }
 
@@ -224,9 +222,7 @@ class FeedbackDetailSerializer(serializers.ModelSerializer):
             }
             for log in logs
         ]
-# apps/feedback_and_surveys/serializers.py
 
-# --- 1. SURVEY RESPONSES TAB SERIALIZERS ---
 class ResponseAnswerSerializer(serializers.ModelSerializer):
     question_text = serializers.CharField(source='question.label', read_only=True)
     class Meta:
@@ -248,7 +244,6 @@ class SurveyResponseCardSerializer(serializers.ModelSerializer):
         fields = ['id', 'survey_title', 'customer_name', 'date', 'rating', 'comment', 'answers']
 
 
-# --- 2. AUDIENCE MANAGEMENT SERIALIZERS ---
 class AudienceContactSerializer(serializers.ModelSerializer):
     class Meta:
         model = AudienceContact
@@ -257,12 +252,10 @@ class AudienceContactSerializer(serializers.ModelSerializer):
 class AudienceListSerializer(serializers.ModelSerializer):
     contact_count = serializers.IntegerField(source='contacts.count', read_only=True)
     class Meta:
-        # Assuming you have an 'AudienceList' or 'Audience' model
-        model = Survey.audience.field.related_model # Dynamically grabs your Audience model
+        model = Survey.audience.field.related_model 
         fields = ['id', 'name', 'description', 'contact_count', 'created_at']
 
 
-# --- 3. AUTOMATION SERIALIZERS ---
 class AutomationRuleSerializer(serializers.ModelSerializer):
     """
     Serializer for 'Automation & Triggers' Tab.
@@ -270,7 +263,6 @@ class AutomationRuleSerializer(serializers.ModelSerializer):
     survey_title = serializers.CharField(source='survey.title', read_only=True)
     
     class Meta:
-        # You will need to create this model (see Step 3 below if missing)
         from .models import AutomationRule 
         model = AutomationRule
         fields = ['id', 'name', 'trigger_event', 'survey', 'survey_title', 'channel', 'is_active']

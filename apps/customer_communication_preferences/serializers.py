@@ -3,9 +3,7 @@ from .models import CustomerCommunicationPreference
 from apps.customers.models import Customer
 
 
-class CustomerCommunicationPreferenceSerializer(serializers.ModelSerializer):
-    """Base serializer for Customer Communication Preferences"""
-    
+class CustomerCommunicationPreferenceSerializer(serializers.ModelSerializer):    
     customer_name = serializers.CharField(source='customer.full_name', read_only=True)
     customer_code = serializers.CharField(source='customer.customer_code', read_only=True)
     communication_summary = serializers.CharField(read_only=True)
@@ -54,9 +52,7 @@ class CustomerCommunicationPreferenceSerializer(serializers.ModelSerializer):
         return obj.get_enabled_channels()
 
 
-class CustomerCommunicationPreferenceCreateSerializer(serializers.ModelSerializer):
-    """Serializer for creating Customer Communication Preferences"""
-    
+class CustomerCommunicationPreferenceCreateSerializer(serializers.ModelSerializer):    
     class Meta:
         model = CustomerCommunicationPreference
         fields = [
@@ -108,7 +104,6 @@ class CustomerCommunicationPreferenceCreateSerializer(serializers.ModelSerialize
                     f"Communication preference for {communication_type} already exists for this customer."
                 )
         
-        # Validate DND time settings
         dnd_start = data.get('dnd_start_time')
         dnd_end = data.get('dnd_end_time')
         
@@ -117,7 +112,6 @@ class CustomerCommunicationPreferenceCreateSerializer(serializers.ModelSerialize
                 "DND start and end times are required when do not disturb is enabled."
             )
         
-        # Validate at least one channel is enabled
         channels_enabled = any([
             data.get('email_enabled', False),
             data.get('sms_enabled', False),
@@ -213,7 +207,6 @@ class CustomerCommunicationPreferenceUpdateSerializer(serializers.ModelSerialize
     
     def validate(self, data):
         """Custom validation for updating communication preferences"""
-        # Validate DND time settings
         dnd_start = data.get('dnd_start_time')
         dnd_end = data.get('dnd_end_time')
         do_not_disturb = data.get('do_not_disturb', self.instance.do_not_disturb)
@@ -224,7 +217,6 @@ class CustomerCommunicationPreferenceUpdateSerializer(serializers.ModelSerialize
                     "DND start and end times are required when do not disturb is enabled."
                 )
         
-        # Validate at least one channel is enabled
         channels_enabled = any([
             data.get('email_enabled', self.instance.email_enabled),
             data.get('sms_enabled', self.instance.sms_enabled),

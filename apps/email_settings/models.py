@@ -34,7 +34,6 @@ SYNC_INTERVAL_CHOICES = [
     (60, '1 Hour'),
 ]
 
-# --- NEW: Choices for the Fallback Logic ---
 SENDING_METHOD_CHOICES = [
     ('smtp', 'Use Incoming SMTP Credentials (Gmail/Outlook)'),
     ('system_default', 'Use System Default Provider (e.g. Corp SendGrid)'),
@@ -67,7 +66,6 @@ class EmailAccount(models.Model):
     last_sync_at = models.DateTimeField(null=True, blank=True, help_text="Timestamp of the last successful sync or test.")
     last_sync_log = models.TextField(blank=True, help_text="Stores the error message if the connection failed.")
 
-    # --- NEW SENDING CONFIGURATION ---
     sending_method = models.CharField(
         max_length=20, 
         choices=SENDING_METHOD_CHOICES, 
@@ -82,12 +80,10 @@ class EmailAccount(models.Model):
         help_text="If 'Use Specific Provider' is selected, this provider will be used."
     )
 
-    # Helper to auto-select this account in Campaigns
     is_default_sender = models.BooleanField(
         default=False, 
         help_text="If true, this account is pre-selected as the 'From' address in new campaigns."
     )
-    # ---------------------------------
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -135,7 +131,6 @@ class EmailAccount(models.Model):
         self.deleted_by = user
         self.save()
 
-# ... (EmailModuleSettings, ClassificationRule, EmailMessage remain the same)
 class EmailModuleSettings(models.Model):
     """
     Stores general, global, processing, and AI features settings, unique per user.

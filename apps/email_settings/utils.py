@@ -82,14 +82,12 @@ def apply_provider_defaults(account_obj) -> None:
 
 def normalize_and_get_credential(account_obj, decrypt: bool = True) -> str:
     raw = account_obj.access_credential or ""
-    # Remove spaces (fix for the copy-paste issue)
     candidate = "".join(raw.split()) 
     
     if not candidate:
         return ""
     
     if decrypt:
-        # Try to decrypt; if it fails, assume it's raw text
         try:
             return decrypt_credential(candidate)
         except Exception:

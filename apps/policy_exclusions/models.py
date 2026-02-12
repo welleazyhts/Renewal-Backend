@@ -4,11 +4,7 @@ from apps.core.models import BaseModel
 from apps.policies.models import Policy
 
 User = get_user_model()
-
-
-class PolicyExclusion(BaseModel):
-    """Model to store policy exclusions"""
-    
+class PolicyExclusion(BaseModel):    
     EXCLUSION_TYPE_CHOICES = [
         ('not_covered', 'Not Covered'),
         ('conditions_apply', 'Conditions Apply'),
@@ -55,10 +51,8 @@ class PolicyExclusion(BaseModel):
     
     @property
     def policy_number(self):
-        """Return the policy number for easy access"""
         return self.policy.policy_number if self.policy else None
     
     @property
     def policy_type_name(self):
-        """Return the policy type name for easy access"""
         return self.policy.policy_type.name if self.policy and self.policy.policy_type else None

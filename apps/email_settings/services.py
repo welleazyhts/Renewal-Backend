@@ -31,14 +31,10 @@ class EmailSyncService:
                 credential=credential,
                 use_ssl_tls=account.use_ssl_tls
             )
-            # 1. Connect to IMAP
-            # 1. Connect to IMAP
             mail = imaplib.IMAP4_SSL(transport.imap_server, transport.imap_port, timeout=transport.timeout)
             mail.login(account.email_address, credential)
             mail.select("INBOX")
 
-            # 2. Search for UNREAD messages
-            # (Fetching only unread keeps it fast. Remove 'UNSEEN' to fetch all if needed)
             status, messages = mail.search(None, 'UNSEEN')
             email_ids = messages[0].split()
 
@@ -127,12 +123,10 @@ class EmailSyncService:
         Checks settings and sends a POST request to the external URL if enabled.
         """
         try:
-            # 1. Load Settings
             settings = EmailModuleSettings.objects.filter(user=user).first()
             
-            # 2. Check if enabled
             if not settings or not settings.enable_webhook_notifications or not settings.webhook_url:
-                return # Feature disabled or URL missing
+                return 
 
             # 3. Prepare Payload
             payload = {
@@ -147,10 +141,9 @@ class EmailSyncService:
                     "category": email_obj.category,
                     "priority": email_obj.priority
                 },
-                "snippet": email_obj.body_text[:200] # Send a preview
+                "snippet": email_obj.body_text[:200] 
             }
 
-            # 4. Fire the Webhook (Timeout is important so we don't hang the sync)
             print(f"🚀 Triggering Webhook to: {settings.webhook_url}")
             response = requests.post(settings.webhook_url, json=payload, timeout=5)
             
@@ -160,7 +153,6 @@ class EmailSyncService:
                 print(f"⚠️ Webhook failed with status: {response.status_code}")
 
         except Exception as e:
-            # Log error but DO NOT crash the sync process
             print(f"❌ Webhook Error: {str(e)}")
 
     def _decode_str(self, header_val):

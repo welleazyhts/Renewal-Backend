@@ -1,21 +1,10 @@
-"""
-Other Insurance Policies models for the Intelipro Insurance Policy Renewal System.
-"""
-
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from decimal import Decimal
 from apps.core.models import BaseModel
 from apps.customers.models import Customer
 from apps.policies.models import PolicyType
-
-
 class OtherInsurancePolicy(BaseModel):
-    """
-    Other insurance policies that customers have with different companies.
-    This helps in understanding customer's complete insurance portfolio.
-    """
-    
     POLICY_STATUS_CHOICES = [
         ('active', 'Active'),
         ('expired', 'Expired'),
@@ -47,7 +36,6 @@ class OtherInsurancePolicy(BaseModel):
         ('unknown', 'Unknown'),
     ]
     
-    # Foreign Keys
     customer = models.ForeignKey(
         Customer,
         on_delete=models.CASCADE,
@@ -62,7 +50,6 @@ class OtherInsurancePolicy(BaseModel):
         help_text="Type of insurance policy (fetched from policies table)"
     )
     
-    # Policy Basic Information
     policy_number = models.CharField(
         max_length=100,
         help_text="Policy number from other insurance company"
@@ -80,7 +67,6 @@ class OtherInsurancePolicy(BaseModel):
         help_text="Current status of the policy"
     )
     
-    # Policy Dates
     start_date = models.DateField(
         help_text="Policy start date"
     )
@@ -95,7 +81,6 @@ class OtherInsurancePolicy(BaseModel):
         help_text="Next renewal date if applicable"
     )
     
-    # Financial Information
     premium_amount = models.DecimalField(
         max_digits=12,
         decimal_places=2,
@@ -117,7 +102,6 @@ class OtherInsurancePolicy(BaseModel):
         help_text="Premium payment frequency"
     )
     
-    # Policy Details
     nominee_name = models.CharField(
         max_length=200,
         blank=True,
@@ -149,7 +133,6 @@ class OtherInsurancePolicy(BaseModel):
         help_text="Channel through which policy was purchased"
     )
     
-    # Additional Information
     policy_features = models.JSONField(
         default=dict,
         blank=True,
@@ -172,7 +155,6 @@ class OtherInsurancePolicy(BaseModel):
         help_text="Special conditions or terms"
     )
     
-    # Satisfaction and Experience
     satisfaction_rating = models.IntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(5)],
         blank=True,
@@ -194,7 +176,6 @@ class OtherInsurancePolicy(BaseModel):
         help_text="Customer's claim experience"
     )
     
-    # Renewal Information
     is_renewal_interested = models.BooleanField(
         default=True,
         help_text="Whether customer is interested in renewing"
@@ -222,7 +203,6 @@ class OtherInsurancePolicy(BaseModel):
         help_text="Potential for customer to switch to our company"
     )
     
-    # Internal Notes
     notes = models.TextField(
         blank=True,
         help_text="Internal notes about this policy"
@@ -266,7 +246,6 @@ class OtherInsurancePolicy(BaseModel):
     
     @property
     def policy_summary(self):
-        """Return a summary of the policy"""
         parts = []
         parts.append(f"{self.policy_type.name}")
         parts.append(f"{self.insurance_company}")
@@ -277,14 +256,13 @@ class OtherInsurancePolicy(BaseModel):
     
     @property
     def annual_premium(self):
-        """Calculate annual premium based on payment mode"""
         if self.payment_mode == 'monthly':
             return self.premium_amount * 12
         elif self.payment_mode == 'quarterly':
             return self.premium_amount * 4
         elif self.payment_mode == 'semi_annual':
             return self.premium_amount * 2
-        else:  # annual or single_premium
+        else:
             return self.premium_amount
     
     @property
@@ -297,7 +275,6 @@ class OtherInsurancePolicy(BaseModel):
     
     @property
     def days_to_expiry(self):
-        """Get number of days until policy expires"""
         from datetime import date
         if self.end_date:
             delta = self.end_date - date.today()
@@ -306,7 +283,6 @@ class OtherInsurancePolicy(BaseModel):
     
     @property
     def policy_age_years(self):
-        """Calculate policy age in years"""
         from datetime import date
         if self.start_date:
             delta = date.today() - self.start_date
@@ -315,28 +291,23 @@ class OtherInsurancePolicy(BaseModel):
     
     @property
     def competitive_analysis_score(self):
-        """Calculate a score for competitive analysis (0-100)"""
         score = 0
         
-        # Base score for having the information
         score += 20
         
-        # Satisfaction rating (20 points)
         if self.satisfaction_rating:
-            score += (self.satisfaction_rating * 4)  # 4-20 points
+            score += (self.satisfaction_rating * 4) 
         
-        # Claim experience (20 points)
         claim_scores = {
             'excellent': 20,
             'good': 15,
             'average': 10,
             'poor': 5,
             'very_poor': 0,
-            'no_claims': 12,  # Neutral score
+            'no_claims': 12,  
         }
         score += claim_scores.get(self.claim_experience, 0)
         
-        # Switching potential (20 points)
         switch_scores = {
             'high': 20,
             'medium': 12,
@@ -345,17 +316,15 @@ class OtherInsurancePolicy(BaseModel):
         }
         score += switch_scores.get(self.switching_potential, 0)
         
-        # Renewal interest (20 points)
         if self.is_renewal_interested:
             score += 20
         else:
-            score += 5  # Still some potential
+            score += 5  
         
         return min(score, 100)
     
     @property
     def risk_indicators(self):
-        """Identify risk indicators for customer retention"""
         risks = []
         
         if self.satisfaction_rating and self.satisfaction_rating <= 2:

@@ -10,7 +10,6 @@ class Command(BaseCommand):
         self.stdout.write("🧪 Testing Policy Renewal Logic")
         self.stdout.write("=" * 50)
         
-        # Get some sample policies
         policies = Policy.objects.all()[:5]
         
         if not policies:
@@ -26,12 +25,10 @@ class Command(BaseCommand):
             self.stdout.write(f"   End Date: {policy.end_date}")
             self.stdout.write(f"   Renewal Reminder Days: {policy.renewal_reminder_days}")
             
-            # Calculate renewal date
             calculated_renewal = policy.calculate_renewal_date()
             self.stdout.write(f"   Calculated Renewal Date: {calculated_renewal}")
             self.stdout.write(f"   Stored Renewal Date: {policy.renewal_date}")
             
-            # Check renewal status
             if policy.is_due_for_renewal:
                 self.stdout.write(self.style.ERROR("   🚨 DUE FOR RENEWAL"))
             else:
@@ -42,7 +39,6 @@ class Command(BaseCommand):
                     else:
                         self.stdout.write(f"   ⚠️ Renewal overdue by {abs(days_until)} days")
             
-            # Check expiry status
             days_until_expiry = policy.days_until_expiry
             if days_until_expiry is not None:
                 if days_until_expiry <= 0:
@@ -52,7 +48,6 @@ class Command(BaseCommand):
                 else:
                     self.stdout.write(f"   ✅ Expires in {days_until_expiry} days")
         
-        # Summary statistics
         self.stdout.write("\n📊 Renewal Summary")
         self.stdout.write("=" * 30)
         
@@ -64,29 +59,24 @@ class Command(BaseCommand):
         self.stdout.write(f"Due for Renewal: {due_for_renewal}")
         self.stdout.write(f"Expired Policies: {expired_policies}")
         
-        # Show policies by renewal urgency
         self.stdout.write("\n🚨 Renewal Urgency Breakdown:")
         
-        # Overdue renewals
         overdue = Policy.objects.filter(
             renewal_date__lt=today,
             status__in=['active', 'pending']
         ).count()
         
-        # Due today
         due_today = Policy.objects.filter(
             renewal_date=today,
             status__in=['active', 'pending']
         ).count()
         
-        # Due within 7 days
         due_week = Policy.objects.filter(
             renewal_date__lte=today + timedelta(days=7),
             renewal_date__gt=today,
             status__in=['active', 'pending']
         ).count()
         
-        # Due within 30 days
         due_month = Policy.objects.filter(
             renewal_date__lte=today + timedelta(days=30),
             renewal_date__gt=today + timedelta(days=7),

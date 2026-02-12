@@ -6,16 +6,11 @@ from django.shortcuts import get_object_or_404
 from .models import Template
 from .serializers import TemplateSerializer, TemplateCreateSerializer, TemplateUpdateSerializer
 from apps.whatsapp_provider.models import WhatsAppProvider
-
-
-class TemplateViewSet(viewsets.ModelViewSet):
-    """ViewSet for Template model"""
-    
+class TemplateViewSet(viewsets.ModelViewSet):    
     queryset = Template.objects.all()
     serializer_class = TemplateSerializer
     
     def get_serializer_class(self):
-        """Return appropriate serializer class based on action"""
         if self.action == 'create':
             return TemplateCreateSerializer
         elif self.action in ['update', 'partial_update']:
@@ -23,7 +18,6 @@ class TemplateViewSet(viewsets.ModelViewSet):
         return TemplateSerializer
     
     def get_queryset(self):
-        """Filter templates based on query parameters"""
         queryset = Template.objects.all()
         
         channel = self.request.query_params.get('channel', None)
@@ -50,11 +44,9 @@ class TemplateViewSet(viewsets.ModelViewSet):
         return queryset.order_by('-created_at')
     
     def perform_create(self, serializer):
-        """Set the created_by field to the current user"""
         serializer.save(created_by=self.request.user)
     
     def create(self, request, *args, **kwargs):
-        """Create a new template"""
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
@@ -66,7 +58,6 @@ class TemplateViewSet(viewsets.ModelViewSet):
         )
     
     def update(self, request, *args, **kwargs):
-        """Update a template"""
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
@@ -79,7 +70,6 @@ class TemplateViewSet(viewsets.ModelViewSet):
         })
     
     def destroy(self, request, *args, **kwargs):
-        """Delete a template"""
         instance = self.get_object()
         self.perform_destroy(instance)
         return Response({
@@ -90,7 +80,6 @@ class TemplateViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def get_all_templates(self, request):
-        """Get all templates with optional filtering"""
         try:
             templates = self.get_queryset()
             serializer = self.get_serializer(templates, many=True)
@@ -111,7 +100,6 @@ class TemplateViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def get_templates_by_channel(self, request):
-        """Get templates filtered by channel"""
         channel = request.query_params.get('channel')
         if not channel:
             return Response({
@@ -140,7 +128,6 @@ class TemplateViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'])
     def duplicate(self, request, pk=None):
-        """Duplicate an existing template"""
         try:
             original_template = self.get_object()
             
@@ -181,7 +168,6 @@ class TemplateViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'])
     def toggle_active(self, request, pk=None):
-        """Toggle template active status"""
         try:
             template = self.get_object()
             template.is_active = not template.is_active
@@ -205,7 +191,6 @@ class TemplateViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def categories(self, request):
-        """Get all available template categories"""
         try:
             categories = [{'value': choice[0], 'label': choice[1]} for choice in Template.CATEGORY_CHOICES]
             return Response({
@@ -223,7 +208,6 @@ class TemplateViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def channels(self, request):
-        """Get all available template channels"""
         try:
             channels = [{'value': choice[0], 'label': choice[1]} for choice in Template.TEMPLATE_TYPES]
             return Response({
@@ -241,7 +225,6 @@ class TemplateViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def template_types(self, request):
-        """Get all available template types"""
         try:
             template_types = [{'value': choice[0], 'label': choice[1]} for choice in Template.TEMPLATE_TYPE_CHOICES]
             return Response({
@@ -256,10 +239,8 @@ class TemplateViewSet(viewsets.ModelViewSet):
                 'message': f'Error retrieving template types: {str(e)}',
                 'data': []
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    # In views.py, inside TemplateViewSet
     @action(detail=False, methods=['get'])
     def stats(self, request):
-        """Get all available template stats"""
         try:
             total_templates = self.get_queryset().count()
             active_templates = self.get_queryset().filter(is_active=True).count()
@@ -279,22 +260,18 @@ class TemplateViewSet(viewsets.ModelViewSet):
             'data': stats_data
         }, status=status.HTTP_200_OK)
 
-        except Exception as e:
-            # apps/whatsapp_provider/serializers.py
-            
+        except Exception as e:            
             from rest_framework import serializers
             from .models import WhatsAppProvider
             
             class WhatsAppProviderCreateUpdateSerializer(serializers.ModelSerializer):
                 class Meta:
                     model = WhatsAppProvider
-                    # Add 'meta_api_version' to the list of fields
                     fields = [
                         'name', 
                         'phone_number_id', 
                         'access_token', 
-                        'meta_api_version',  # Add the missing field here
-                        # ... other fields ...
+                        'meta_api_version', 
                         'is_active',
                     ]
             

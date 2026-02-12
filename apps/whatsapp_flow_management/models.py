@@ -1,19 +1,15 @@
-# whatsapp_flow_management/models.py
-
 from django.db import models
 from django.conf import settings
 
-# --- Soft Delete Abstract Base ---
 class SoftDeleteBase(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
-    # Standard Audit Fields
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, 
         on_delete=models.SET_NULL, 
         null=True, blank=True, 
-        related_name='created_%(class)ss' # Dynamically named relation
+        related_name='created_%(class)ss' 
     )
     updated_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, 
@@ -28,7 +24,6 @@ class SoftDeleteBase(models.Model):
     class Meta:
         abstract = True
 
-# --- 1. WhatsApp Flow Model (The Flow Container) ---
 class WhatsAppFlow(SoftDeleteBase):
     STATUS_CHOICES = [
         ('DRAFT', 'Draft'),
@@ -48,14 +43,12 @@ class WhatsAppFlow(SoftDeleteBase):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='DRAFT')
     entry_point = models.CharField(max_length=50, choices=TRIGGER_CHOICES, default='INBOUND')
     
-    # Store the entire canvas layout and connections as JSON
     canvas_layout = models.JSONField(default=dict)
     
     
     def __str__(self):
         return self.name
 
-# --- 2. Flow Block Model (Individual Nodes on the Canvas) ---
 class FlowBlock(models.Model):
     BLOCK_TYPE_CHOICES = [
         ('SEND_MESSAGE', 'Send Message'),
@@ -85,7 +78,6 @@ class FlowAnalytics(models.Model):
         related_name='analytics'
     )
     
-    # Existing fields
     total_runs = models.IntegerField(default=0)
     completed_runs = models.IntegerField(default=0)  
     dropped_off_runs = models.IntegerField(default=0) 
@@ -117,7 +109,6 @@ class WhatsAppMessageTemplate(SoftDeleteBase):
     def __str__(self):
         return self.name
 
-# --- 5. Flow Templates Model (For Templates Tab) ---
 class FlowTemplate(SoftDeleteBase):
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField()

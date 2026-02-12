@@ -7,14 +7,12 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         try:
             with connection.cursor() as cursor:
-                # Drop the existing foreign key constraint if it exists
                 self.stdout.write('Dropping existing foreign key constraint...')
                 cursor.execute("""
                     ALTER TABLE users_user 
                     DROP CONSTRAINT IF EXISTS users_user_role_id_854f2687_fk_users_role_id
                 """)
                 
-                # Add the new foreign key constraint pointing to the 'user_role' table
                 self.stdout.write('Adding new foreign key constraint...')
                 cursor.execute("""
                     ALTER TABLE users_user 

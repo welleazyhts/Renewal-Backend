@@ -1,8 +1,6 @@
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from apps.users.models import User, Role
-
-
 class Command(BaseCommand):
     help = 'Assign default roles to users who do not have roles assigned'
 
@@ -24,7 +22,6 @@ class Command(BaseCommand):
         dry_run = options['dry_run']
 
         try:
-            # Get the default role
             try:
                 default_role = Role.objects.get(name=default_role_name)
                 self.stdout.write(
@@ -39,7 +36,6 @@ class Command(BaseCommand):
                     self.stdout.write(f'  - {role.name} ({role.display_name})')
                 return
 
-            # Find users without roles
             users_without_roles = User.objects.filter(role__isnull=True, is_active=True)
             count = users_without_roles.count()
 
@@ -62,13 +58,11 @@ class Command(BaseCommand):
                 )
                 return
 
-            # Confirm action
             confirm = input(f'\nAssign role "{default_role.display_name}" to {count} users? (y/N): ')
             if confirm.lower() != 'y':
                 self.stdout.write('Operation cancelled.')
                 return
 
-            # Assign roles
             with transaction.atomic():
                 updated_count = users_without_roles.update(role=default_role)
                 

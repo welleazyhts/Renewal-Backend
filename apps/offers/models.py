@@ -3,14 +3,7 @@ from django.contrib.auth import get_user_model
 from apps.core.models import BaseModel
 
 User = get_user_model()
-
-
 class Offer(BaseModel):
-    """
-    Model to store offers that are common for all customers
-    Includes payment plans, discounts, product recommendations, etc.
-    """
-    
     OFFER_TYPE_CHOICES = [
         ('payment_option', 'Payment Option'),
         ('product', 'Product'),
@@ -124,7 +117,6 @@ class Offer(BaseModel):
     
     @property
     def is_currently_active(self):
-        """Check if offer is currently active based on dates and status"""
         from django.utils import timezone
         now = timezone.now()
         
@@ -141,14 +133,12 @@ class Offer(BaseModel):
     
     @property
     def formatted_amount(self):
-        """Return formatted amount with currency"""
         if not self.amount:
             return None
         return f"₹{self.amount:,.2f}" if self.currency == 'INR' else f"{self.currency} {self.amount:,.2f}"
     
     @property
     def formatted_interest_rate(self):
-        """Return formatted interest rate"""
         if not self.interest_rate:
             return None
         return f"{self.interest_rate}% p.a."

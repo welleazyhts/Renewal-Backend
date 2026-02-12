@@ -11,7 +11,6 @@ class RenewalSettingsAdmin(admin.ModelAdmin):
         'default_call_duration'
     ]
     
-    # Organize fields nicely in admin
     fieldsets = (
         ('General Settings', {
             'fields': ('auto_refresh_enabled', 'show_edit_case_button')
@@ -34,5 +33,4 @@ class RenewalSettingsAdmin(admin.ModelAdmin):
     )
 
     def has_add_permission(self, request):
-        # Prevent creating multiple setting rows
         return not RenewalSettings.objects.exists()

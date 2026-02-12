@@ -84,7 +84,6 @@ class CustomerFamilyMedicalHistoryCreateSerializer(serializers.ModelSerializer):
 
 
 class CustomerFamilyMedicalHistoryUpdateSerializer(serializers.ModelSerializer):
-    
     class Meta:
         model = CustomerFamilyMedicalHistory
         fields = [

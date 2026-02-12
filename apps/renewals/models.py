@@ -9,10 +9,8 @@ from apps.teams.models import Team
 User = get_user_model()
 
 class Competitor(BaseModel):
-    """Model to store information about competitors."""
     name = models.CharField(max_length=255, unique=True, help_text="The unique name of the competitor.") 
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='competitors_created')
-    # updated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='competitors_updated')
 
     class Meta:
         db_table = 'competitors'
@@ -22,8 +20,6 @@ class Competitor(BaseModel):
         return self.name
 
 class RenewalCase(BaseModel):
-    """Model for tracking policy renewal cases"""
-
     STATUS_CHOICES = [
         ('uploaded', 'Uploaded'),
         ('assigned', 'Assigned'),
@@ -147,7 +143,6 @@ class RenewalCase(BaseModel):
 
     not_interested_date = models.DateField(null=True, blank=True)
 
-    # Archive Fields
     is_archived = models.BooleanField(
         default=False, 
         help_text="If True, this case only appears in the Archived dashboard"
@@ -170,17 +165,14 @@ class RenewalCase(BaseModel):
     
     @property
     def communication_attempts_count(self):
-        """Calculate communication attempts from CommunicationLog records"""
         from apps.customer_communication_preferences.models import CommunicationLog
         return CommunicationLog.objects.filter(customer=self.customer).count()
     
     def get_communication_attempts(self):
-        """Get the actual communication attempts count from logs"""
         return self.communication_attempts_count
     
     @property
     def last_contact_date(self):
-        """Get the last contact date from CommunicationLog records"""
         from apps.customer_communication_preferences.models import CommunicationLog
         latest_communication = CommunicationLog.objects.filter(
             customer=self.customer,

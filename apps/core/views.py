@@ -1,7 +1,3 @@
-"""
-Core views for system health checks, utilities, and error handling.
-"""
-
 import os
 import sys
 import django
@@ -26,9 +22,6 @@ from .models import SystemConfiguration, AuditLog
 @api_view(['GET'])
 @permission_classes([])
 def health_check(request):
-    """
-    Simple health check endpoint for load balancers and monitoring.
-    """
     try:
         with connection.cursor() as cursor:
             cursor.execute("SELECT 1")
@@ -63,9 +56,6 @@ def health_check(request):
     tags=["System"]
 )
 def detailed_health_check(request):
-    """
-    Detailed health check with system metrics.
-    """
     try:
         health_data = {
             'status': 'healthy',
@@ -136,9 +126,6 @@ def detailed_health_check(request):
 @api_view(['GET'])
 @permission_classes([IsAdminUser])
 def system_info(request):
-    """
-    Get system information and configuration.
-    """
     try:
         info = {
             'application': {
@@ -178,9 +165,6 @@ def system_info(request):
 @api_view(['GET'])
 @permission_classes([IsAdminUser])
 def system_status(request):
-    """
-    Get current system status and metrics.
-    """
     try:
         # System metrics
         memory = psutil.virtual_memory()
@@ -235,9 +219,6 @@ def system_status(request):
 @api_view(['GET'])
 @permission_classes([IsAdminUser])
 def system_config(request):
-    """
-    Get system configuration settings.
-    """
     try:
         configs = SystemConfiguration.objects.filter(is_active=True)
         config_data = {}
@@ -261,9 +242,6 @@ def system_config(request):
 @api_view(['GET'])
 @permission_classes([IsAdminUser])
 def system_config_by_category(request, category):
-    """
-    Get system configuration for a specific category.
-    """
     try:
         configs = SystemConfiguration.objects.filter(
             category=category,
@@ -291,9 +269,6 @@ def system_config_by_category(request, category):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def audit_logs(request):
-    """
-    Get audit logs with filtering and pagination.
-    """
     try:
         logs = AuditLog.objects.all()
         

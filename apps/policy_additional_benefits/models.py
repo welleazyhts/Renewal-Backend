@@ -6,10 +6,7 @@ from apps.policy_coverages.models import PolicyCoverage
 
 User = get_user_model()
 
-
-class PolicyAdditionalBenefit(BaseModel):
-    """Model to store additional benefits for different policies"""
-    
+class PolicyAdditionalBenefit(BaseModel):    
     BENEFIT_TYPE_CHOICES = [
         ('key_replacement', 'Key Replacement'),
         ('return_to_invoice', 'Return to Invoice'),
@@ -28,7 +25,6 @@ class PolicyAdditionalBenefit(BaseModel):
         ('general', 'General'),
     ]
     
-    # Replace policy FK with policy_coverages FK
     policy_coverages = models.ForeignKey(
         PolicyCoverage,
         on_delete=models.CASCADE,
@@ -36,14 +32,12 @@ class PolicyAdditionalBenefit(BaseModel):
         help_text="Policy coverage this benefit belongs to"
     )
 
-    # New benefit_category CharField
     benefit_category = models.CharField(
         max_length=100,
         blank=True,
         help_text="Category of the benefit"
     )
 
-    # Keep existing benefit_type for backward compatibility
     benefit_type = models.CharField(
         max_length=50,
         choices=BENEFIT_TYPE_CHOICES,
@@ -127,10 +121,8 @@ class PolicyAdditionalBenefit(BaseModel):
 
     @property
     def policy_type_name(self):
-        """Return the policy type name for easy access"""
         return self.policy_coverages.policy_type.name if self.policy_coverages and self.policy_coverages.policy_type else None
 
     @property
     def coverage_name(self):
-        """Return the coverage name for easy access"""
         return self.policy_coverages.coverage_name if self.policy_coverages else None

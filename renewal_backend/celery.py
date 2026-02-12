@@ -3,11 +3,6 @@ from celery import Celery
 from django.conf import settings
 from celery.schedules import crontab
 
-# os.environ.setdefault(
-#     'DJANGO_SETTINGS_MODULE',
-#     os.environ.get('DJANGO_SETTINGS_MODULE', 'renewal_backend.settings.production')
-# )
-
 os.environ.setdefault(
     'DJANGO_SETTINGS_MODULE',
     'renewal_backend.settings.development'
@@ -36,12 +31,6 @@ app.conf.beat_schedule = {
     },
 }
 
-# app.conf.task_routes = {
-#     'apps.email_manager.tasks.*': {'queue': 'emails'},
-#     'apps.policies.tasks.*': {'queue': 'policies'},
-#     'apps.analytics.tasks.*': {'queue': 'analytics'},
-#     'apps.campaign_manager.tasks.*': {'queue': 'campaigns'}, 
-# }
 @app.task(bind=True)
 def debug_task(self):
     print(f"Request: {self.request!r}")

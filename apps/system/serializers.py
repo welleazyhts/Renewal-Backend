@@ -3,7 +3,6 @@ from .models import SystemSettings
 
 
 class SystemSettingsSerializer(serializers.ModelSerializer):
-    """Full system settings serializer."""
     class Meta:
         model = SystemSettings
         fields = "__all__"
@@ -11,7 +10,6 @@ class SystemSettingsSerializer(serializers.ModelSerializer):
 
 
 class AIBasicConfigSerializer(serializers.ModelSerializer):
-    """Basic AI Configuration: provider, model, API key."""
     class Meta:
         model = SystemSettings
         fields = [
@@ -23,7 +21,6 @@ class AIBasicConfigSerializer(serializers.ModelSerializer):
 
 
 class AIFeaturesSerializer(serializers.ModelSerializer):
-    """AI Features toggles."""
     class Meta:
         model = SystemSettings
         fields = [
@@ -35,7 +32,6 @@ class AIFeaturesSerializer(serializers.ModelSerializer):
 
 
 class RateLimitingSerializer(serializers.ModelSerializer):
-    """Rate limiting configuration."""
     class Meta:
         model = SystemSettings
         fields = [
@@ -46,7 +42,6 @@ class RateLimitingSerializer(serializers.ModelSerializer):
 
 
 class AdvancedConfigSerializer(serializers.ModelSerializer):
-    """Advanced AI configuration."""
     class Meta:
         model = SystemSettings
         fields = [
@@ -58,7 +53,6 @@ class AdvancedConfigSerializer(serializers.ModelSerializer):
 
 
 class KnowledgeBaseSerializer(serializers.ModelSerializer):
-    """Knowledge base settings."""
     class Meta:
         model = SystemSettings
         fields = [
@@ -70,7 +64,6 @@ class KnowledgeBaseSerializer(serializers.ModelSerializer):
 
 
 class SystemPerformanceSerializer(serializers.ModelSerializer):
-    """System performance settings."""
     class Meta:
         model = SystemSettings
         fields = [
@@ -80,7 +73,6 @@ class SystemPerformanceSerializer(serializers.ModelSerializer):
 
 
 class OllamaConfigSerializer(serializers.ModelSerializer):
-    """Ollama-specific configuration."""
     class Meta:
         model = SystemSettings
         fields = [
@@ -97,19 +89,16 @@ class OllamaConfigSerializer(serializers.ModelSerializer):
 
 
 class AIProviderSerializer(serializers.Serializer):
-    """Serializer for AI provider options."""
     value = serializers.CharField()
     label = serializers.CharField()
 
 
 class AIModelSerializer(serializers.Serializer):
-    """Serializer for AI model options."""
     value = serializers.CharField()
     label = serializers.CharField()
 
 
 class AIProvidersResponseSerializer(serializers.Serializer):
-    """Response serializer for available providers and models."""
     providers = AIProviderSerializer(many=True)
     models = serializers.DictField(child=AIModelSerializer(many=True))
     current_provider = serializers.CharField()

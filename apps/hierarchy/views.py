@@ -27,11 +27,9 @@ class TeamViewSet(viewsets.ModelViewSet):
     queryset = Team.objects.all()
     serializer_class = TeamSerializer
 
-# --- SUMMARY TABLE API (For the Hierarchy Performance Table) ---
 class HierarchySummaryView(APIView):
     def get(self, request):
         data = []
-        # Gather all data from 5 tables
         data.extend(RegionSerializer(Region.objects.all(), many=True).data)
         data.extend(StateSerializer(State.objects.all(), many=True).data)
         data.extend(BranchSerializer(Branch.objects.all(), many=True).data)

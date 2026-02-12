@@ -3,9 +3,7 @@ from datetime import date, timedelta
 from django.db import transaction
 from django.utils import timezone
 from .models import CustomerInstallment
-class InstallmentIntegrationService:
-    """Service class for integrating installments with policy and payment systems"""
-    
+class InstallmentIntegrationService:    
     @staticmethod
     def create_installments_for_policy(policy, renewal_case=None):
         try:

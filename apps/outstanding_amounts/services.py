@@ -6,13 +6,7 @@ from apps.renewals.models import RenewalCase
 from apps.customer_installment.models import CustomerInstallment
 from apps.customer_payment_schedule.models import PaymentSchedule
 from apps.customer_payments.models import CustomerPayment
-
-
 class OutstandingAmountsService:
-    """
-    Service class to calculate and manage outstanding amounts for renewal cases
-    """
-    
     @staticmethod
     def calculate_outstanding_for_case(case_id):
         try:
@@ -236,7 +230,6 @@ class OutstandingAmountsService:
     
     @staticmethod
     def _calculate_days_overdue(due_date):
-        """Calculate days overdue from due date"""
         if not due_date:
             return 0
         
@@ -248,27 +241,23 @@ class OutstandingAmountsService:
     
     @staticmethod
     def _generate_description(period, item_type):
-        """Generate description for installment"""
         if item_type == 'installment':
             return f"Quarterly premium for family health insurance - {period}"
         return f"Payment for {period}"
     
     @staticmethod
     def _generate_period_from_schedule(schedule):
-        """Generate period string from payment schedule"""
         if schedule.installment_number and schedule.total_installments:
             return f"Installment {schedule.installment_number}/{schedule.total_installments}"
         return f"Payment {schedule.id}"
     
     @staticmethod
     def _generate_description_from_schedule(schedule):
-        """Generate description from payment schedule"""
         if schedule.description:
             return schedule.description
         return f"Payment schedule installment {schedule.installment_number}"
     
     @staticmethod
     def _generate_transaction_id():
-        """Generate unique transaction ID"""
         import uuid
         return f"TXN_{uuid.uuid4().hex[:12].upper()}"

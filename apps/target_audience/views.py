@@ -11,10 +11,7 @@ from .serializers import (
     TargetAudienceCreateSerializer
 )
 
-
-class TargetAudienceViewSet(viewsets.ModelViewSet):
-    """ViewSet for managing target audiences"""
-    
+class TargetAudienceViewSet(viewsets.ModelViewSet):    
     queryset = TargetAudience.objects.all()
     permission_classes = [IsAuthenticated]
     
@@ -26,10 +23,8 @@ class TargetAudienceViewSet(viewsets.ModelViewSet):
         return TargetAudienceSerializer
     
     def get_queryset(self):
-        """Filter target audiences based on query parameters"""
         queryset = super().get_queryset()
         
-        # Filter by search term
         search = self.request.query_params.get('search')
         if search:
             queryset = queryset.filter(
@@ -42,14 +37,12 @@ class TargetAudienceViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def options(self, request):
-        """Get target audience options for dropdowns"""
         audiences = self.get_queryset()
         serializer = TargetAudienceListSerializer(audiences, many=True)
         return Response(serializer.data)
     
     @action(detail=False, methods=['get'])
     def predefined(self, request):
-        """Get predefined target audience options (for campaign creation)"""
         predefined_options = [
             {
                 'id': 'all_customers',

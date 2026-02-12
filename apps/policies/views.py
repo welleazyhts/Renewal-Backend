@@ -25,7 +25,6 @@ from .serializers import (
 from apps.core.pagination import StandardResultsSetPagination
 
 class PolicyTypeViewSet(viewsets.ModelViewSet):
-    """ViewSet for managing policy types"""
     queryset = PolicyType.objects.all()
     serializer_class = PolicyTypeSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -42,11 +41,9 @@ class PolicyTypeViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def categories_summary(self, request):
-        """Get summary of policy types by category"""
         try:
             policy_types = PolicyType.objects.filter(is_active=True)
 
-            # Group by category
             categories = {}
             for policy_type in policy_types:
                 category = policy_type.category
@@ -59,7 +56,6 @@ class PolicyTypeViewSet(viewsets.ModelViewSet):
                     'category': category
                 })
 
-            # Count by category
             category_counts = {}
             for category, types in categories.items():
                 category_counts[category] = len(types)
@@ -78,7 +74,6 @@ class PolicyTypeViewSet(viewsets.ModelViewSet):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class PolicyViewSet(viewsets.ModelViewSet):
-    """ViewSet for managing policies"""
     queryset = Policy.objects.select_related('customer', 'policy_type', 'created_by').prefetch_related(
         'beneficiaries', 'documents', 'payments', 'notes'
     )
@@ -100,18 +95,15 @@ class PolicyViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = super().get_queryset()
         
-        # Filter by status
         status_filter = self.request.query_params.get('status')
         if status_filter:
             queryset = queryset.filter(status=status_filter)
         
-        # Filter by renewal due
         renewal_due = self.request.query_params.get('renewal_due')
         if renewal_due == 'true':
             thirty_days_from_now = date.today() + timedelta(days=30)
             queryset = queryset.filter(end_date__lte=thirty_days_from_now, status='active')
         
-        # Filter by customer
         customer_id = self.request.query_params.get('customer_id')
         if customer_id:
             queryset = queryset.filter(customer_id=customer_id)
@@ -126,27 +118,22 @@ class PolicyViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def dashboard(self, request):
-        """Get policy dashboard statistics"""
         total_policies = Policy.objects.count()
         active_policies = Policy.objects.filter(status='active').count()
         expired_policies = Policy.objects.filter(status='expired').count()
         
-        # Policies due for renewal (within 30 days)
         thirty_days_from_now = date.today() + timedelta(days=30)
         policies_due_for_renewal = Policy.objects.filter(
             end_date__lte=thirty_days_from_now,
             status='active'
         ).count()
         
-        # Pending renewals
         pending_renewals = PolicyRenewal.objects.filter(status='pending').count()
         
-        # Total premium collected (completed payments)
         total_premium = PolicyPayment.objects.filter(
             status='completed'
         ).aggregate(total=Sum('amount'))['total'] or 0
         
-        # Recent claims (last 30 days)
         thirty_days_ago = date.today() - timedelta(days=30)
         recent_claims = PolicyClaim.objects.filter(
             claim_date__gte=thirty_days_ago
@@ -167,7 +154,6 @@ class PolicyViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def due_for_renewal(self, request):
-        """Get policies due for renewal"""
         days = int(request.query_params.get('days', 30))
         target_date = date.today() + timedelta(days=days)
         
@@ -186,7 +172,6 @@ class PolicyViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'])
     def add_beneficiary(self, request, pk=None):
-        """Add a beneficiary to a policy"""
         policy = self.get_object()
         serializer = PolicyBeneficiarySerializer(data=request.data)
         if serializer.is_valid():
@@ -196,7 +181,6 @@ class PolicyViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'])
     def add_document(self, request, pk=None):
-        """Add a document to a policy"""
         policy = self.get_object()
         serializer = PolicyDocumentSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
@@ -206,7 +190,6 @@ class PolicyViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'])
     def add_payment(self, request, pk=None):
-        """Add a payment record to a policy"""
         policy = self.get_object()
         serializer = PolicyPaymentSerializer(data=request.data)
         if serializer.is_valid():
@@ -216,7 +199,6 @@ class PolicyViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'])
     def add_note(self, request, pk=None):
-        """Add a note to a policy"""
         policy = self.get_object()
         serializer = PolicyNoteSerializer(data=request.data)
         if serializer.is_valid():
@@ -226,13 +208,10 @@ class PolicyViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def renewal_dashboard(self, request):
-        """Get renewal dashboard statistics with configurable reminder days"""
         today = date.today()
 
-        # Get renewal urgency data using the new method
         urgency_data = Policy.get_policies_by_renewal_urgency()
 
-        # Calculate statistics
         stats = {
             'total_policies': Policy.objects.count(),
             'active_policies': Policy.objects.filter(status='active').count(),
@@ -246,7 +225,6 @@ class PolicyViewSet(viewsets.ModelViewSet):
             'renewal_reminder_distribution': {}
         }
 
-        # Get renewal reminder days distribution
         reminder_distribution = Policy.objects.values('renewal_reminder_days').annotate(
             count=Count('id')
         ).order_by('renewal_reminder_days')
@@ -260,20 +238,17 @@ class PolicyViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'])
     def configure_renewal_reminders(self, request):
-        """Configure renewal reminder days for policies"""
         reminder_days = request.data.get('reminder_days', 30)
         policy_ids = request.data.get('policy_ids', [])
         policy_type = request.data.get('policy_type')
         category = request.data.get('category')
 
-        # Validate reminder_days
         if reminder_days not in [15, 30, 45, 60]:
             return Response(
                 {'error': 'reminder_days must be one of: 15, 30, 45, 60'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Build query filters
         filters = {'end_date__isnull': False}
 
         if policy_ids:
@@ -283,7 +258,6 @@ class PolicyViewSet(viewsets.ModelViewSet):
         elif category:
             filters['policy_type__category'] = category
 
-        # Get policies to update
         policies_to_update = Policy.objects.filter(**filters)
 
         if not policies_to_update.exists():
@@ -292,7 +266,6 @@ class PolicyViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        # Update policies
         updated_count = Policy.set_renewal_reminder_days(
             [p.id for p in policies_to_update],
             reminder_days
@@ -311,7 +284,6 @@ class PolicyViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def renewal_urgency_list(self, request):
-        """Get policies by renewal urgency"""
         urgency_type = request.query_params.get('urgency', 'overdue')
 
         urgency_data = Policy.get_policies_by_renewal_urgency()
@@ -338,18 +310,15 @@ class PolicyViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def update_renewal_reminder(self, request, pk=None):
-        """Update renewal reminder days for a specific policy"""
         policy = self.get_object()
         reminder_days = request.data.get('reminder_days', 30)
 
-        # Validate reminder_days
         if reminder_days not in [15, 30, 45, 60]:
             return Response(
                 {'error': 'reminder_days must be one of: 15, 30, 45, 60'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Update policy
         old_renewal_date = policy.renewal_date
         policy.renewal_reminder_days = reminder_days
         if policy.end_date:
@@ -366,11 +335,9 @@ class PolicyViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['get', 'post'])
     def coverage_details(self, request, pk=None):
-        """Get or update coverage details for a policy"""
         policy = self.get_object()
 
         if request.method == 'GET':
-            # Return complete coverage details (policy type + policy specific)
             complete_coverage = policy.get_complete_coverage_details()
             return Response({
                 'policy_number': policy.policy_number,
@@ -380,7 +347,6 @@ class PolicyViewSet(viewsets.ModelViewSet):
             })
 
         elif request.method == 'POST':
-            # Update policy-specific coverage details
             coverage_data = request.data.get('coverage_details', {})
 
             if not isinstance(coverage_data, dict):
@@ -402,10 +368,8 @@ class PolicyViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def reset_coverage_to_default(self, request, pk=None):
-        """Reset policy coverage details to policy type defaults"""
         policy = self.get_object()
 
-        # Clear policy-specific coverage details
         policy.coverage_details = {}
         policy.last_modified_by = request.user
         policy.save()
@@ -418,7 +382,6 @@ class PolicyViewSet(viewsets.ModelViewSet):
         })
 
 class PolicyRenewalViewSet(viewsets.ModelViewSet):
-    """ViewSet for managing policy renewals"""
     queryset = PolicyRenewal.objects.select_related('policy', 'policy__customer', 'assigned_to')
     serializer_class = PolicyRenewalSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -437,7 +400,6 @@ class PolicyRenewalViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = super().get_queryset()
         
-        # Filter by overdue renewals
         overdue = self.request.query_params.get('overdue')
         if overdue == 'true':
             queryset = queryset.filter(
@@ -449,18 +411,15 @@ class PolicyRenewalViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def dashboard(self, request):
-        """Get renewal dashboard statistics"""
         pending_renewals = PolicyRenewal.objects.filter(status='pending').count()
         in_progress_renewals = PolicyRenewal.objects.filter(status='in_progress').count()
         completed_renewals = PolicyRenewal.objects.filter(status='completed').count()
         
-        # Overdue renewals
         overdue_renewals = PolicyRenewal.objects.filter(
             renewal_date__lt=date.today(),
             status__in=['pending', 'in_progress']
         ).count()
         
-        # Calculate renewal rate (completed vs total)
         total_renewals = PolicyRenewal.objects.count()
         renewal_rate = (completed_renewals / total_renewals * 100) if total_renewals > 0 else 0
         
@@ -477,7 +436,6 @@ class PolicyRenewalViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'])
     def mark_contacted(self, request, pk=None):
-        """Mark renewal as contacted"""
         renewal = self.get_object()
         contact_method = request.data.get('contact_method', '')
         notes = request.data.get('notes', '')
@@ -494,7 +452,6 @@ class PolicyRenewalViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'])
     def update_customer_response(self, request, pk=None):
-        """Update customer response for renewal"""
         renewal = self.get_object()
         customer_response = request.data.get('customer_response')
         
@@ -515,7 +472,6 @@ class PolicyRenewalViewSet(viewsets.ModelViewSet):
         )
 
 class PolicyClaimViewSet(viewsets.ModelViewSet):
-    """ViewSet for managing policy claims"""
     queryset = PolicyClaim.objects.select_related('policy', 'policy__customer', 'assigned_to')
     serializer_class = PolicyClaimSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -533,7 +489,6 @@ class PolicyClaimViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'])
     def approve(self, request, pk=None):
-        """Approve a claim"""
         claim = self.get_object()
         approved_amount = request.data.get('approved_amount', claim.claim_amount)
         review_notes = request.data.get('review_notes', '')
@@ -548,7 +503,6 @@ class PolicyClaimViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'])
     def reject(self, request, pk=None):
-        """Reject a claim"""
         claim = self.get_object()
         rejection_reason = request.data.get('rejection_reason', '')
         
@@ -561,7 +515,6 @@ class PolicyClaimViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'])
     def mark_paid(self, request, pk=None):
-        """Mark claim as paid"""
         claim = self.get_object()
         payment_date = request.data.get('payment_date', date.today())
         payment_reference = request.data.get('payment_reference', '')
@@ -574,9 +527,7 @@ class PolicyClaimViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(claim)
         return Response(serializer.data)
 
-# Additional ViewSets for related models
 class PolicyDocumentViewSet(viewsets.ModelViewSet):
-    """ViewSet for managing policy documents"""
     queryset = PolicyDocument.objects.select_related('policy', 'uploaded_by', 'verified_by')
     serializer_class = PolicyDocumentSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -590,7 +541,6 @@ class PolicyDocumentViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'])
     def verify(self, request, pk=None):
-        """Verify a document"""
         document = self.get_object()
         document.is_verified = True
         document.verified_by = request.user
@@ -601,7 +551,6 @@ class PolicyDocumentViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 class PolicyBeneficiaryViewSet(viewsets.ModelViewSet):
-    """ViewSet for managing policy beneficiaries"""
     queryset = PolicyBeneficiary.objects.select_related('policy')
     serializer_class = PolicyBeneficiarySerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -610,7 +559,6 @@ class PolicyBeneficiaryViewSet(viewsets.ModelViewSet):
     search_fields = ['name', 'policy__policy_number']
 
 class PolicyPaymentViewSet(viewsets.ModelViewSet):
-    """ViewSet for managing policy payments"""
     queryset = PolicyPayment.objects.select_related('policy', 'processed_by')
     serializer_class = PolicyPaymentSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -624,7 +572,6 @@ class PolicyPaymentViewSet(viewsets.ModelViewSet):
         serializer.save(processed_by=self.request.user)
 
 class PolicyNoteViewSet(viewsets.ModelViewSet):
-    """ViewSet for managing policy notes"""
     queryset = PolicyNote.objects.select_related('policy', 'created_by')
     serializer_class = PolicyNoteSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -636,10 +583,7 @@ class PolicyNoteViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
 
-
-class PolicyMemberViewSet(viewsets.ModelViewSet):
-    """ViewSet for managing policy members"""
-    
+class PolicyMemberViewSet(viewsets.ModelViewSet):    
     queryset = PolicyMember.objects.all()
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -656,22 +600,18 @@ class PolicyMemberViewSet(viewsets.ModelViewSet):
         return PolicyMemberSerializer
     
     def get_queryset(self):
-        """Filter queryset based on user permissions and query parameters"""
         from django.db import connection
         
         queryset = super().get_queryset()
         
-        # Filter by customer if provided
         customer_id = self.request.query_params.get('customer_id')
         if customer_id:
             queryset = queryset.filter(customer_id=customer_id)
         
-        # Filter by policy if provided
         policy_id = self.request.query_params.get('policy_id')
         if policy_id:
             queryset = queryset.filter(policy_id=policy_id)
         
-        # Add age calculation using SQL for better performance
         if self.action in ['list', 'by_policy', 'by_customer', 'by_case']:
             try:
                 queryset = queryset.extra(
@@ -680,14 +620,12 @@ class PolicyMemberViewSet(viewsets.ModelViewSet):
                     }
                 )
             except Exception:
-                # If SQL annotation fails, fallback to Python calculation in serializer
                 pass
         
         return queryset
     
     @action(detail=False, methods=['get'], url_path='by-policy/(?P<policy_id>[^/.]+)')
     def by_policy(self, request, policy_id=None):
-        """Get all members for a specific policy"""
         try:
             members = self.get_queryset().filter(policy_id=policy_id)
             serializer = self.get_serializer(members, many=True)
@@ -725,18 +663,15 @@ class PolicyMemberViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'], url_path='by-case/(?P<case_id>[^/.]+)')
     def by_case(self, request, case_id=None):
-        """Get all members for a specific renewal case (accepts both case ID and case number)"""
         try:
             from apps.renewals.models import RenewalCase
             from apps.policies.models import PolicyMember
             from apps.policies.serializers import PolicyMemberSerializer
             
-            # Try to parse as integer first (case ID)
             try:
                 case_id_int = int(case_id)
                 members = PolicyMember.objects.filter(renewal_case_id=case_id_int)
             except ValueError:
-                # If not an integer, treat as case number
                 try:
                     renewal_case = RenewalCase.objects.get(case_number=case_id)
                     members = PolicyMember.objects.filter(renewal_case_id=renewal_case.id)
@@ -762,17 +697,14 @@ class PolicyMemberViewSet(viewsets.ModelViewSet):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     def create(self, request, *args, **kwargs):
-        """Create a new policy member"""
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         
-        # Auto-set renewal_case_id if not provided
         if not serializer.validated_data.get('renewal_case'):
             from apps.renewals.models import RenewalCase
             customer_id = serializer.validated_data.get('customer').id
             policy_id = serializer.validated_data.get('policy').id
             
-            # Find the most recent renewal case for this customer and policy
             renewal_case = RenewalCase.objects.filter(
                 customer_id=customer_id,
                 policy_id=policy_id
@@ -790,7 +722,6 @@ class PolicyMemberViewSet(viewsets.ModelViewSet):
         }, status=status.HTTP_201_CREATED, headers=headers)
     
     def update(self, request, *args, **kwargs):
-        """Update a policy member"""
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
@@ -803,7 +734,6 @@ class PolicyMemberViewSet(viewsets.ModelViewSet):
         })
     
     def destroy(self, request, *args, **kwargs):
-        """Delete a policy member"""
         instance = self.get_object()
         self.perform_destroy(instance)
         return Response({

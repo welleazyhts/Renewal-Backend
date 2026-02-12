@@ -2,8 +2,6 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from apps.policies.models import Policy
 from apps.policy_data.utils import generate_policy_number
-
-
 class Command(BaseCommand):
     help = 'Fix existing policy numbers to use the correct POL-00001 format'
 
@@ -22,7 +20,6 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         self.stdout.write("🔍 Checking for policies with incorrect format...")
         
-        # Find policies that don't follow POL-00001 format
         incorrect_policies = Policy.objects.exclude(policy_number__regex=r'^POL-\d{5}$')
         
         if not incorrect_policies.exists():
@@ -31,8 +28,7 @@ class Command(BaseCommand):
         
         self.stdout.write(f"📋 Found {incorrect_policies.count()} policies with incorrect format:")
         
-        # Show current incorrect formats
-        for policy in incorrect_policies[:10]:  # Show first 10
+        for policy in incorrect_policies[:10]:  
             self.stdout.write(f"   - {policy.policy_number} (Customer: {policy.customer.full_name})")
         
         if incorrect_policies.count() > 10:
@@ -42,7 +38,6 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING("\n🔍 DRY RUN - No changes will be made"))
             return
         
-        # Ask for confirmation unless --force is used
         if not options['force']:
             response = input("\n🔧 Do you want to fix these policy numbers? (y/N): ")
             if response.lower() != 'y':
@@ -54,14 +49,12 @@ class Command(BaseCommand):
         fixed_count = 0
         errors = []
 
-        # Process each policy individually to avoid transaction rollback issues
         for policy in incorrect_policies:
             try:
                 with transaction.atomic():
                     old_number = policy.policy_number
                     new_number = generate_policy_number()
 
-                    # Update the policy number
                     policy.policy_number = new_number
                     policy.save()
 

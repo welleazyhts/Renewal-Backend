@@ -170,7 +170,7 @@ class EmailProviderConfigViewSet(viewsets.ModelViewSet):
     def reset_usage(self, request, pk=None):
         """Reset usage counters for a provider"""
         provider = self.get_object()
-        reset_type = request.data.get('type', 'daily')  # daily or monthly
+        reset_type = request.data.get('type', 'daily') 
         
         if reset_type == 'daily':
             provider.reset_daily_usage()
@@ -350,15 +350,12 @@ class EmailWebhookView(APIView):
     def post(self, request, provider_type=None):
         if provider_type == 'sendgrid':
             events = request.data
-            # SendGrid sends an array of events
             if isinstance(events, list):
                 for event in events:
-                    # SendGrid Message ID often has extra data appended, split by '.'
                     sg_message_id = event.get('sg_message_id', '').split('.')[0]
                     event_type = event.get('event')
                     
                     if sg_message_id and event_type:
-                        # Map SendGrid events to Billing Status
                         new_status = None
                         if event_type in ['delivered', 'open', 'click']:
                             new_status = 'delivered'

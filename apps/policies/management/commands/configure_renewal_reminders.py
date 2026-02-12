@@ -2,7 +2,6 @@ from django.core.management.base import BaseCommand
 from apps.policies.models import Policy, PolicyType
 from datetime import timedelta, date
 
-
 class Command(BaseCommand):
     help = 'Configure renewal reminder days for policies (15, 30, 45, or 60 days before end_date)'
 
@@ -47,16 +46,13 @@ class Command(BaseCommand):
         self.stdout.write("=" * 50)
         self.stdout.write(f"📅 Setting renewal reminders to: {reminder_days} days before end_date")
         
-        # Build query filters
         filters = {'end_date__isnull': False}
         
         if policy_ids:
-            # Specific policy IDs
             ids = [int(id.strip()) for id in policy_ids.split(',')]
             filters['id__in'] = ids
             self.stdout.write(f"🎯 Target: Specific policies {ids}")
         else:
-            # Filter by policy type or category
             if policy_type:
                 filters['policy_type__name__icontains'] = policy_type
                 self.stdout.write(f"🎯 Target: Policy type containing '{policy_type}'")
@@ -66,7 +62,6 @@ class Command(BaseCommand):
             else:
                 self.stdout.write("🎯 Target: All policies")
         
-        # Get policies to update
         policies_to_update = Policy.objects.filter(**filters)
         total_policies = policies_to_update.count()
         
@@ -76,7 +71,6 @@ class Command(BaseCommand):
         
         self.stdout.write(f"📊 Found {total_policies} policies to update")
         
-        # Show breakdown by current reminder days
         current_breakdown = {}
         for policy in policies_to_update:
             current_days = policy.renewal_reminder_days
@@ -86,11 +80,10 @@ class Command(BaseCommand):
         for days, count in sorted(current_breakdown.items()):
             self.stdout.write(f"   {days} days: {count} policies")
         
-        # Preview changes
         self.stdout.write(f"\n🔄 Changes Preview:")
         updated_count = 0
         
-        for policy in policies_to_update[:10]:  # Show first 10 as preview
+        for policy in policies_to_update[:10]:  
             old_renewal_date = policy.renewal_date
             new_renewal_date = policy.end_date - timedelta(days=reminder_days)
             
@@ -107,7 +100,6 @@ class Command(BaseCommand):
                 policy.save()
                 updated_count += 1
         
-        # Update remaining policies if not dry run
         if not dry_run and total_policies > 10:
             remaining_policies = policies_to_update[10:]
             for policy in remaining_policies:
@@ -130,7 +122,6 @@ class Command(BaseCommand):
                 )
             )
         
-        # Show renewal urgency after changes
         self.stdout.write("\n📊 Renewal Urgency After Changes:")
         self.stdout.write("-" * 40)
         
@@ -142,7 +133,6 @@ class Command(BaseCommand):
         self.stdout.write(f"🟡 Due This Week: {urgency_data['due_this_week'].count()}")
         self.stdout.write(f"🟢 Due This Month: {urgency_data['due_this_month'].count()}")
         
-        # Show recommended actions
         self.stdout.write("\n💡 Recommended Actions:")
         if urgency_data['overdue'].count() > 0:
             self.stdout.write("   🚨 Contact overdue renewals immediately")

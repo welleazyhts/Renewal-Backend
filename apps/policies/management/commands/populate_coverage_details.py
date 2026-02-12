@@ -1,10 +1,5 @@
-"""
-Management command to populate policy types with default coverage details
-"""
 from django.core.management.base import BaseCommand
 from apps.policies.models import PolicyType
-
-
 class Command(BaseCommand):
     help = 'Populate policy types with default coverage details templates'
 
@@ -18,7 +13,6 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         update_existing = options['update_existing']
         
-        # Coverage templates for different policy categories
         coverage_templates = {
             'Motor': {
                 "primary_coverage": {
@@ -220,7 +214,6 @@ class Command(BaseCommand):
         for policy_type in PolicyType.objects.all():
             category = policy_type.category
             
-            # Skip if policy type already has coverage details and update_existing is False
             if policy_type.coverage_details and not update_existing:
                 self.stdout.write(
                     self.style.WARNING(
@@ -229,7 +222,6 @@ class Command(BaseCommand):
                 )
                 continue
             
-            # Get template for this category
             template = coverage_templates.get(category, {})
             
             if template:

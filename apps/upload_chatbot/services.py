@@ -8,7 +8,6 @@ from django.utils import timezone
 from django.db.models import Sum, Count, Q, Avg
 from django.contrib.auth import get_user_model
 
-# OpenAI imports
 try:
     import openai
     OPENAI_AVAILABLE = True
@@ -25,9 +24,7 @@ User = get_user_model()
 logger = logging.getLogger(__name__)
 
 
-class UploadChatbotService:
-    """Service for handling upload and campaign-related chatbot queries"""
-    
+class UploadChatbotService:    
     def __init__(self):
         self.openai_client = None
         self._initialize_openai()
@@ -58,7 +55,6 @@ class UploadChatbotService:
         )
     
     def get_upload_campaign_data(self) -> Dict[str, Any]:
-        """Get comprehensive data for upload and campaign analysis"""
         try:
             campaigns = Campaign.objects.filter(is_deleted=False)
             
@@ -238,7 +234,6 @@ class UploadChatbotService:
             }
     
     def _classify_query(self, user_message: str) -> str:
-        """Classify the type of query to determine what data to fetch"""
         message_lower = user_message.lower()
         
         campaign_keywords = [
@@ -322,7 +317,6 @@ class UploadChatbotService:
             return 'non_campaign'
     
     def _get_specialized_data(self, query_type: str, user_message: str) -> Dict[str, Any]:
-        """Fetch specialized data based on query type"""
         try:
             if query_type == 'campaign_performance':
                 return self._get_campaign_performance_data()
@@ -349,7 +343,6 @@ class UploadChatbotService:
             return {}
     
     def _get_campaign_performance_data(self) -> Dict[str, Any]:
-        """Get detailed campaign performance data"""
         try:
             from datetime import datetime, timedelta
             today = datetime.now().date()
@@ -394,7 +387,6 @@ class UploadChatbotService:
             return {'campaign_performance': {}}
     
     def _get_campaign_general_data(self, user_message: str = None) -> Dict[str, Any]:
-        """Get general campaign data for workflow and general questions"""
         try:
             from datetime import datetime, timedelta
             from django.utils import timezone
@@ -515,7 +507,6 @@ class UploadChatbotService:
             return {'campaign_general': {}}
     
     def _get_upload_analysis_data(self) -> Dict[str, Any]:
-        """Get detailed upload analysis data"""
         try:
             from datetime import datetime, timedelta
             today = datetime.now().date()
@@ -559,7 +550,6 @@ class UploadChatbotService:
             return {'upload_analysis': {}}
     
     def _get_communication_effectiveness_data(self) -> Dict[str, Any]:
-        """Get communication effectiveness data"""
         try:
             from datetime import datetime, timedelta
             today = datetime.now().date()
@@ -617,7 +607,6 @@ class UploadChatbotService:
             return {'communication_effectiveness': {}}
     
     def _get_channel_analysis_data(self) -> Dict[str, Any]:
-        """Get channel analysis data"""
         try:
             channel_campaigns = Channel.objects.filter(
                 is_deleted=False
@@ -650,7 +639,6 @@ class UploadChatbotService:
             return {'channel_analysis': {}}
     
     def _get_recipient_engagement_data(self) -> Dict[str, Any]:
-        """Get recipient engagement data"""
         try:
             from datetime import datetime, timedelta
             today = datetime.now().date()
@@ -699,7 +687,6 @@ class UploadChatbotService:
             return {'recipient_engagement': {}}
     
     def _get_upload_troubleshooting_data(self) -> Dict[str, Any]:
-        """Get upload troubleshooting data"""
         try:
             failed_uploads = UploadFile.objects.filter(
                 is_deleted=False,
@@ -736,7 +723,6 @@ class UploadChatbotService:
             return {'upload_troubleshooting': {}}
     
     def _get_campaign_optimization_data(self) -> Dict[str, Any]:
-        """Get campaign optimization data"""
         try:
             from datetime import datetime, timedelta
             today = datetime.now().date()
@@ -900,7 +886,6 @@ RESPONSE FORMAT:
             return ""
     
     def _build_campaign_performance_context(self, campaign_data: Dict[str, Any]) -> str:
-        """Build context for campaign performance analysis"""
         if not campaign_data:
             return ""
         
@@ -932,7 +917,6 @@ RESPONSE FORMAT:
         return context
     
     def _build_upload_analysis_context(self, upload_data: Dict[str, Any]) -> str:
-        """Build context for upload analysis"""
         if not upload_data:
             return ""
         
@@ -962,7 +946,6 @@ RESPONSE FORMAT:
         return context
     
     def _build_communication_effectiveness_context(self, comm_data: Dict[str, Any]) -> str:
-        """Build context for communication effectiveness"""
         if not comm_data:
             return ""
         
@@ -995,7 +978,6 @@ RESPONSE FORMAT:
         return context
     
     def _build_channel_analysis_context(self, channel_data: Dict[str, Any]) -> str:
-        """Build context for channel analysis"""
         if not channel_data:
             return ""
         
@@ -1017,7 +999,6 @@ RESPONSE FORMAT:
         return context
     
     def _build_recipient_engagement_context(self, engagement_data: Dict[str, Any]) -> str:
-        """Build context for recipient engagement"""
         if not engagement_data:
             return ""
         
@@ -1044,7 +1025,6 @@ RESPONSE FORMAT:
         return context
     
     def _build_upload_troubleshooting_context(self, troubleshooting_data: Dict[str, Any]) -> str:
-        """Build context for upload troubleshooting"""
         if not troubleshooting_data:
             return ""
         
@@ -1073,7 +1053,6 @@ RESPONSE FORMAT:
         return context
     
     def _build_campaign_optimization_context(self, optimization_data: Dict[str, Any]) -> str:
-        """Build context for campaign optimization"""
         if not optimization_data:
             return ""
         
@@ -1102,7 +1081,6 @@ RESPONSE FORMAT:
         return context
     
     def _build_campaign_general_context(self, campaign_data: Dict[str, Any]) -> str:
-        """Build context for general campaign questions"""
         if not campaign_data:
             return ""
         
@@ -1116,7 +1094,6 @@ RESPONSE FORMAT:
             context += f"- Completed Campaigns: {campaign_stats.get('completed_campaigns', 0)}\n"
             context += f"- Paused Campaigns: {campaign_stats.get('paused_campaigns', 0)}\n"
             
-            # Include time-filtered data if available
             if 'time_period_info' in campaign_stats:
                 time_info = campaign_stats.get('time_period_info', {})
                 period = time_info.get('period', 'specified time period')
@@ -1125,14 +1102,12 @@ RESPONSE FORMAT:
                 context += f"- Active Campaigns: {campaign_stats.get('time_period_active_campaigns', 0)}\n"
                 context += f"- Completed Campaigns: {campaign_stats.get('time_period_completed_campaigns', 0)}\n"
                 
-                # Include time-filtered campaign details
                 time_filtered_campaigns = campaign_stats.get('time_filtered_campaigns', [])
                 if time_filtered_campaigns:
                     context += f"\nDETAILED LIST OF CAMPAIGNS CREATED IN {period.upper()}:\n"
                     for campaign in time_filtered_campaigns:
                         created_at = campaign.get('created_at', '')
                         if created_at:
-                            # Format date if it's a datetime string
                             try:
                                 from django.utils.dateparse import parse_datetime
                                 dt = parse_datetime(str(created_at))
@@ -1159,11 +1134,9 @@ RESPONSE FORMAT:
         return context
     
     def _build_non_campaign_context(self) -> str:
-        """Build context for non-campaign questions"""
         return "\n\nIMPORTANT: This question is not related to campaigns or uploads. Please respond with the standard non-campaign message."
     
     def get_quick_suggestions(self) -> List[Dict[str, str]]:
-        """Get quick suggestions for upload and campaign queries"""
         return [
             {
                 "id": "analyze_campaign_performance",
@@ -1206,7 +1179,6 @@ RESPONSE FORMAT:
 _upload_chatbot_service_instance = None
 
 def get_upload_chatbot_service():
-    """Get or create the upload chatbot service instance"""
     global _upload_chatbot_service_instance
     if _upload_chatbot_service_instance is None:
         _upload_chatbot_service_instance = UploadChatbotService()

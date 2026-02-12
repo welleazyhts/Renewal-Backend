@@ -2,7 +2,6 @@ from django.core.management.base import BaseCommand
 from apps.policies.models import Policy
 from datetime import timedelta
 
-
 class Command(BaseCommand):
     help = 'Populate renewal dates for existing policies'
 
@@ -26,7 +25,6 @@ class Command(BaseCommand):
         self.stdout.write("🔄 Populating Renewal Dates for Existing Policies")
         self.stdout.write("=" * 60)
         
-        # Get all policies without renewal_date
         policies_to_update = Policy.objects.filter(
             renewal_date__isnull=True,
             end_date__isnull=False
@@ -42,7 +40,6 @@ class Command(BaseCommand):
         updated_count = 0
         
         for policy in policies_to_update:
-            # Calculate renewal date
             renewal_date = policy.end_date - timedelta(days=reminder_days)
             
             self.stdout.write(
@@ -71,20 +68,17 @@ class Command(BaseCommand):
                 )
             )
             
-        # Show some statistics
         self.stdout.write("\n📈 Renewal Date Statistics:")
         self.stdout.write("-" * 40)
         
         from datetime import date
         today = date.today()
         
-        # Policies due for renewal (renewal_date <= today)
         due_for_renewal = Policy.objects.filter(
             renewal_date__lte=today,
             status__in=['active', 'pending']
         ).count()
         
-        # Policies expiring soon (within next 7 days)
         expiring_soon = Policy.objects.filter(
             end_date__lte=today + timedelta(days=7),
             end_date__gte=today,

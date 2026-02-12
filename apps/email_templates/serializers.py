@@ -170,16 +170,16 @@ class EmailTemplateCreateSerializer(serializers.ModelSerializer):
             validated_data.get('is_default', False),
             validated_data.get('is_public', True),
             tags_value,
-            False,  # requires_approval
-            0,      # usage_count
-            None,   # last_used
+            False,
+            0, 
+            None,
             timezone.now(),
             timezone.now(),
             created_by_id,
             created_by_id,
-            False,  # is_deleted
-            None,   # deleted_at
-            None,   # deleted_by_id
+            False, 
+            None,  
+            None,  
         ]
 
         placeholders = [

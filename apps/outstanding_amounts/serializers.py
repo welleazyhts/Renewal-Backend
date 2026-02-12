@@ -1,15 +1,6 @@
-"""
-Serializers for Outstanding Amounts functionality
-"""
-
 from rest_framework import serializers
 from decimal import Decimal
-
-
 class OutstandingInstallmentSerializer(serializers.Serializer):
-    """
-    Serializer for individual outstanding installment
-    """
     id = serializers.IntegerField()
     period = serializers.CharField()
     amount = serializers.DecimalField(max_digits=12, decimal_places=2)
@@ -20,9 +11,6 @@ class OutstandingInstallmentSerializer(serializers.Serializer):
 
 
 class OutstandingAmountsSummarySerializer(serializers.Serializer):
-    """
-    Serializer for outstanding amounts summary
-    """
     total_outstanding = serializers.DecimalField(max_digits=12, decimal_places=2)
     oldest_due_date = serializers.DateField(allow_null=True)
     latest_due_date = serializers.DateField(allow_null=True)
@@ -33,9 +21,6 @@ class OutstandingAmountsSummarySerializer(serializers.Serializer):
 
 
 class PaymentInitiationSerializer(serializers.Serializer):
-    """
-    Serializer for payment initiation request
-    """
     installment_ids = serializers.ListField(
         child=serializers.IntegerField(),
         required=False,
@@ -67,9 +52,6 @@ class PaymentInitiationSerializer(serializers.Serializer):
 
 
 class PaymentPlanSetupSerializer(serializers.Serializer):
-    """
-    Serializer for payment plan setup request
-    """
     installment_count = serializers.IntegerField(
         min_value=2,
         max_value=12,
@@ -120,9 +102,6 @@ class PaymentPlanSetupSerializer(serializers.Serializer):
 
 
 class PaymentResponseSerializer(serializers.Serializer):
-    """
-    Serializer for payment initiation response
-    """
     success = serializers.BooleanField()
     message = serializers.CharField()
     payment_id = serializers.IntegerField(required=False, allow_null=True)
@@ -131,9 +110,6 @@ class PaymentResponseSerializer(serializers.Serializer):
 
 
 class PaymentPlanResponseSerializer(serializers.Serializer):
-    """
-    Serializer for payment plan setup response
-    """
     success = serializers.BooleanField()
     message = serializers.CharField()
     total_amount = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, allow_null=True)

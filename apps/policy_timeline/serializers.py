@@ -1,13 +1,8 @@
-"""
-Policy Timeline serializers for the Intelipro Insurance Policy Renewal System.
-"""
-
 from rest_framework import serializers
 from .models import PolicyTimeline, PolicyTimelineEvent, CustomerTimelineSummary, PolicyTimelineFilter, CustomerPaymentSchedule, UpcomingPayment
 from apps.customers.serializers import CustomerSerializer
 from apps.policies.serializers import PolicySerializer
 from apps.users.serializers import UserSerializer
-# Import serializers that exist
 try:
     from apps.customer_financial_profile.serializers import CustomerFinancialProfileSerializer
 except ImportError:
@@ -57,11 +52,7 @@ try:
     from apps.customer_payment_schedule.serializers import PaymentScheduleSerializer
 except ImportError:
     PaymentScheduleSerializer = None
-
-
-class PolicyTimelineSerializer(serializers.ModelSerializer):
-    """Serializer for Policy Timeline model"""
-    
+class PolicyTimelineSerializer(serializers.ModelSerializer):    
     customer_name = serializers.CharField(source='customer.full_name', read_only=True)
     policy_number = serializers.CharField(source='policy.policy_number', read_only=True)
     agent_name = serializers.CharField(source='agent.get_full_name', read_only=True)
@@ -91,7 +82,6 @@ class PolicyTimelineSerializer(serializers.ModelSerializer):
             'sequence_order',
             'created_at',
             'updated_at',
-            # Read-only fields
             'customer_name',
             'policy_number',
             'agent_name',
@@ -110,9 +100,7 @@ class PolicyTimelineSerializer(serializers.ModelSerializer):
         ]
 
 
-class PolicyTimelineDetailSerializer(serializers.ModelSerializer):
-    """Detailed serializer for Policy Timeline with related objects"""
-    
+class PolicyTimelineDetailSerializer(serializers.ModelSerializer):    
     customer = CustomerSerializer(read_only=True)
     policy = PolicySerializer(read_only=True)
     agent = UserSerializer(read_only=True)
@@ -153,10 +141,7 @@ class PolicyTimelineDetailSerializer(serializers.ModelSerializer):
             'event_category_display',
         ]
 
-
-class PolicyTimelineCreateSerializer(serializers.ModelSerializer):
-    """Serializer for creating Policy Timeline events"""
-    
+class PolicyTimelineCreateSerializer(serializers.ModelSerializer):    
     class Meta:
         model = PolicyTimeline
         fields = [
@@ -180,15 +165,12 @@ class PolicyTimelineCreateSerializer(serializers.ModelSerializer):
         ]
     
     def validate(self, data):
-        """Validate the timeline event data"""
-        # Ensure customer matches the policy's customer
         if data.get('policy') and data.get('customer'):
             if data['policy'].customer != data['customer']:
                 raise serializers.ValidationError(
                     "Customer must match the policy's customer"
                 )
         
-        # Ensure follow_up_date is provided if follow_up_required is True
         if data.get('follow_up_required') and not data.get('follow_up_date'):
             raise serializers.ValidationError(
                 "Follow-up date is required when follow-up is marked as required"
@@ -197,9 +179,7 @@ class PolicyTimelineCreateSerializer(serializers.ModelSerializer):
         return data
 
 
-class PolicyTimelineEventSerializer(serializers.ModelSerializer):
-    """Serializer for Policy Timeline Events"""
-    
+class PolicyTimelineEventSerializer(serializers.ModelSerializer):    
     class Meta:
         model = PolicyTimelineEvent
         fields = [
@@ -216,9 +196,7 @@ class PolicyTimelineEventSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at']
 
 
-class CustomerTimelineSummarySerializer(serializers.ModelSerializer):
-    """Serializer for Customer Timeline Summary"""
-    
+class CustomerTimelineSummarySerializer(serializers.ModelSerializer):    
     customer_name = serializers.CharField(source='customer.full_name', read_only=True)
     customer_code = serializers.CharField(source='customer.customer_code', read_only=True)
     
@@ -239,9 +217,7 @@ class CustomerTimelineSummarySerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at', 'customer_name', 'customer_code']
 
 
-class PolicyTimelineFilterSerializer(serializers.ModelSerializer):
-    """Serializer for Policy Timeline Filters"""
-    
+class PolicyTimelineFilterSerializer(serializers.ModelSerializer):    
     created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
     
     class Meta:
@@ -259,18 +235,13 @@ class PolicyTimelineFilterSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'created_at', 'updated_at', 'created_by_name']
 
-
 class PolicyTimelineDetailViewSerializer(serializers.ModelSerializer):
-    """Comprehensive serializer for Policy Timeline detail view with all related data"""
-    
-    # Basic timeline data
     customer = CustomerSerializer(read_only=True)
     policy = PolicySerializer(read_only=True)
     agent = UserSerializer(read_only=True)
     formatted_event_date = serializers.CharField(read_only=True)
     event_category_display = serializers.CharField(read_only=True)
     
-    # Related customer data
     financial_profile = serializers.SerializerMethodField()
     family_medical_history = serializers.SerializerMethodField()
     assets = serializers.SerializerMethodField()
@@ -279,14 +250,11 @@ class PolicyTimelineDetailViewSerializer(serializers.ModelSerializer):
     policy_preferences = serializers.SerializerMethodField()
     other_insurance_policies = serializers.SerializerMethodField()
     
-    # AI insights and recommendations
     ai_insights = serializers.SerializerMethodField()
     ai_policy_recommendations = serializers.SerializerMethodField()
     
-    # Payment information
     payment_schedules = serializers.SerializerMethodField()
     
-    # Timeline events
     timeline_events = PolicyTimelineEventSerializer(many=True, read_only=True)
     
     class Meta:
@@ -314,7 +282,6 @@ class PolicyTimelineDetailViewSerializer(serializers.ModelSerializer):
             'updated_at',
             'formatted_event_date',
             'event_category_display',
-            # Related data
             'financial_profile',
             'family_medical_history',
             'assets',
@@ -336,7 +303,6 @@ class PolicyTimelineDetailViewSerializer(serializers.ModelSerializer):
         ]
     
     def get_financial_profile(self, obj):
-        """Get customer financial profile"""
         try:
             if CustomerFinancialProfileSerializer:
                 profile = obj.customer.financial_profile
@@ -346,7 +312,6 @@ class PolicyTimelineDetailViewSerializer(serializers.ModelSerializer):
             return None
     
     def get_family_medical_history(self, obj):
-        """Get customer family medical history"""
         try:
             if CustomerFamilyMedicalHistorySerializer:
                 history = obj.customer.family_medical_history.filter(is_active=True)
@@ -356,7 +321,6 @@ class PolicyTimelineDetailViewSerializer(serializers.ModelSerializer):
             return []
     
     def get_assets(self, obj):
-        """Get customer assets"""
         try:
             if CustomerAssetsSerializer:
                 assets = obj.customer.assets.all()
@@ -366,7 +330,6 @@ class PolicyTimelineDetailViewSerializer(serializers.ModelSerializer):
             return []
     
     def get_vehicles(self, obj):
-        """Get customer vehicles"""
         try:
             if CustomerVehicleSerializer:
                 vehicles = []
@@ -378,7 +341,6 @@ class PolicyTimelineDetailViewSerializer(serializers.ModelSerializer):
             return []
     
     def get_communication_preferences(self, obj):
-        """Get customer communication preferences"""
         try:
             if CustomerCommunicationPreferenceSerializer:
                 preferences = obj.customer.detailed_communication_preferences.all()
@@ -388,7 +350,6 @@ class PolicyTimelineDetailViewSerializer(serializers.ModelSerializer):
             return []
     
     def get_policy_preferences(self, obj):
-        """Get customer policy preferences"""
         try:
             if CustomerPolicyPreferenceSerializer:
                 preferences = obj.customer.policy_preferences.all()
@@ -398,7 +359,6 @@ class PolicyTimelineDetailViewSerializer(serializers.ModelSerializer):
             return []
     
     def get_other_insurance_policies(self, obj):
-        """Get customer's other insurance policies"""
         try:
             if OtherInsurancePolicySerializer:
                 policies = obj.customer.other_insurance_policies.filter(policy_status='active')
@@ -408,7 +368,6 @@ class PolicyTimelineDetailViewSerializer(serializers.ModelSerializer):
             return []
     
     def get_ai_insights(self, obj):
-        """Get AI insights for customer"""
         try:
             if AIInsightSerializer:
                 insights = obj.customer.ai_insights.filter(is_active=True)
@@ -418,7 +377,6 @@ class PolicyTimelineDetailViewSerializer(serializers.ModelSerializer):
             return []
     
     def get_ai_policy_recommendations(self, obj):
-        """Get AI policy recommendations for customer"""
         try:
             if AIPolicyRecommendationSerializer:
                 recommendations = obj.customer.ai_policy_recommendations.filter(is_active=True)
@@ -428,24 +386,18 @@ class PolicyTimelineDetailViewSerializer(serializers.ModelSerializer):
             return []
     
     def get_payment_schedules(self, obj):
-        """Get payment schedules for customer"""
         try:
-            # This would need to be connected through renewal cases
-            # For now, return empty list
             return []
         except:
             return []
 
 
-class PolicyTimelineDashboardSerializer(serializers.ModelSerializer):
-    """Serializer for Policy Timeline Dashboard view"""
-    
+class PolicyTimelineDashboardSerializer(serializers.ModelSerializer):    
     customer_name = serializers.CharField(source='customer.full_name', read_only=True)
     customer_code = serializers.CharField(source='customer.customer_code', read_only=True)
     policy_number = serializers.CharField(source='policy.policy_number', read_only=True)
     agent_name = serializers.CharField(source='agent.get_full_name', read_only=True)
     
-    # Summary statistics
     total_events = serializers.SerializerMethodField()
     active_policies = serializers.SerializerMethodField()
     total_premium = serializers.SerializerMethodField()
@@ -483,21 +435,18 @@ class PolicyTimelineDashboardSerializer(serializers.ModelSerializer):
         ]
     
     def get_total_events(self, obj):
-        """Get total events for customer"""
         try:
             return PolicyTimeline.objects.filter(customer=obj.customer, is_deleted=False).count()
         except:
             return 0
     
     def get_active_policies(self, obj):
-        """Get active policies count for customer"""
         try:
             return obj.customer.policies.filter(status='active').count()
         except:
             return 0
     
     def get_total_premium(self, obj):
-        """Get total premium for customer"""
         try:
             total = 0
             for policy in obj.customer.policies.filter(status='active'):
@@ -507,7 +456,6 @@ class PolicyTimelineDashboardSerializer(serializers.ModelSerializer):
             return 0
 
 class UpcomingPaymentSerializer(serializers.ModelSerializer):
-    """Serializer for UpcomingPayment model"""
     
     policy_type = serializers.CharField(source='policy.policy_type.name', read_only=True)
     policy_name = serializers.CharField(source='policy.policy_type.friendly_name', read_only=True) # Assuming a friendly name field exists
@@ -526,12 +474,7 @@ class UpcomingPaymentSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'policy_type', 'policy_name']
 
-
-class CustomerPaymentScheduleSerializer(serializers.ModelSerializer):
-    """Serializer for CustomerPaymentSchedule model (The Main Payment Section)"""
-    
-    # We will fetch upcoming payments separately in the view for efficiency
-    
+class CustomerPaymentScheduleSerializer(serializers.ModelSerializer):    
     class Meta:
         model = CustomerPaymentSchedule
         fields = [

@@ -1,7 +1,3 @@
-"""
-Policy Timeline models for the Intelipro Insurance Policy Renewal System.
-"""
-
 from django.db import models
 from django.contrib.auth import get_user_model
 from apps.core.models import BaseModel
@@ -9,13 +5,7 @@ from apps.customers.models import Customer
 from apps.policies.models import Policy
 
 User = get_user_model()
-
-
 class PolicyTimeline(BaseModel):
-    """
-    Policy Timeline model to track all policy events, communications, and changes
-    """
-    
     EVENT_TYPE_CHOICES = [
         ('communication', 'Communication'),
         ('creation', 'Policy Creation'),
@@ -35,7 +25,6 @@ class PolicyTimeline(BaseModel):
         ('in_progress', 'In Progress'),
     ]
     
-    # Core Foreign Keys
     policy = models.ForeignKey(
         Policy, 
         on_delete=models.CASCADE, 
@@ -57,7 +46,6 @@ class PolicyTimeline(BaseModel):
         help_text="Assigned agent for this event"
     )
     
-    # Event Information
     event_type = models.CharField(
         max_length=20, 
         choices=EVENT_TYPE_CHOICES,
@@ -82,7 +70,6 @@ class PolicyTimeline(BaseModel):
         help_text="Current status of the event"
     )
     
-    # Financial Fields
     premium_amount = models.DecimalField(
         max_digits=12, 
         decimal_places=2, 
@@ -100,7 +87,6 @@ class PolicyTimeline(BaseModel):
         help_text="Discount information (e.g., '5% multi-policy discount applied')"
     )
     
-    # Outcome Fields
     outcome = models.TextField(
         blank=True,
         help_text="Outcome or result of the event"
@@ -115,7 +101,6 @@ class PolicyTimeline(BaseModel):
         help_text="Date for follow-up action"
     )
     
-    # Display Fields
     display_icon = models.CharField(
         max_length=50, 
         blank=True,
@@ -147,20 +132,14 @@ class PolicyTimeline(BaseModel):
     
     @property
     def formatted_event_date(self):
-        """Return formatted date for display"""
         return self.event_date.strftime('%b %d, %Y')
     
     @property
     def event_category_display(self):
-        """Return display name for event type"""
         return dict(self.EVENT_TYPE_CHOICES).get(self.event_type, self.event_type)
 
 
 class PolicyTimelineEvent(BaseModel):
-    """
-    Individual events within a policy timeline for detailed tracking
-    """
-    
     EVENT_CATEGORY_CHOICES = [
         ('creation', 'Creation'),
         ('renewal', 'Renewal'),
@@ -215,10 +194,6 @@ class PolicyTimelineEvent(BaseModel):
 
 
 class CustomerTimelineSummary(BaseModel):
-    """
-    Summary statistics for customer timeline view
-    """
-    
     customer = models.OneToOneField(
         Customer,
         on_delete=models.CASCADE,
@@ -257,9 +232,6 @@ class CustomerTimelineSummary(BaseModel):
 
 
 class PolicyTimelineFilter(BaseModel):
-    """
-    Saved filters for policy timeline views
-    """
     
     FILTER_TYPE_CHOICES = [
         ('event_type', 'Event Type'),
@@ -304,10 +276,6 @@ class PolicyTimelineFilter(BaseModel):
         return f"{self.name} ({self.get_filter_type_display()})"
     
 class CustomerPaymentSchedule(BaseModel):
-    """
-    Model to track upcoming payments and payment history statistics for a customer.
-    """
-    
     PAYMENT_METHOD_CHOICES = [
         ('credit_card', 'Credit Card'),
         ('bank_transfer', 'Bank Transfer'),
@@ -322,7 +290,6 @@ class CustomerPaymentSchedule(BaseModel):
         help_text="Customer this schedule belongs to"
     )
     
-    # Payment Statistics (from Payment Patterns & History)
     total_payments_last_12_months = models.PositiveSmallIntegerField(
         default=0,
         help_text="Total expected payments in the last 12 months"
@@ -360,10 +327,6 @@ class CustomerPaymentSchedule(BaseModel):
 
 
 class UpcomingPayment(BaseModel):
-    """
-    Model for individual upcoming premium payments.
-    """
-    
     policy = models.ForeignKey(
         Policy, 
         on_delete=models.CASCADE, 

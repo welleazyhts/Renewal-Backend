@@ -27,8 +27,6 @@ def survey_notification_handler(sender, instance, created, **kwargs):
             text_content=f"User {instance.customer} is unhappy. Comment: {instance.comment}"
         )
 
-    # --- ZAPIER LOGIC (New) ---
-    # Check if the user has activated Zapier
     try:
         zapier_config = IntegrationCredential.objects.get(
             owner=owner, 
@@ -37,7 +35,6 @@ def survey_notification_handler(sender, instance, created, **kwargs):
         )
         
         if zapier_config.webhook_url:
-            # Prepare the data packet
             payload = {
                 "event": "new_feedback",
                 "survey_title": instance.survey.title,
@@ -48,7 +45,6 @@ def survey_notification_handler(sender, instance, created, **kwargs):
                 "submitted_at": str(instance.created_at)
             }
             
-            # Send the POST request to Zapier
             try:
                 requests.post(zapier_config.webhook_url, json=payload, timeout=5)
                 print("Successfully sent data to Zapier")
@@ -63,8 +59,6 @@ def survey_notification_handler(sender, instance, created, **kwargs):
             is_active=True
         )
         
-        # Salesforce typically requires an Instance URL and an Access Token
-        # We assume you stored the Instance URL in 'meta_data' and Token in 'api_key'
         instance_url = sf_config.meta_data.get('instance_url') 
         access_token = sf_config.api_key
         
@@ -74,8 +68,6 @@ def survey_notification_handler(sender, instance, created, **kwargs):
                 'Content-Type': 'application/json'
             }
             
-            # 1. Create a "Task" or "Note" object in Salesforce linked to a generic Contact
-            # (In a real scenario, you'd first search for the Contact ID by email)
             sf_payload = {
                 "Subject": f"Survey Response: {instance.survey.title}",
                 "Description": f"Rating: {instance.rating}/5\nComment: {instance.comment}",

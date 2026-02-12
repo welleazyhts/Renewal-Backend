@@ -21,17 +21,14 @@ class CustomerFinancialProfileViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = CustomerFinancialProfile.objects.filter(is_deleted=False)
 
-        # Filter by customer
         customer_id = self.request.query_params.get('customer_id')
         if customer_id:
             queryset = queryset.filter(customer_id=customer_id)
 
-        # Filter by risk profile
         risk_profile = self.request.query_params.get('risk_profile')
         if risk_profile:
             queryset = queryset.filter(risk_profile=risk_profile)
 
-        # Filter by income range
         min_income = self.request.query_params.get('min_income')
         max_income = self.request.query_params.get('max_income')
         if min_income:
@@ -39,7 +36,6 @@ class CustomerFinancialProfileViewSet(viewsets.ModelViewSet):
         if max_income:
             queryset = queryset.filter(annual_income__lte=max_income)
 
-        # Search by customer name or code
         search = self.request.query_params.get('search')
         if search:
             queryset = queryset.filter(
@@ -85,11 +81,9 @@ class CustomerFinancialProfileViewSet(viewsets.ModelViewSet):
         try:
             serializer = self.get_serializer(data=request.data)
             if serializer.is_valid():
-                # Save the financial profile and update capacity utilization
                 financial_profile = serializer.save(created_by=request.user)
                 financial_profile.update_capacity_utilization()
 
-                # Return success response with created data
                 response_serializer = CustomerFinancialProfileSerializer(financial_profile)
                 return Response({
                     'success': True,
@@ -110,7 +104,6 @@ class CustomerFinancialProfileViewSet(viewsets.ModelViewSet):
                 'errors': {}
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    # Disable other actions to keep only create and list
     def retrieve(self, request, *args, **kwargs):
         return Response({
             'success': False,

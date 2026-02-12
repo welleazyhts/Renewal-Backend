@@ -12,13 +12,6 @@ logger = logging.getLogger(__name__)
 
 
 class TwilioStatusCallbackView(APIView):
-    """
-    Twilio will POST here with call status updates.
-
-    Final URL (with project prefix) is:
-    /call-provider/twilio/status-callback/<provider_id>/
-    """
-
     permission_classes = [AllowAny]
 
     def post(self, request, provider_id: int, *args, **kwargs):
@@ -28,10 +21,9 @@ class TwilioStatusCallbackView(APIView):
             is_deleted=False,
         )
 
-        # Twilio sends form-encoded fields by default
         call_sid = request.data.get("CallSid")
-        call_status = request.data.get("CallStatus")     # queued, ringing, in-progress, completed, failed, busy, no-answer
-        duration = request.data.get("CallDuration")      # seconds as string, only for completed
+        call_status = request.data.get("CallStatus")     
+        duration = request.data.get("CallDuration")
 
         terminal_statuses = {"completed", "failed", "busy", "no-answer", "canceled"}
         if call_status in terminal_statuses:
@@ -55,21 +47,10 @@ class TwilioStatusCallbackView(APIView):
                     provider.id, exc
                 )
 
-        # Always return 200 so Twilio is satisfied
         return Response("OK")
 
 
 class ExotelStatusCallbackView(APIView):
-    """
-    Generic Exotel callback endpoint.
-
-    Your Exotel integration (or a middle service) should POST here with
-    at least a status + optional duration.
-
-    Final URL:
-    /call-provider/exotel/status-callback/<provider_id>/
-    """
-
     permission_classes = [AllowAny]
 
     def post(self, request, provider_id: int, *args, **kwargs):
@@ -93,7 +74,6 @@ class ExotelStatusCallbackView(APIView):
             or request.data.get("call_duration")
         )
 
-        # you can adjust this mapping depending on actual Exotel payload
         success = status_str in {"completed", "answered", "success"}
 
         try:
@@ -117,16 +97,6 @@ class ExotelStatusCallbackView(APIView):
 
 
 class UbonaStatusCallbackView(APIView):
-    """
-    Generic Ubona callback endpoint.
-
-    Your Ubona integration (or a middle service) should POST here with
-    normalised fields.
-
-    Final URL:
-    /call-provider/ubona/status-callback/<provider_id>/
-    """
-
     permission_classes = [AllowAny]
 
     def post(self, request, provider_id: int, *args, **kwargs):

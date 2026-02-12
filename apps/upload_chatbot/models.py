@@ -4,10 +4,7 @@ from apps.core.models import BaseModel
 
 User = get_user_model()
 
-
-class UploadChatbotConversation(BaseModel):
-    """Model to store upload chatbot conversation sessions"""
-    
+class UploadChatbotConversation(BaseModel):    
     STATUS_CHOICES = [
         ('active', 'Active'),
         ('archived', 'Archived'),
@@ -66,14 +63,11 @@ class UploadChatbotConversation(BaseModel):
         return f"Upload Chatbot Conversation: {self.title} - {self.user.username}"
     
     def update_message_count(self):
-        """Update the message count for this conversation"""
         self.message_count = self.messages.count()
         self.save(update_fields=['message_count'])
 
 
-class UploadChatbotMessage(BaseModel):
-    """Model to store individual messages in upload chatbot conversations"""
-    
+class UploadChatbotMessage(BaseModel):    
     ROLE_CHOICES = [
         ('user', 'User'),
         ('assistant', 'AI Assistant'),

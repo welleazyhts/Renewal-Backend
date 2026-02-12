@@ -1,7 +1,6 @@
 from django.core.management.base import BaseCommand
 from django.db import connection
 
-
 class Command(BaseCommand):
     help = 'Drop the renewal_timelines table from the database'
 
@@ -14,7 +13,6 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         with connection.cursor() as cursor:
-            # Check if table exists
             cursor.execute("""
                 SELECT EXISTS (
                     SELECT FROM information_schema.tables 
@@ -29,7 +27,6 @@ class Command(BaseCommand):
                 )
                 return
             
-            # Check if table has any data
             cursor.execute("SELECT COUNT(*) FROM renewal_timelines;")
             row_count = cursor.fetchone()[0]
             
@@ -43,7 +40,6 @@ class Command(BaseCommand):
                         self.stdout.write('Operation cancelled.')
                         return
             
-            # Drop the table
             try:
                 cursor.execute("DROP TABLE IF EXISTS renewal_timelines CASCADE;")
                 self.stdout.write(

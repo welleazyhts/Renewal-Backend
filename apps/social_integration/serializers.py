@@ -6,12 +6,7 @@ from .models import (
     SocialIntegrationStatistics,
 )
 
-
-# ==========================================================
-# 1️⃣ SOCIAL PLATFORM SERIALIZER
-# ==========================================================
 class SocialPlatformSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = SocialPlatform
         fields = [
@@ -19,47 +14,39 @@ class SocialPlatformSerializer(serializers.ModelSerializer):
             "platform",
             "display_name",
 
-            # Facebook
             "facebook_api_key",
             "facebook_api_secret",
             "facebook_page_id",
             "facebook_access_token",
 
-            # Twitter
             "twitter_api_key",
             "twitter_api_secret",
             "twitter_access_token",
             "twitter_access_token_secret",
 
-            # Instagram
             "instagram_business_account_id",
             "instagram_access_token",
             "instagram_app_id",
             "instagram_app_secret",
 
-            # LinkedIn
             "linkedin_client_id",
             "linkedin_client_secret",
             "linkedin_access_token",
             "linkedin_company_id",
 
-            # WeChat
             "wechat_app_id",
             "wechat_app_secret",
             "wechat_merchant_id",
             "wechat_api_key",
 
-            # LINE
             "line_channel_id",
             "line_channel_secret",
             "line_channel_access_token",
 
-            # Telegram
             "telegram_bot_token",
             "telegram_chat_id",
             "telegram_webhook_url",
 
-            # Connection state
             "is_connected",
             "is_not_connected",
             "last_connected_at",
@@ -78,10 +65,6 @@ class SocialPlatformSerializer(serializers.ModelSerializer):
             "updated_at",
         )
 
-
-# ==========================================================
-# 2️⃣ CONNECT PLATFORM SERIALIZER
-# ==========================================================
 class SocialPlatformConnectSerializer(serializers.Serializer):
 
     facebook_api_key = serializers.CharField(required=False, allow_blank=True)
@@ -123,11 +106,6 @@ class SocialPlatformConnectSerializer(serializers.Serializer):
                 "At least one credential must be provided."
             )
         return attrs
-
-
-# ==========================================================
-# 3️⃣ VERIFICATION RESULT SERIALIZER
-# ==========================================================
 class SocialVerificationResultSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -141,11 +119,6 @@ class SocialVerificationResultSerializer(serializers.ModelSerializer):
             "raw_response",
             "tested_at",
         ]
-
-
-# ==========================================================
-# 4️⃣ GLOBAL SETTINGS SERIALIZER (VERSIONED)
-# ==========================================================
 class SocialVerificationSettingsSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -160,10 +133,6 @@ class SocialVerificationSettingsSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ("id", "updated_at")
 
-
-# ==========================================================
-# 5️⃣ STATISTICS SERIALIZER
-# ==========================================================
 class SocialIntegrationStatisticsSerializer(serializers.ModelSerializer):
 
     class Meta:

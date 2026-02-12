@@ -30,19 +30,11 @@ from .serializers import RenewalCaseSerializer
 
 
 class RenewalCaseViewSet(viewsets.ModelViewSet):
-    """
-    Added ONLY to support:
-    1) Auto refresh
-    2) Edit case ON / OFF
-    """
-
     queryset = RenewalCase.objects.all().order_by("-created_at")
     serializer_class = RenewalCaseSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-    # FEATURE 1: AUTO REFRESH
     def list(self, request, *args, **kwargs):
-        # Fix: Robust lookup instead of get_settings()
         settings = RenewalSettings.objects.filter(enable_call_integration=True).first()
         if not settings:
             settings = RenewalSettings.objects.first()
@@ -51,13 +43,11 @@ class RenewalCaseViewSet(viewsets.ModelViewSet):
             refresh_all_cases()
         return super().list(request, *args, **kwargs)
 
-    # FEATURE 2: EDIT CASE ON / OFF
     def update(self, request, *args, **kwargs):
         settings = RenewalSettings.objects.filter(enable_call_integration=True).first()
         if not settings:
             settings = RenewalSettings.objects.first()
 
-        # If settings exist, check the flag. If no settings, assume allowed (or safe default)
         if settings and not settings.show_edit_case_button:
             raise ValidationError("Editing renewal cases is disabled by admin.")
         return super().update(request, *args, **kwargs)

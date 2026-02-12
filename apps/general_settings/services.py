@@ -13,7 +13,6 @@ def send_user_notification(user, notification_type, message, subject=None):
         logger.warning(f"No UserSettings found for user {user.id}. Skipping notification.")
         return
 
-    # Try to find associated customer for billing/logging
     customer = None
     try:
         from apps.customers.models import Customer

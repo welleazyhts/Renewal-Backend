@@ -46,7 +46,7 @@ class OfferAdmin(admin.ModelAdmin):
     
     def save_model(self, request, obj, form, change):
         """Set created_by and updated_by fields"""
-        if not change:  # Creating new object
+        if not change:  
             obj.created_by = request.user
         obj.updated_by = request.user
         super().save_model(request, obj, form, change)

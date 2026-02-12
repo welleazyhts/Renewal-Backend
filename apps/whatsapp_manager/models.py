@@ -6,9 +6,6 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 class WhatsAppMessage(BaseModel):
-    """
-    Individual chat messages linked to a Renewal Case.
-    """
     SENDER_CHOICES = [
         ('agent', 'Agent'),
         ('customer', 'Customer'),

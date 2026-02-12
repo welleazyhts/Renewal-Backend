@@ -11,7 +11,6 @@ class Command(BaseCommand):
         self.stdout.write("🧪 Testing Renewal Reminder API Functionality")
         self.stdout.write("=" * 60)
         
-        # Check if we have policies to work with
         total_policies = Policy.objects.count()
         if total_policies == 0:
             self.stdout.write(self.style.WARNING("⚠️ No policies found. Please add some policies first."))
@@ -19,16 +18,12 @@ class Command(BaseCommand):
         
         self.stdout.write(f"📊 Found {total_policies} policies in database")
         
-        # Test 1: Simulate renewal dashboard API
         self.test_renewal_dashboard()
         
-        # Test 2: Test renewal urgency categorization
         self.test_renewal_urgency()
         
-        # Test 3: Test different reminder scenarios
         self.test_reminder_scenarios()
         
-        # Test 4: Show API endpoint examples
         self.show_api_examples()
         
         self.stdout.write(self.style.SUCCESS("\n✅ Renewal reminder API testing completed!"))
@@ -40,12 +35,10 @@ class Command(BaseCommand):
         
         today = date.today()
         
-        # Calculate statistics
         total_policies = Policy.objects.count()
         active_policies = Policy.objects.filter(status='active').count()
         expired_policies = Policy.objects.filter(status='expired').count()
         
-        # Simulate renewal urgency calculation
         overdue_count = 0
         due_today_count = 0
         due_this_week_count = 0
@@ -61,7 +54,6 @@ class Command(BaseCommand):
             elif policy.renewal_date <= today + timedelta(days=30):
                 due_this_month_count += 1
         
-        # Display dashboard data
         dashboard_data = {
             'total_policies': total_policies,
             'active_policies': active_policies,
@@ -77,7 +69,6 @@ class Command(BaseCommand):
         self.stdout.write(json.dumps(dashboard_data, indent=2))
 
     def test_renewal_urgency(self):
-        """Test renewal urgency categorization"""
         self.stdout.write("\n🚨 Testing Renewal Urgency Categories:")
         self.stdout.write("-" * 45)
         
@@ -109,11 +100,9 @@ class Command(BaseCommand):
             return "⚪ FUTURE"
 
     def test_reminder_scenarios(self):
-        """Test different reminder day scenarios"""
         self.stdout.write("\n🎯 Testing Reminder Scenarios:")
         self.stdout.write("-" * 35)
         
-        # Get a sample policy
         sample_policy = Policy.objects.filter(end_date__isnull=False).first()
         if not sample_policy:
             self.stdout.write("⚠️ No policies with end dates found")
@@ -139,11 +128,9 @@ class Command(BaseCommand):
             )
 
     def show_api_examples(self):
-        """Show API endpoint examples"""
         self.stdout.write("\n🚀 API Endpoint Examples:")
         self.stdout.write("-" * 30)
         
-        # Get some sample policy IDs
         sample_policies = Policy.objects.all()[:3]
         policy_ids = [p.id for p in sample_policies]
         

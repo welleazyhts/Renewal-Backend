@@ -552,7 +552,7 @@ class EmailInboxMessageViewSet(viewsets.ModelViewSet):
         return Response({'message': 'Moved to Junk Email'})
 
     @action(detail=True, methods=['post'])
-    def mark_spam(self, request, pk=None):  # Make sure to use 'pk' or 'custom_id' based on your previous lookup setup
+    def mark_spam(self, request, pk=None):  
         email = self.get_object()
         
         # 1. Find or Create a Spam/Junk Folder
@@ -980,13 +980,8 @@ class EmailFilterViewSet(viewsets.ModelViewSet):
             'matches': matches[:10]
         })
 
-    # --- ACTION 1: DYNAMIC SYSTEM RULES LIST ---
     @action(detail=False, methods=['get'])
     def system_rules(self, request):
-        """
-        Returns ALL rules marked as 'is_system=True' from the database.
-        No hardcoded list. If you add a new rule in Postman, it appears here automatically.
-        """
         system_filters = EmailFilter.objects.filter(
             is_system=True, 
             is_deleted=False
@@ -994,15 +989,12 @@ class EmailFilterViewSet(viewsets.ModelViewSet):
 
         response_data = []
         for f in system_filters:
-            # Dynamically generate a 'rule_type' key for the frontend
-            # Example: "System: Spam Detection" -> "spam_detection"
-            # Example: "VIP Auto-Star" -> "vip_auto_star"
             slug_name = f.name.lower().replace("system: ", "").replace(" ", "_").strip()
 
             response_data.append({
                 "id": str(f.id),
-                "rule_type": slug_name, # Dynamic key
-                "name": f.name.replace("System: ", ""), # Clean display name
+                "rule_type": slug_name, 
+                "name": f.name.replace("System: ", ""), 
                 "description": f.description,
                 "enabled": f.is_active
             })
@@ -1011,10 +1003,6 @@ class EmailFilterViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'])
     def toggle_rule(self, request):
-        """
-        Toggles a rule by looking it up in the DB.
-        Accepts 'id' (UUID) OR 'rule_type' (Name-based match).
-        """
         rule_id = request.data.get('id')
         rule_type = request.data.get('rule_type')
         enabled = request.data.get('enabled')
@@ -1126,7 +1114,6 @@ class BulkEmailCampaignViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
-        # Fix: Set status to 'scheduled' if a date is provided, otherwise default 'draft'
         status = 'draft'
         if serializer.validated_data.get('scheduled_at'):
             status = 'scheduled'
@@ -1213,17 +1200,12 @@ class BulkEmailCampaignViewSet(viewsets.ModelViewSet):
 from rest_framework.permissions import AllowAny
 
 class IncomingEmailWebhookAPIView(APIView):
-    """
-    The 'Input Door' for real-time emails.
-    Triggers AI, Rules, and Threading logic.
-    """
     permission_classes = [AllowAny] 
 
     def post(self, request):
         try:
             data = request.data
             
-            # Map the incoming JSON to your service's expected arguments
             service = EmailInboxService()
             result = service.receive_email(
                 from_email=data.get('from_email'),

@@ -2,8 +2,6 @@ from django.db import models
 from apps.users.models import User 
 
 class Template(models.Model):
-    """Stores content templates used in campaigns (email, sms, whatsapp, etc.)"""
-
     TEMPLATE_TYPES = [
         ('email', 'Email'),
         ('whatsapp', 'WhatsApp'),

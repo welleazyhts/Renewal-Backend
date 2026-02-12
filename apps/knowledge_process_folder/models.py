@@ -1,19 +1,10 @@
 from django.db import models
 from django.conf import settings
-from django.utils import timezone  # ✅ ADDED
+from django.utils import timezone 
 import os
 
 User = settings.AUTH_USER_MODEL
-
-
-# =====================================================
-# KNOWLEDGE DOCUMENT MODEL (UPDATED – ENTERPRISE READY)
-# =====================================================
 class KnowledgeDocument(models.Model):
-    """
-    Stores uploaded knowledge/process documents.
-    Designed for compliance-heavy domains like insurance.
-    """
 
     STATUS_CHOICES = [
         ("pending", "Pending"),
@@ -29,17 +20,11 @@ class KnowledgeDocument(models.Model):
         ("failed", "Failed"),
     ]
 
-    # -------------------------
-    # CORE DOCUMENT FIELDS
-    # -------------------------
     document_name = models.CharField(max_length=255)
     document_file = models.FileField(upload_to="knowledge/documents/")
-    modules = models.JSONField(default=list)  # UI-aligned
+    modules = models.JSONField(default=list) 
     expiry_date = models.DateField(null=True, blank=True)
 
-    # -------------------------
-    # DOCUMENT METADATA (AUTO)
-    # -------------------------
     document_type = models.CharField(
         max_length=50,
         null=True,
@@ -53,16 +38,12 @@ class KnowledgeDocument(models.Model):
         help_text="Auto-detected file size in bytes",
     )
 
-    # -------------------------
-    # DOCUMENT STATUS
-    # -------------------------
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
         default="pending",
     )
 
-    # Rejection audit fields
     rejection_reason = models.TextField(null=True, blank=True)
 
     rejected_by = models.ForeignKey(
@@ -74,10 +55,6 @@ class KnowledgeDocument(models.Model):
     )
 
     rejected_at = models.DateTimeField(null=True, blank=True)
-
-    # -------------------------
-    # OCR FIELDS
-    # -------------------------
     ocr_status = models.CharField(
         max_length=20,
         choices=OCR_STATUS_CHOICES,
@@ -92,10 +69,6 @@ class KnowledgeDocument(models.Model):
         blank=True,
         help_text="Exact reason why OCR failed (system generated)",
     )
-
-    # -------------------------
-    # USER & AUDIT FIELDS
-    # -------------------------
     uploaded_by = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
@@ -123,14 +96,7 @@ class KnowledgeDocument(models.Model):
     uploaded_at = models.DateTimeField(auto_now_add=True)
     approved_at = models.DateTimeField(null=True, blank=True)
 
-    # -------------------------
-    # SOFT DELETE (CRITICAL)
-    # -------------------------
     is_deleted = models.BooleanField(default=False)
-
-    # -------------------------
-    # META
-    # -------------------------
     class Meta:
         ordering = ["-uploaded_at"]
         indexes = [
@@ -141,10 +107,6 @@ class KnowledgeDocument(models.Model):
         ]
 
     def save(self, *args, **kwargs):
-        """
-        Auto-populate document_type and document_size
-        when file is uploaded.
-        """
         if self.document_file:
             if not self.document_type:
                 self.document_type = (
@@ -160,16 +122,8 @@ class KnowledgeDocument(models.Model):
                     pass
 
         super().save(*args, **kwargs)
-
-    # =================================================
-    # ✅ ADDED: EXPIRY LOGIC (NO DB UPDATE, NO SERVICE)
-    # =================================================
     @property
     def is_expired(self):
-        """
-        Returns True if expiry_date is crossed.
-        This is a derived value, not stored in DB.
-        """
         return bool(
             self.expiry_date
             and self.expiry_date < timezone.now().date()
@@ -177,16 +131,7 @@ class KnowledgeDocument(models.Model):
 
     def __str__(self):
         return self.document_name
-
-# =====================================================
-# KNOWLEDGE WEBSITE MODEL (UPDATED – ENTERPRISE READY)
-# =====================================================
 class KnowledgeWebsite(models.Model):
-    """
-    Stores website URLs used as knowledge sources.
-    Supports async scraping & AI-safe usage.
-    """
-
     SCRAPING_TYPE_CHOICES = [
         ("static", "Static"),
         ("dynamic", "Dynamic"),
@@ -204,7 +149,6 @@ class KnowledgeWebsite(models.Model):
         ("inactive", "Inactive"),
     ]
 
-    # ADD: SCRAPING STATUS CHOICES
     SCRAPING_STATUS_CHOICES = [
         ("pending", "Pending"),
         ("processing", "Processing"),
@@ -212,9 +156,6 @@ class KnowledgeWebsite(models.Model):
         ("failed", "Failed"),
     ]
 
-    # -------------------------
-    # CORE FIELDS
-    # -------------------------
     name = models.CharField(max_length=255)
     url = models.URLField()
 
@@ -238,10 +179,6 @@ class KnowledgeWebsite(models.Model):
         choices=STATUS_CHOICES,
         default="active",
     )
-
-    # -------------------------
-    # ADD: SCRAPING STATE (MISSING PART)
-    # -------------------------
     scraping_status = models.CharField(
         max_length=20,
         choices=SCRAPING_STATUS_CHOICES,
@@ -263,15 +200,8 @@ class KnowledgeWebsite(models.Model):
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
-
-    # -------------------------
-    # SOFT DELETE
-    # -------------------------
     is_deleted = models.BooleanField(default=False)
 
-    # -------------------------
-    # META
-    # -------------------------
     class Meta:
         ordering = ["-created_at"]
         indexes = [
@@ -283,16 +213,7 @@ class KnowledgeWebsite(models.Model):
     def __str__(self):
         return self.name
 
-
-# ----------------------------------------------------
-# modules
-# ----------------------------------------------------
 class DocumentModule(models.Model):
-    """
-    Master table for document-related modules.
-    Used to dynamically select single or multiple modules
-    while uploading knowledge documents.
-    """
 
     name = models.CharField(max_length=100, unique=True)
     is_active = models.BooleanField(default=True)

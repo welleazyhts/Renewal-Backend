@@ -177,9 +177,6 @@ def send_policy_renewal_reminders():
 
 @shared_task
 def generate_daily_report():
-    """
-    Generate daily system report.
-    """
     try:
         from apps.customers.models import Customer
         from apps.policies.models import Policy
@@ -260,9 +257,6 @@ def generate_daily_report():
 
 @shared_task
 def backup_database():
-    """
-    Create database backup (placeholder - implement based on your backup strategy).
-    """
     try:
         logger.info("Database backup task executed (placeholder)")
         return "Database backup completed"

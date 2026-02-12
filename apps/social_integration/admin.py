@@ -5,11 +5,6 @@ from .models import (
     SocialVerificationResult,
     SocialIntegrationStatistics,
 )
-
-
-# ================================================================
-# 1️⃣ PLATFORM ADMIN
-# ================================================================
 @admin.register(SocialPlatform)
 class SocialPlatformAdmin(admin.ModelAdmin):
 
@@ -106,10 +101,6 @@ class SocialPlatformAdmin(admin.ModelAdmin):
         }),
     )
 
-
-# ================================================================
-# 2️⃣ GLOBAL SETTINGS ADMIN
-# ================================================================
 @admin.register(SocialVerificationSettings)
 class SocialVerificationSettingsAdmin(admin.ModelAdmin):
 
@@ -128,11 +119,6 @@ class SocialVerificationSettingsAdmin(admin.ModelAdmin):
         "save_customer_data",
         "retention_period",
     )
-
-
-# ================================================================
-# 3️⃣ VERIFICATION RESULT ADMIN
-# ================================================================
 @admin.register(SocialVerificationResult)
 class SocialVerificationResultAdmin(admin.ModelAdmin):
 
@@ -147,10 +133,6 @@ class SocialVerificationResultAdmin(admin.ModelAdmin):
     list_filter = ("platform", "is_found", "is_verified")
     readonly_fields = ("tested_at", "raw_response")
 
-
-# ================================================================
-# 4️⃣ STATISTICS ADMIN
-# ================================================================
 @admin.register(SocialIntegrationStatistics)
 class SocialIntegrationStatisticsAdmin(admin.ModelAdmin):
 

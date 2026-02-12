@@ -1,11 +1,6 @@
-"""
-Management command to update policy type categories based on names.
-"""
-
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from apps.policies.models import PolicyType
-
 
 class Command(BaseCommand):
     help = 'Update policy type categories based on policy names'
@@ -25,9 +20,7 @@ class Command(BaseCommand):
                 self.style.WARNING('DRY RUN MODE - No changes will be made')
             )
         
-        # Category mapping based on policy type names
         category_mapping = {
-            # Motor category
             'Vehicle Insurance': 'Motor',
             'Comprehensive Auto Insurance': 'Motor',
             'Motor Insurance': 'Motor',
@@ -35,7 +28,6 @@ class Command(BaseCommand):
             'Two Wheeler Insurance': 'Motor',
             'Commercial Vehicle Insurance': 'Motor',
             
-            # Life category
             'Term Life Insurance': 'Life',
             'Life Insurance Plus': 'Life',
             'Life Insurance': 'Life',
@@ -43,21 +35,18 @@ class Command(BaseCommand):
             'Whole Life Insurance': 'Life',
             'ULIP': 'Life',
             
-            # Property category
             'Home Shield Insurance': 'Property',
             'Home Insurance': 'Property',
             'Property Insurance': 'Property',
             'Fire Insurance': 'Property',
             'Burglary Insurance': 'Property',
             
-            # Health category
             'Health Insurance Family': 'Health',
             'Health Insurance': 'Health',
             'Medical Insurance': 'Health',
             'Critical Illness': 'Health',
             'Personal Accident': 'Health',
             
-            # Travel category
             'Travel Insurance Pro': 'Travel',
             'Travel Insurance': 'Travel',
             'International Travel': 'Travel',
@@ -75,11 +64,9 @@ class Command(BaseCommand):
                 old_category = getattr(policy_type, 'category', 'Motor')
                 new_category = old_category
                 
-                # Check exact match first
                 if policy_type.name in category_mapping:
                     new_category = category_mapping[policy_type.name]
                 else:
-                    # Check partial matches for flexibility
                     name_lower = policy_type.name.lower()
                     
                     if any(keyword in name_lower for keyword in ['vehicle', 'auto', 'motor', 'car', 'bike', 'wheeler']):
@@ -93,7 +80,6 @@ class Command(BaseCommand):
                     elif any(keyword in name_lower for keyword in ['travel', 'international', 'domestic']):
                         new_category = 'Travel'
                     else:
-                        # Default to Motor if no match found
                         new_category = 'Motor'
                 
                 if old_category != new_category:
@@ -106,7 +92,6 @@ class Command(BaseCommand):
                         policy_type.category = new_category
                         policy_type.save()
         
-        # Summary
         self.stdout.write('\n' + '='*50)
         self.stdout.write(f'SUMMARY:')
         self.stdout.write(f'Total policy types processed: {total_policy_types}')

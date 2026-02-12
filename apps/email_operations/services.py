@@ -473,7 +473,7 @@ Privacy Policy: https://welleazy.com/privacy
             pending_emails = EmailQueue.objects.filter(
                 status='queued',
                 scheduled_for__lte=timezone.now()
-            ).order_by('priority', 'scheduled_for')[:100]  # Process up to 100 emails at a time
+            ).order_by('priority', 'scheduled_for')[:100] 
             
             processed_count = 0
             success_count = 0

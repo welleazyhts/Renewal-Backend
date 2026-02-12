@@ -7,8 +7,6 @@ class UsersConfig(AppConfig):
     verbose_name = 'User Management'
     
     def ready(self):
-        """Initialize app when Django starts"""
-        # Import signal handlers
         try:
             import apps.users.signals  
         except ImportError:

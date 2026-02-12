@@ -5,12 +5,6 @@ from django.utils import timezone
 
 logger = logging.getLogger(__name__)
 
-# HEADERS = {
-#     "accept": "application/json",
-#     "authorization": f"Basic {getattr(settings, 'BUREAU_API_KEY', '')}",
-#     "content-type": "application/json"
-# }
-
 def bureau_headers():
     return {
         "accept": "application/json",

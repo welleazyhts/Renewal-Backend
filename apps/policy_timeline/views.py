@@ -1,7 +1,3 @@
-"""
-Policy Timeline views for the Intelipro Insurance Policy Renewal System.
-"""
-
 from rest_framework import generics, status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -11,7 +7,6 @@ from django.http import JsonResponse
 from django.utils import timezone 
 from datetime import timedelta
 
-# Import models/serializers from current app (assuming the Payment Schedule classes are here)
 from .models import PolicyTimeline, CustomerTimelineSummary, UpcomingPayment, CustomerPaymentSchedule
 from .serializers import (
     PolicyTimelineSerializer,
@@ -21,16 +16,12 @@ from .serializers import (
     UpcomingPaymentSerializer
 )
 
-# You must ensure these external imports are correct for your project structure
 from apps.policies.models import Policy
 from apps.customers.models import Customer
 from apps.renewal_timeline.models import CommonRenewalTimelineSettings
 
 
 class PolicyTimelineListCreateView(generics.ListCreateAPIView):
-    """
-    List all policy timeline events or create a new timeline event
-    """
     queryset = PolicyTimeline.objects.select_related('policy', 'customer', 'agent')
     
     def get_serializer_class(self):
@@ -64,9 +55,6 @@ class PolicyTimelineListCreateView(generics.ListCreateAPIView):
 
 
 class PolicyTimelineDetailView(generics.RetrieveUpdateDestroyAPIView):
-    """
-    Retrieve, update or delete a policy timeline event
-    """
     queryset = PolicyTimeline.objects.select_related('policy', 'customer', 'agent')
     serializer_class = PolicyTimelineDetailSerializer
     lookup_field = 'id'
@@ -83,9 +71,6 @@ class PolicyTimelineDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 @api_view(['GET'])
 def policy_timeline_by_policy(request, policy_id):
-    """
-    Get timeline events for a specific policy
-    """
     try:
         policy = get_object_or_404(Policy, id=policy_id)
         timeline_events = PolicyTimeline.objects.filter(
@@ -112,9 +97,6 @@ def policy_timeline_by_policy(request, policy_id):
 
 @api_view(['GET'])
 def customer_policy_timeline(request, customer_id):
-    """
-    Get all timeline events for a specific customer across all their policies
-    """
     try:
         customer = get_object_or_404(Customer, id=customer_id)
         timeline_events = PolicyTimeline.objects.filter(
@@ -141,9 +123,6 @@ def customer_policy_timeline(request, customer_id):
 
 @api_view(['GET'])
 def timeline_event_types(request):
-    """
-    Get available event types for timeline
-    """
     event_types = [
         {'value': choice[0], 'label': choice[1]} 
         for choice in PolicyTimeline.EVENT_TYPE_CHOICES
@@ -163,9 +142,6 @@ def timeline_event_types(request):
 
 @api_view(['POST'])
 def create_timeline_event(request):
-    """
-    Create a new timeline event
-    """
     try:
         serializer = PolicyTimelineCreateSerializer(data=request.data)
         if serializer.is_valid():
@@ -193,9 +169,6 @@ def create_timeline_event(request):
 
 @api_view(['GET'])
 def policy_timeline_dashboard(request, customer_id):
-    """
-    Get comprehensive policy timeline dashboard data for a customer
-    """
     try:
         customer = get_object_or_404(Customer, id=customer_id)
         
@@ -233,9 +206,6 @@ def policy_timeline_dashboard(request, customer_id):
 
 @api_view(['GET'])
 def policy_timeline_complete_view(request, customer_id):
-    """
-    Get complete policy timeline view with all related customer data
-    """
     try:
         customer = get_object_or_404(Customer, id=customer_id)
         
@@ -263,9 +233,6 @@ def policy_timeline_complete_view(request, customer_id):
 
 @api_view(['GET'])
 def search_timeline_events(request):
-    """
-    Search timeline events with filters
-    """
     try:
         queryset = PolicyTimeline.objects.select_related('policy', 'customer', 'agent').filter(is_deleted=False)
         
@@ -327,9 +294,6 @@ def search_timeline_events(request):
 
 @api_view(['GET'])
 def timeline_statistics(request):
-    """
-    Get timeline statistics and analytics
-    """
     try:
         from django.db.models import Count, Q
         
@@ -391,9 +355,6 @@ def timeline_statistics(request):
 
 @api_view(['POST'])
 def create_timeline_event_bulk(request):
-    """
-    Create multiple timeline events in bulk
-    """
     try:
         events_data = request.data.get('events', [])
         if not events_data:
@@ -436,29 +397,17 @@ def create_timeline_event_bulk(request):
 
 @api_view(['GET'])
 def policy_timeline_complete_api(request, customer_id):
-    """
-    COMPLETE POLICY TIMELINE API - Single endpoint for all frontend data
-    
-    This API provides everything needed for the policy timeline frontend:
-    - Customer information, Financial profile, Assets, Medical history
-    - Communication & Policy preferences
-    - Payment schedules (summary and upcoming list)
-    - Timeline events with filtering
-    """
     try:
-        # FIX 1: Use select_related to load the payment schedule summary immediately
         customer = get_object_or_404(
             Customer.objects.select_related('payment_schedule'), 
             id=customer_id
         )
         
-        # 1. Get timeline events with filtering
         timeline_queryset = PolicyTimeline.objects.filter(
             customer=customer,
             is_deleted=False
         ).select_related('policy', 'customer', 'agent').order_by('-event_date')
         
-        # Apply filters (search, event_type, date range)
         search_query = request.query_params.get('search', '')
         if search_query:
             timeline_queryset = timeline_queryset.filter(
@@ -476,7 +425,6 @@ def policy_timeline_complete_api(request, customer_id):
         if end_date:
             timeline_queryset = timeline_queryset.filter(event_date__date__lte=end_date)
         
-        # Pagination
         page_size = int(request.query_params.get('page_size', 20))
         page = int(request.query_params.get('page', 1))
         start = (page - 1) * page_size
@@ -485,7 +433,6 @@ def policy_timeline_complete_api(request, customer_id):
         total_events_count = timeline_queryset.count()
         timeline_events = timeline_queryset[start:end]
         
-        # 2. Get or create customer timeline summary
         try:
             summary = customer.timeline_summary
         except:
@@ -496,10 +443,8 @@ def policy_timeline_complete_api(request, customer_id):
                 total_premium=sum([float(p.premium_amount or 0) for p in customer.policies.filter(status='active')])
             )
         
-        # Serialize data
         timeline_serializer = PolicyTimelineSerializer(timeline_events, many=True)
         
-        # 3. Get customer's active policies and calculate financial stats
         active_policies = customer.policies.filter(status='active')
         policies_data = []
         total_premium = 0
@@ -526,7 +471,6 @@ def policy_timeline_complete_api(request, customer_id):
         schedule_summary = None
         
         try:
-            # Use get_or_create to ensure schedule exists
             schedule_summary, created = CustomerPaymentSchedule.objects.get_or_create(
                 customer=customer,
                 defaults={
@@ -539,7 +483,6 @@ def policy_timeline_complete_api(request, customer_id):
             if schedule_summary:
                 payment_schedules = CustomerPaymentScheduleSerializer(schedule_summary).data
                 
-                # Fetch Upcoming Payments list
                 upcoming_payments = UpcomingPayment.objects.filter(
                     customer=customer,
                     due_date__gte=timezone.now().date()
@@ -550,10 +493,9 @@ def policy_timeline_complete_api(request, customer_id):
         except CustomerPaymentSchedule.DoesNotExist:
             pass
         except Exception as e:
-            pass # Catch other serialization errors
+            pass
 
         
-        # 5. Get Financial Profile
         financial_profile = None
         try:
             if customer.financial_profile:
@@ -571,7 +513,6 @@ def policy_timeline_complete_api(request, customer_id):
         except:
             pass
         
-        # 6. Get Family Medical History
         medical_history = []
         try:
             for history in customer.family_medical_history.filter(is_active=True):
@@ -587,7 +528,6 @@ def policy_timeline_complete_api(request, customer_id):
         except:
             pass
         
-        # 7. Get Assets and Vehicles
         assets_data = []
         vehicles_data = []
         try:
@@ -612,7 +552,6 @@ def policy_timeline_complete_api(request, customer_id):
         except:
             pass
         
-        # 9. Get Policy Preferences (INCLUDING AVOIDED TYPES)
         policy_preferences = []
         try:
             for pref in customer.policy_preferences.all():
@@ -629,7 +568,6 @@ def policy_timeline_complete_api(request, customer_id):
         except:
             pass
         
-        # 10. Get Other Insurance Policies
         other_policies = []
         try:
             for policy in customer.other_insurance_policies.filter(policy_status='active'):
@@ -648,10 +586,6 @@ def policy_timeline_complete_api(request, customer_id):
         except:
             pass
         
-        # 11. Get AI Insights and Recommendations (Completely Omitted as requested)
-        
-        
-        # 12. Get Event Type Counts
         event_type_counts = {}
         for event_type_choice in PolicyTimeline.EVENT_TYPE_CHOICES:
             count = PolicyTimeline.objects.filter(
@@ -664,7 +598,6 @@ def policy_timeline_complete_api(request, customer_id):
                 'count': count
             }
                 
-        # A. Communication Preferences
         comm_prefs_data = []
         try:
             for pref in customer.detailed_communication_preferences.all():
@@ -676,10 +609,8 @@ def policy_timeline_complete_api(request, customer_id):
         except:
             pass
 
-        # B. Renewal Timeline
         renewal_data = None
         try:
-            # Fetch global settings for reminders to match case_details view
             common_settings = CommonRenewalTimelineSettings.objects.filter(is_active=True).first()
             reminder_schedule = []
             
@@ -712,7 +643,6 @@ def policy_timeline_complete_api(request, customer_id):
         except:
             renewal_data = None
 
-        # C. Payment Methods
         payment_method_data = None
         try:
             if schedule_summary:
@@ -724,7 +654,6 @@ def policy_timeline_complete_api(request, customer_id):
         except:
             payment_method_data = None
 
-        # D. Language Preferences
         language_data = {
             'preferred_language': getattr(customer, 'preferred_language', 'English'),
             'document_language': getattr(customer, 'document_language', 'English'),
@@ -794,40 +723,29 @@ def policy_timeline_complete_api(request, customer_id):
             'success': False,
             'error': str(e)
         }, status=status.HTTP_400_BAD_REQUEST)
-# ... (rest of the file containing check_data_completeness and policy_data_check_generic follows) ... 
-def check_data_completeness(data, policy_type_slug):
-    """Internal helper function to check completeness based on dynamic policy type."""
-    
+def check_data_completeness(data, policy_type_slug):    
     slug = policy_type_slug.upper()
     
-    # Financial data exists and income is > 0
     financial_ok = data['financial_profile'] is not None and data['financial_profile'].get('annual_income', 0) > 0
-    # Communication preferences are set
     communication_ok = len(data['communication_preferences']) > 0
-    # Policy preferences exist and budget is set
     preferences_ok = len(data['policy_preferences']) > 0 and data['policy_preferences'][0].get('budget_range_max', 0) > 0
     
-    # Policy-Specific Checks
     policy_specific_ok = False
     policy_focus = slug
 
     if 'VEHICLE' in slug:
-        # Vehicle: Check for vehicle assets
         policy_specific_ok = len(data['vehicles']) > 0
         policy_focus = 'VEHICLE'
     
     elif 'LIFE' in slug or 'HEALTH' in slug:
-        # Life/Health: Check for medical history (critical for underwriting)
         policy_specific_ok = len(data['family_medical_history']) > 0
         policy_focus = 'LIFE/HEALTH'
         
     elif 'HOME' in slug or 'PROPERTY' in slug:
-        # Property/Home: Check for residence/asset details (at least one asset)
         policy_specific_ok = len(data['assets']) > 0
         policy_focus = 'PROPERTY/HOME'
         
     else:
-        # General/Other: Assume general data is sufficient
         policy_specific_ok = True 
         policy_focus = slug
     
@@ -843,13 +761,7 @@ def check_data_completeness(data, policy_type_slug):
 
 @api_view(['GET'])
 def policy_data_check_generic(request, policy_type_slug, customer_id):
-    """
-    Generic API to check data completeness for any policy type (Vehicle, Life, Home, etc.).
-    
-    URL: /data-check/<policy_type_slug>/<customer_id>/
-    """
     try:
-        # 1. Fetch all comprehensive data using the existing endpoint
         raw_django_request = request._request
         complete_response = policy_timeline_complete_api(request, customer_id)
         
@@ -857,10 +769,8 @@ def policy_data_check_generic(request, policy_type_slug, customer_id):
             return complete_response 
         complete_data = complete_response.data['data']
         
-        # 2. Determine completeness status based on the slug
         completeness_status = check_data_completeness(complete_data, policy_type_slug)
         
-        # 3. Filter active policies for the specific type
         policy_type_filter = completeness_status['policy_focus'].split('/')[0].upper()
         
         target_policies = [

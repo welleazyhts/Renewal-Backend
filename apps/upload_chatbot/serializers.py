@@ -2,9 +2,7 @@ from rest_framework import serializers
 from apps.upload_chatbot.models import UploadChatbotConversation, UploadChatbotMessage
 
 
-class UploadChatbotMessageSerializer(serializers.ModelSerializer):
-    """Serializer for upload chatbot messages"""
-    
+class UploadChatbotMessageSerializer(serializers.ModelSerializer):    
     class Meta:
         model = UploadChatbotMessage
         fields = [
@@ -13,9 +11,7 @@ class UploadChatbotMessageSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'timestamp']
 
 
-class UploadChatbotConversationSerializer(serializers.ModelSerializer):
-    """Serializer for upload chatbot conversations"""
-    
+class UploadChatbotConversationSerializer(serializers.ModelSerializer):    
     messages = UploadChatbotMessageSerializer(many=True, read_only=True)
     
     class Meta:

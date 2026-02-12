@@ -4,13 +4,11 @@ from apps.core.models import BaseModel, TimestampedModel
 from apps.customers.models import Customer
 import uuid
 from decimal import Decimal
-from django.utils import timezone # <-- 1. ADDED THIS IMPORT
+from django.utils import timezone 
 
 User = get_user_model()
 
-class PolicyAgent(BaseModel):
-    """Policy agents model for storing agent information"""
-    
+class PolicyAgent(BaseModel):    
     agent_code = models.CharField(max_length=50, unique=True, help_text="Auto-generated agent code")
     agent_name = models.CharField(max_length=200)
     contact_number = models.CharField(max_length=20, blank=True)
@@ -32,24 +30,19 @@ class PolicyAgent(BaseModel):
     
     def save(self, *args, **kwargs):
         if not self.agent_code:
-            # Auto-generate agent code if not provided
             self.agent_code = self.generate_agent_code()
         super().save(*args, **kwargs)
     
     def generate_agent_code(self):
-        """Generate a unique agent code"""
         import random
         import string
         
-        # Generate a code like AGT-1234
         while True:
             code = f"AGT-{random.randint(1000, 9999)}"
             if not PolicyAgent.objects.filter(agent_code=code).exists():
                 return code
 
 class PolicyType(BaseModel):
-    """Types of insurance policies (Life, Health, Motor, etc.)"""
-
     CATEGORY_CHOICES = [
         ('Motor', 'Motor'),
         ('Life', 'Life'),
@@ -74,7 +67,6 @@ class PolicyType(BaseModel):
         return f"{self.name} ({self.code})"
 
 class Policy(BaseModel):
-    """Main policy model"""
     POLICY_STATUS_CHOICES = [
         ('active', 'Active'),
         ('expired', 'Expired'),
@@ -91,7 +83,6 @@ class Policy(BaseModel):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='policies')
     policy_type = models.ForeignKey(PolicyType, on_delete=models.CASCADE, related_name='policies')
     
-    # Policy Details
     start_date = models.DateField()
     end_date = models.DateField()
     renewal_date = models.DateField(null=True, blank=True, help_text="Auto-calculated renewal date")
@@ -101,7 +92,6 @@ class Policy(BaseModel):
     sum_assured = models.DecimalField(max_digits=15, decimal_places=2)
     status = models.CharField(max_length=20, choices=POLICY_STATUS_CHOICES, default='pending')
     
-    # Payment Details
     payment_frequency = models.CharField(max_length=20, choices=[
         ('monthly', 'Monthly'),
         ('quarterly', 'Quarterly'),
@@ -109,24 +99,20 @@ class Policy(BaseModel):
         ('yearly', 'Yearly'),
     ], default='yearly')
     
-    # Additional Details
     nominee_name = models.CharField(max_length=200, blank=True)
     nominee_relationship = models.CharField(max_length=100, blank=True)
     nominee_contact = models.CharField(max_length=20, blank=True)
 
-    # Coverage Details - Policy-specific coverage information
     coverage_details = models.JSONField(
         default=dict,
         help_text="Policy-specific coverage details that override or extend policy type defaults"
     )
 
-    # Metadata
     policy_document = models.FileField(upload_to='policies/documents/', blank=True, null=True)
     terms_conditions = models.TextField(blank=True)
     special_conditions = models.TextField(blank=True)
     agent = models.ForeignKey(PolicyAgent, on_delete=models.SET_NULL, null=True, blank=True, related_name='policies', help_text="Policy agent")
     
-    # System Fields
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='created_policies')
     last_modified_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='modified_policies')
     
@@ -143,23 +129,15 @@ class Policy(BaseModel):
         return f"{self.policy_number} - {self.customer.full_name}"
     
     def calculate_renewal_date(self):
-        """Calculate renewal date based on end_date and renewal_reminder_days"""
         from datetime import timedelta
         if self.end_date:
             return self.end_date - timedelta(days=self.renewal_reminder_days)
         return None
 
     def get_complete_coverage_details(self):
-        """
-        Get complete coverage details by merging policy type defaults with policy-specific overrides
-        Policy-specific coverage details take precedence over policy type defaults
-        """
-        # Start with policy type coverage details as base
         complete_coverage = self.policy_type.coverage_details.copy() if self.policy_type.coverage_details else {}
 
-        # Override/extend with policy-specific coverage details
         if self.coverage_details:
-            # Deep merge the dictionaries
             def deep_merge(base_dict, override_dict):
                 for key, value in override_dict.items():
                     if key in base_dict and isinstance(base_dict[key], dict) and isinstance(value, dict):
@@ -173,15 +151,12 @@ class Policy(BaseModel):
         return complete_coverage
 
     def save(self, *args, **kwargs):
-        """Override save to auto-calculate renewal_date"""
-        # Auto-calculate renewal date if not manually set
         if self.end_date and not self.renewal_date:
             self.renewal_date = self.calculate_renewal_date()
         super().save(*args, **kwargs)
 
     @property
     def is_due_for_renewal(self):
-        """Check if policy is due for renewal (within renewal_reminder_days)"""
         from datetime import date
         if self.renewal_date:
             return date.today() >= self.renewal_date
@@ -189,7 +164,6 @@ class Policy(BaseModel):
 
     @property
     def days_until_renewal(self):
-        """Get number of days until renewal date"""
         from datetime import date
         if self.renewal_date:
             delta = self.renewal_date - date.today()
@@ -198,7 +172,6 @@ class Policy(BaseModel):
 
     @property
     def days_until_expiry(self):
-        """Get number of days until policy expires"""
         from datetime import date
         if self.end_date:
             delta = self.end_date - date.today()
@@ -207,13 +180,11 @@ class Policy(BaseModel):
     
     @property
     def days_to_expiry(self):
-        """Days remaining until policy expires"""
         from datetime import date
         return (self.end_date - date.today()).days
 
     @classmethod
     def set_renewal_reminder_days(cls, policy_ids, reminder_days):
-        """Bulk update renewal reminder days for multiple policies"""
         from datetime import timedelta
 
         policies = cls.objects.filter(id__in=policy_ids)
@@ -230,7 +201,6 @@ class Policy(BaseModel):
 
     @classmethod
     def get_policies_by_renewal_urgency(cls):
-        """Get policies grouped by renewal urgency"""
         from datetime import date, timedelta
 
         today = date.today()
@@ -272,7 +242,6 @@ class PolicyRenewal(BaseModel):
     new_sum_assured = models.DecimalField(max_digits=15, decimal_places=2)
     status = models.CharField(max_length=20, choices=RENEWAL_STATUS_CHOICES, default='pending')
     
-    # Renewal Details
     renewal_notice_sent = models.BooleanField(default=False)
     renewal_notice_date = models.DateTimeField(null=True, blank=True)
     customer_response = models.CharField(max_length=20, choices=[
@@ -282,7 +251,6 @@ class PolicyRenewal(BaseModel):
         ('no_response', 'No Response'),
     ], default='no_response')
     
-    # Communication Tracking
     contact_attempts = models.PositiveIntegerField(default=0)
     last_contact_date = models.DateTimeField(null=True, blank=True)
     contact_method = models.CharField(max_length=20, choices=[
@@ -335,18 +303,15 @@ class PolicyClaim(BaseModel):
     claim_amount = models.DecimalField(max_digits=15, decimal_places=2)
     approved_amount = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
     
-    # Claim Details
     incident_date = models.DateField()
     claim_date = models.DateField()
     status = models.CharField(max_length=20, choices=CLAIM_STATUS_CHOICES, default='submitted')
     description = models.TextField()
     
-    # Processing Details
     assigned_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='assigned_claims')
     review_notes = models.TextField(blank=True)
     rejection_reason = models.TextField(blank=True)
     
-    # Payment Details
     payment_date = models.DateField(null=True, blank=True)
     payment_reference = models.CharField(max_length=100, blank=True)
     
@@ -363,7 +328,6 @@ class PolicyClaim(BaseModel):
         return f"Claim {self.claim_number} - {self.policy.policy_number}"
 
 class PolicyDocument(BaseModel):
-    """Policy related documents"""
     DOCUMENT_TYPE_CHOICES = [
         ('policy_document', 'Policy Document'),
         ('renewal_notice', 'Renewal Notice'),
@@ -382,7 +346,6 @@ class PolicyDocument(BaseModel):
     file_size = models.PositiveIntegerField()
     mime_type = models.CharField(max_length=100)
     
-    # Metadata
     description = models.TextField(blank=True)
     is_verified = models.BooleanField(default=False)
     verified_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='verified_documents')
@@ -398,7 +361,6 @@ class PolicyDocument(BaseModel):
         return f"{self.document_name} - {self.policy.policy_number}"
 
 class PolicyBeneficiary(BaseModel):
-    """Policy beneficiaries/nominees"""
     policy = models.ForeignKey(Policy, on_delete=models.CASCADE, related_name='beneficiaries')
     name = models.CharField(max_length=200)
     relationship = models.CharField(max_length=100)
@@ -406,7 +368,6 @@ class PolicyBeneficiary(BaseModel):
     email = models.EmailField(blank=True)
     address = models.TextField(blank=True)
     
-    # Beneficiary Details
     date_of_birth = models.DateField(null=True, blank=True)
     id_type = models.CharField(max_length=50, blank=True)
     id_number = models.CharField(max_length=100, blank=True)
@@ -423,7 +384,6 @@ class PolicyBeneficiary(BaseModel):
         return f"{self.name} - {self.policy.policy_number}"
 
 class PolicyPayment(BaseModel):
-    """Policy payment tracking"""
     PAYMENT_STATUS_CHOICES = [
         ('pending', 'Pending'),
         ('completed', 'Completed'),
@@ -448,12 +408,10 @@ class PolicyPayment(BaseModel):
     payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES)
     status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='pending')
     
-    # Payment Details
     transaction_id = models.CharField(max_length=100, blank=True)
     payment_reference = models.CharField(max_length=100, blank=True)
     gateway_response = models.JSONField(default=dict, blank=True)
     
-    # Period Details
     payment_for_period_start = models.DateField()
     payment_for_period_end = models.DateField()
     
@@ -472,7 +430,6 @@ class PolicyPayment(BaseModel):
         return f"Payment {self.amount} - {self.policy.policy_number}"
 
 class PolicyNote(BaseModel):
-    """Internal notes for policies"""
     policy = models.ForeignKey(Policy, on_delete=models.CASCADE, related_name='notes')
     note = models.TextField()
     is_customer_visible = models.BooleanField(default=False)
@@ -496,7 +453,6 @@ class PolicyNote(BaseModel):
 
 
 class PolicyMember(BaseModel):
-    """Policy members (family members covered under a policy)"""
     
     RELATION_CHOICES = [
         ('self', 'Self'),
@@ -516,7 +472,6 @@ class PolicyMember(BaseModel):
         ('other', 'Other'),
     ]
     
-    # Foreign Keys
     customer = models.ForeignKey(
         Customer, 
         on_delete=models.CASCADE, 
@@ -538,7 +493,6 @@ class PolicyMember(BaseModel):
         help_text="Renewal case this member belongs to"
     )
     
-    # Member Details
     name = models.CharField(max_length=200, help_text="Full name of the policy member")
     relation = models.CharField(
         max_length=20, 
@@ -552,7 +506,6 @@ class PolicyMember(BaseModel):
         help_text="Gender"
     )
     
-    # Financial Details
     sum_insured = models.DecimalField(
         max_digits=15, 
         decimal_places=2,
@@ -580,7 +533,6 @@ class PolicyMember(BaseModel):
     
     @property
     def age(self):
-        """Calculate age dynamically from date of birth"""
         from datetime import date
         today = date.today()
         age = today.year - self.dob.year - ((today.month, today.day) < (self.dob.month, self.dob.day))
@@ -595,11 +547,7 @@ class PolicyMember(BaseModel):
         elif len(names) == 1:
             return names[0][:2].upper()
         return "??"
-# claims Timeline    
 class ClaimTimelineEvent(BaseModel):
-    """
-    Stores a single event in the timeline of a policy claim.
-    """
     claim = models.ForeignKey(
         PolicyClaim, 
         related_name="timeline_events", 

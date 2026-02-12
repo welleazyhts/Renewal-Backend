@@ -118,7 +118,7 @@ class EmailProviderConfigAdmin(admin.ModelAdmin):
         return format_html(
             '<span style="color: {}; font-weight: bold;">{}%</span>',
             color, 
-            round(percent_val, 1)  # Using round() prevents the string formatting crash
+            round(percent_val, 1) 
         )
     
     monthly_usage_percentage.short_description = "Monthly Usage"
@@ -162,7 +162,7 @@ class EmailProviderHealthLogAdmin(admin.ModelAdmin):
     ]
     list_filter = ['is_healthy', 'provider', 'checked_at']
     search_fields = ['provider__name',
-                    #   'error_message'
+
                       ]
     readonly_fields = ['id', 'checked_at']
     date_hierarchy = 'checked_at'

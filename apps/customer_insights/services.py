@@ -20,7 +20,6 @@ from .models import CustomerInsight
 
 User = get_user_model()
 
-# Global Constants
 COMMUNICATION_TOPICS = {
     'policy_inquiries': ['policy inquiry', 'coverage question', 'policy details'],
     'billing_questions': ['billing', 'payment error', 'premium calculation'],
@@ -68,13 +67,11 @@ class CustomerInsightsService:
         if True:
             insights_data = self._calculate_all_insights(customer)
             
-            # Serialize dates
             insights_data['payment_insights'] = self._serialize_datetime(insights_data['payment_insights'])
             insights_data['communication_insights'] = self._serialize_datetime(insights_data['communication_insights'])
             insights_data['claims_insights'] = self._serialize_datetime(insights_data['claims_insights'])
             insights_data['profile_insights'] = self._serialize_datetime(insights_data['profile_insights'])
             
-            # Save to DB
             insight_record.payment_insights = insights_data['payment_insights']
             insight_record.communication_insights = insights_data['communication_insights']
             insight_record.claims_insights = insights_data['claims_insights']

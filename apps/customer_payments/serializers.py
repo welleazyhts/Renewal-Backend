@@ -3,9 +3,7 @@ from decimal import Decimal
 from .models import CustomerPayment
 from apps.customers.models import Customer
 from apps.renewals.models import RenewalCase
-class CustomerPaymentSerializer(serializers.ModelSerializer):
-    """Serializer for CustomerPayment model"""
-    
+class CustomerPaymentSerializer(serializers.ModelSerializer):    
     customer_id = serializers.IntegerField(source="customer.id", read_only=True)
     customer_name = serializers.CharField(read_only=True)
     policy_number = serializers.CharField(read_only=True)
@@ -120,41 +118,35 @@ class CustomerPaymentCreateSerializer(serializers.ModelSerializer):
                 "Payment amount must be greater than zero."
             )
         
-        # Validate processing fee
         processing_fee = data.get('processing_fee', Decimal('0.00'))
         if processing_fee < 0:
             raise serializers.ValidationError(
                 "Processing fee cannot be negative."
             )
         
-        # Validate tax amount
         tax_amount = data.get('tax_amount', Decimal('0.00'))
         if tax_amount < 0:
             raise serializers.ValidationError(
                 "Tax amount cannot be negative."
             )
         
-        # Validate discount amount
         discount_amount = data.get('discount_amount', Decimal('0.00'))
         if discount_amount < 0:
             raise serializers.ValidationError(
                 "Discount amount cannot be negative."
             )
         
-        # Validate discount doesn't exceed payment amount
         if discount_amount > payment_amount:
             raise serializers.ValidationError(
                 "Discount amount cannot exceed payment amount."
             )
         
-        # Validate exchange rate
         exchange_rate = data.get('exchange_rate', Decimal('1.0000'))
         if exchange_rate <= 0:
             raise serializers.ValidationError(
                 "Exchange rate must be greater than zero."
             )
         
-        # Validate attempt count
         attempt_count = data.get('attempt_count', 1)
         if attempt_count < 1:
             raise serializers.ValidationError(
@@ -170,9 +162,7 @@ class CustomerPaymentCreateSerializer(serializers.ModelSerializer):
         payment.save()
         return payment
 
-class CustomerPaymentUpdateSerializer(serializers.ModelSerializer):
-    """Serializer for updating CustomerPayment"""
-    
+class CustomerPaymentUpdateSerializer(serializers.ModelSerializer):    
     class Meta:
         model = CustomerPayment
         fields = [
@@ -200,10 +190,8 @@ class CustomerPaymentUpdateSerializer(serializers.ModelSerializer):
         ]
     
     def validate(self, data):
-        """Validate the payment update data"""
         instance = self.instance
         
-        # Validate refund amount
         refund_amount = data.get('refund_amount', instance.refund_amount if instance else Decimal('0.00'))
         payment_amount = instance.payment_amount if instance else Decimal('0.00')
         
@@ -212,21 +200,18 @@ class CustomerPaymentUpdateSerializer(serializers.ModelSerializer):
                 "Refund amount cannot exceed payment amount."
             )
         
-        # Validate processing fee
         processing_fee = data.get('processing_fee', instance.processing_fee if instance else Decimal('0.00'))
         if processing_fee < 0:
             raise serializers.ValidationError(
                 "Processing fee cannot be negative."
             )
         
-        # Validate tax amount
         tax_amount = data.get('tax_amount', instance.tax_amount if instance else Decimal('0.00'))
         if tax_amount < 0:
             raise serializers.ValidationError(
                 "Tax amount cannot be negative."
             )
         
-        # Validate discount amount
         discount_amount = data.get('discount_amount', instance.discount_amount if instance else Decimal('0.00'))
         if discount_amount < 0:
             raise serializers.ValidationError(
@@ -241,11 +226,9 @@ class CustomerPaymentUpdateSerializer(serializers.ModelSerializer):
         return data
     
     def update(self, instance, validated_data):
-        """Update payment and recalculate net amount"""
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         
-        # Recalculate net amount if financial fields changed
         financial_fields = ['processing_fee', 'tax_amount', 'discount_amount']
         if any(field in validated_data for field in financial_fields):
             instance.calculate_net_amount()
@@ -254,9 +237,7 @@ class CustomerPaymentUpdateSerializer(serializers.ModelSerializer):
         return instance
 
 
-class CustomerPaymentListSerializer(serializers.ModelSerializer):
-    """Serializer for listing CustomerPayment with minimal data"""
-    
+class CustomerPaymentListSerializer(serializers.ModelSerializer):    
     customer_name = serializers.CharField(read_only=True)
     policy_number = serializers.CharField(read_only=True)
     case_number = serializers.CharField(source='renewal_case.case_number', read_only=True)
@@ -286,9 +267,7 @@ class CustomerPaymentListSerializer(serializers.ModelSerializer):
         ]
 
 
-class CustomerPaymentSummarySerializer(serializers.ModelSerializer):
-    """Serializer for payment summary and analytics"""
-    
+class CustomerPaymentSummarySerializer(serializers.ModelSerializer):    
     customer_name = serializers.CharField(read_only=True)
     policy_number = serializers.CharField(read_only=True)
     case_number = serializers.CharField(source='renewal_case.case_number', read_only=True)
@@ -313,9 +292,7 @@ class CustomerPaymentSummarySerializer(serializers.ModelSerializer):
         ]
 
 
-class PaymentRefundSerializer(serializers.Serializer):
-    """Serializer for processing payment refunds"""
-    
+class PaymentRefundSerializer(serializers.Serializer):    
     refund_amount = serializers.DecimalField(
         max_digits=12,
         decimal_places=2,
@@ -377,14 +354,12 @@ class PaymentStatusUpdateSerializer(serializers.Serializer):
         """Validate status update data"""
         payment_status = data.get('payment_status')
         
-        # Require failure details for failed status
         if payment_status == 'failed':
             if not data.get('failure_reason') and not data.get('failure_code'):
                 raise serializers.ValidationError(
                     "Failure reason or failure code is required for failed payments."
                 )
         
-        # Require transaction details for completed status
         if payment_status == 'completed':
             if not data.get('transaction_id') and not data.get('reference_number'):
                 raise serializers.ValidationError(

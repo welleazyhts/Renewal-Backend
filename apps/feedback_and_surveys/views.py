@@ -43,10 +43,6 @@ class SurveyViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def publish(self, request, pk=None):
-        """
-        Endpoint for the 'Publish' button.
-        Sets status to 'active' and generates the public link.
-        """
         survey = self.get_object()
         survey.status = 'active'
         survey.is_active = True
@@ -59,13 +55,8 @@ class SurveyViewSet(viewsets.ModelViewSet):
         })
     @action(detail=True, methods=['post'])
     def launch(self, request, pk=None):
-        """
-        Triggers the DistributionService to send emails/SMS.
-        Endpoint: POST /surveys/{id}/launch/
-        """
         survey = self.get_object()
         
-        # Get channels from request (e.g., ["email", "sms"])
         channels = request.data.get('channels', ['email'])
         
         service = DistributionService(survey)
@@ -77,10 +68,6 @@ class SurveyViewSet(viewsets.ModelViewSet):
         return Response(result, status=status.HTTP_200_OK)
     @action(detail=True, methods=['get'])
     def export_csv(self, request, pk=None):
-        """
-        Downloads all responses for a specific survey as CSV.
-        URL: GET /api/feedback/surveys/{id}/export_csv/
-        """
         survey = self.get_object()
         submissions = survey.submissions.all().order_by('-created_at')
         
@@ -103,22 +90,17 @@ class SurveyViewSet(viewsets.ModelViewSet):
                 sub.comment
             ]
             
-            # Match Answers to Questions (Handle missing answers)
-            # We fetch all answers for this submission
             answers_map = {ans.question_id: ans.answer_value for ans in sub.answers.all()}
             
             for question in survey.questions.all().order_by('order'):
-                row.append(answers_map.get(question.id, "")) # Empty string if no answer
+                row.append(answers_map.get(question.id, "")) 
             
             writer.writerow(row)
             
         return response
     @action(detail=True, methods=['post'])
     def pause(self, request, pk=None):
-        """
-        Endpoint for the 'Pause' button on the Campaign Card.
-        Sets status to 'paused' and stops public access.
-        """
+        
         survey = self.get_object()
         survey.status = 'paused'
         survey.is_active = False
@@ -128,10 +110,7 @@ class SurveyViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['get'])
     def export_pdf(self, request, pk=None):
-        """
-        Generates a PDF summary report.
-        URL: GET /api/feedback/surveys/{id}/export_pdf/
-        """
+        
         survey = self.get_object()
         submissions = survey.submissions.all()
         
@@ -188,10 +167,7 @@ class SurveyViewSet(viewsets.ModelViewSet):
         return response
     
 class FeedbackDashboardView(APIView):
-    """
-    SINGLE API for the 'Dashboard' Tab.
-    URL: GET /api/feedback/dashboard-stats/
-    """
+    
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
@@ -258,10 +234,6 @@ class CampaignViewSet(viewsets.ModelViewSet):
             response_count=Count('submissions')
         ).order_by('-created_at')
 class SubmissionViewSet(viewsets.ModelViewSet):
-    """
-    API for 'Feedback Inbox' Tab.
-    Supports advanced filtering: ?status=unaddressed & ?rating__lte=2 & ?created_at__gte=...
-    """
     serializer_class = InboxSubmissionSerializer
     permission_classes = [permissions.IsAuthenticated]
     
@@ -311,10 +283,7 @@ class SubmissionViewSet(viewsets.ModelViewSet):
         return Response({'status': 'assigned', 'agent': agent_id})
     @action(detail=True, methods=['post'])
     def archive(self, request, pk=None):
-        """
-        API: POST /api/feedback_and_surveys/inbox/{id}/archive/
-        Moves a specific feedback to the 'Archived' list.
-        """
+      
         submission = self.get_object()
         submission.status = 'archived'
         submission.save()
@@ -324,10 +293,7 @@ class SubmissionViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def archived_list(self, request):
-        """
-        API: GET /api/feedback_and_surveys/inbox/archived_list/
-        Returns ONLY archived items (for the 'Archived' tab in UI).
-        """
+      
         user = self.request.user
         submissions = SurveySubmission.objects.filter(
             survey__owner=user, 
@@ -338,13 +304,10 @@ class SubmissionViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
     @action(detail=False, methods=['post'])
     def bulk_action(self, request):
-        """
-        Handles ALL bulk operations: Assign, Resolve, Flag, Archive.
-        Payload: { "ids": [1, 2], "action": "assign", "value": 5 }
-        """
+       
         ids = request.data.get('ids', [])
         action_type = request.data.get('action')
-        value = request.data.get('value') # Used for 'assign' (User ID)
+        value = request.data.get('value') 
 
         if not ids:
             return Response({'error': 'No IDs provided'}, status=status.HTTP_400_BAD_REQUEST)
@@ -356,7 +319,7 @@ class SubmissionViewSet(viewsets.ModelViewSet):
             if action_type == 'assign':
                 if value:
                     sub.assigned_to_id = value
-                    sub.status = 'in_progress' # Auto-update status when assigned
+                    sub.status = 'in_progress'
                     sub.save()
                     self._log_activity(sub, request.user, f"Bulk assigned to User {value}")
                     count += 1
@@ -393,18 +356,12 @@ class SubmissionViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def export(self, request):
-        """
-        Exports the CURRENT filtered inbox to CSV.
-        URL: GET /api/feedback/inbox/export/?status=unaddressed&rating__lte=2
-        """
-        # 1. Apply the same filters used in the UI
+      
         queryset = self.filter_queryset(self.get_queryset())
         
-        # 2. Create the Response
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="feedback_inbox.csv"'
         
-        # 3. Write CSV Data
         writer = csv.writer(response)
         writer.writerow(['ID', 'Date', 'Customer', 'Rating', 'Category', 'Status', 'Comment', 'Assigned To'])
         
@@ -424,10 +381,7 @@ class SubmissionViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'])
     def bulk_update(self, request):
-        """
-        Handles selecting multiple rows and clicking "Mark Resolved" or "Bulk Assign".
-        Payload: { "ids": [1, 2, 3], "action": "resolve" }
-        """
+       
         ids = request.data.get('ids', [])
         action_type = request.data.get('action')
         value = request.data.get('value') 
@@ -466,10 +420,7 @@ class SubmissionViewSet(viewsets.ModelViewSet):
         return InboxSubmissionSerializer
     @action(detail=False, methods=['get'])
     def inbox_stats(self, request):
-        """
-        API: GET /api/feedback_and_surveys/inbox/inbox_stats/
-        Returns counts for the header cards (Unaddressed, Negative, etc.).
-        """
+       
         queryset = self.get_queryset()
         data = {
             "all_feedback": queryset.count(),
@@ -581,14 +532,10 @@ class FeedbackAnalyticsView(APIView):
             }
         })
 class DistributionChannelViewSet(viewsets.ViewSet):
-    """
-    API for the 'Distribution Channels' Tab.
-    URL: GET /api/feedback/channels/
-    """
+   
     permission_classes = [permissions.IsAuthenticated]
 
     def list(self, request):
-        # You can replace these hardcoded values with database checks later
         channels = [
             {
                 "id": "email",
@@ -632,11 +579,9 @@ class PublicSurveyView(APIView):
         # 2. Look up the AudienceContact
         if contact_id:
             try:
-                # Assuming your AudienceContact uses integer IDs. 
-                # We fetch the .customer from the contact to link it correctly.
                 customer_obj = AudienceContact.objects.get(id=contact_id).customer
             except (AudienceContact.DoesNotExist, ValueError, AttributeError):
-                pass # If ID is invalid or not found, keep it Anonymous
+                pass
         
         # 3. Create Submission with the Customer
         data = request.data
@@ -644,32 +589,25 @@ class PublicSurveyView(APIView):
             survey=survey,
             rating=data.get('rating'),
             comment=data.get('comment', ''),
-            customer=customer_obj,  # <--- SAVE THE CUSTOMER HERE
+            customer=customer_obj, 
             status='unaddressed'
         )
 
         return Response({"message": "Feedback received!"}, status=status.HTTP_201_CREATED)
 class ResponseListViewSet(viewsets.ReadOnlyModelViewSet):
-    """
-    API for 'Survey Responses' Tab.
-    URL: /api/feedback_and_surveys/responses/
-    """
+   
     serializer_class = SurveyResponseCardSerializer
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
-    filterset_fields = ['survey', 'rating'] # Filter by specific survey
+    filterset_fields = ['survey', 'rating'] 
     ordering = ['-created_at']
 
     def get_queryset(self):
-        # Only show responses for surveys owned by this user
         return SurveySubmission.objects.filter(survey__owner=self.request.user)
 
     @action(detail=False, methods=['get'])
     def export_csv(self, request):
-        """
-        Global Export CSV for the 'Survey Responses' tab.
-        Downloads ALL filtered responses.
-        """
+        
         queryset = self.filter_queryset(self.get_queryset())
         
         response = HttpResponse(content_type='text/csv')
@@ -679,7 +617,6 @@ class ResponseListViewSet(viewsets.ReadOnlyModelViewSet):
         writer.writerow(['Survey', 'Date', 'Customer', 'Rating', 'Comment', 'Answers'])
         
         for sub in queryset:
-            # Format answers as a string "Q: A | Q: A"
             answers_str = " | ".join([f"{a.question.label}: {a.answer_value}" for a in sub.answers.all()])
             customer = sub.customer.name if sub.customer else "Anonymous"
             
@@ -711,7 +648,7 @@ class ResponseListViewSet(viewsets.ReadOnlyModelViewSet):
         elements.append(Spacer(1, 12))
         
         data = [['Survey', 'Customer', 'Rating', 'Comment']]
-        for sub in queryset[:50]: # Limit to 50 for performance safety in PDF
+        for sub in queryset[:50]:
             customer = sub.customer.name if sub.customer else "Anonymous"
             comment = (sub.comment[:50] + '...') if sub.comment else "-"
             data.append([sub.survey.title, customer, str(sub.rating), comment])
@@ -728,14 +665,7 @@ class ResponseListViewSet(viewsets.ReadOnlyModelViewSet):
         return response
 
 
-# --- 2. AUDIENCE MANAGEMENT VIEWSET ---
 class AudienceViewSet(viewsets.ModelViewSet):
-    """
-    API for 'Audience Management' Tab.
-    URL: /api/feedback_and_surveys/audiences/
-    """
-    # Assuming 'Audience' is the model name for your contact lists
-    # Replace 'Audience' with your actual model class if different
     from apps.audience_manager.models import Audience 
     queryset = Audience.objects.all()
     serializer_class = AudienceListSerializer
@@ -758,10 +688,6 @@ class AudienceViewSet(viewsets.ModelViewSet):
             "survey_participants": participants
         })
 class AutomationViewSet(viewsets.ModelViewSet):
-    """
-    API for 'Automation & Triggers' Tab.
-    URL: /api/feedback_and_surveys/automation/
-    """
     serializer_class = AutomationRuleSerializer
     permission_classes = [permissions.IsAuthenticated]
 

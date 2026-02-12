@@ -2,9 +2,7 @@ from django.contrib import admin
 from django.utils.html import format_html
 from .models import CustomerInsight
 @admin.register(CustomerInsight)
-class CustomerInsightAdmin(admin.ModelAdmin):
-    """Admin for CustomerInsight model - simplified"""
-    
+class CustomerInsightAdmin(admin.ModelAdmin):    
     list_display = [
         'id', 'customer', 'is_cached', 'cache_status', 'calculated_at'
     ]

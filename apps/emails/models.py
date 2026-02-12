@@ -41,7 +41,7 @@ class EmailAccount(BaseModel):
     
     # Authentication
     username = models.CharField(max_length=200)
-    password = models.CharField(max_length=500)  # Encrypted
+    password = models.CharField(max_length=500)  
     
     # API credentials (for Gmail/Outlook API)
     api_credentials = models.JSONField(default=dict, blank=True)
@@ -105,7 +105,7 @@ class EmailFolder(BaseModel):
 class EmailThread(BaseModel):
     """Email conversation threads"""
     subject = models.CharField(max_length=500)
-    participants = models.JSONField(default=list)  # List of email addresses
+    participants = models.JSONField(default=list) 
     
     # Thread properties
     message_count = models.PositiveIntegerField(default=0)
@@ -318,24 +318,9 @@ class EmailRule(BaseModel):
     
     # Rule conditions
     conditions = models.JSONField(default=dict)
-    # Example: {
-    #   "from_contains": ["@example.com"],
-    #   "subject_contains": ["renewal", "policy"],
-    #   "body_contains": ["urgent"],
-    #   "has_attachments": true
-    # }
     
     # Rule actions
     actions = models.JSONField(default=dict)
-    # Example: {
-    #   "assign_to_user": 123,
-    #   "set_category": "renewal",
-    #   "set_priority": 5,
-    #   "send_auto_reply": "template_id",
-    #   "forward_to": "manager@company.com"
-    # }
-    
-    # Statistics
     matches_count = models.PositiveIntegerField(default=0)
     last_matched = models.DateTimeField(null=True, blank=True)
     

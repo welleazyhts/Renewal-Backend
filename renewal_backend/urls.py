@@ -15,22 +15,16 @@ from rest_framework.permissions import AllowAny
 from rest_framework.decorators import permission_classes
 from django.http import JsonResponse
 
-# Public schema view (allow docs without auth)
 class PublicSchemaView(SpectacularAPIView):
     permission_classes = [AllowAny]
 
-# API URL patterns
 api_patterns = [
-    # Authentication endpoints
     path('auth/', include('apps.authentication.urls')),
 
-    # Core utilities
     path('core/', include('apps.core.urls')),
 
-    # User management
     path('users/', include('apps.users.urls')),
 
-    # Profiles
     path('profiles/',include('apps.profiles.urls')),
     
     path('billing/',include('apps.billing.urls')),
@@ -38,10 +32,8 @@ api_patterns = [
     path('feedback_settings/',include('apps.feedback_settings.urls')),
     path('feedback_and_surveys/',include('apps.feedback_and_surveys.urls')),
 
-    # Customer Verification endpoints
     path('verification/', include('apps.verification.urls')),
     
-    # Core business endpoints
     path('customers/', include('apps.customers.urls')),
     path('policies/', include('apps.policies.urls')),
     path('campaigns/', include('apps.campaigns.urls')),
@@ -85,7 +77,6 @@ api_patterns = [
     path('policy-conditions/', include('apps.policy_conditions.urls')),
     path("teams/", include("apps.teams.urls")),
     
-    # path('communication-provider/', include('apps.communication_provider.urls')),  
     path('email-templates/', include('apps.email_templates.urls')),
     path('email-operations/', include('apps.email_operations.urls')),
     path('email-inbox/', include('apps.email_inbox.urls')),
@@ -98,9 +89,6 @@ api_patterns = [
     path("clients/", include("apps.clients.urls")),
     path("renewal-settings/", include("apps.renewal_settings.urls")),
 
-
-
-    # WhatsApp Integration endpoints
     path('offers/', include('apps.offers.urls')),
     path('dashboard/', include('apps.dashboard.urls')),
     path('upload-chatbot/', include('apps.upload_chatbot.urls')),
@@ -109,15 +97,11 @@ api_patterns = [
     path('policy-timeline-chatbot/', include('apps.policytimeline_chatbot.urls')),
     path('case-logs-chatbot/', include('apps.case_logs_chatbot.urls')),
     path('renewals/', include('apps.renewals.urls')),
-    
 
-
-    # API Documentation
     path('schema/', PublicSchemaView.as_view(), name='schema'),
     path('docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     path('redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
 
-    # settings
     path('campaign-settings/',include('apps.campaign_management_settings.urls')),
     path('email-provider/', include('apps.email_provider.urls')),
     path('whatsapp_provider/', include('apps.whatsapp_provider.urls')),
@@ -129,37 +113,29 @@ api_patterns = [
     path("system/", include("apps.system.urls")),
 ]
 
-# Main URL patterns
 urlpatterns = [
-    # Admin interface
     path(f'{settings.ADMIN_URL if hasattr(settings, "ADMIN_URL") else "admin/"}', admin.site.urls),
     
-    # API endpoints
     path('api/', include(api_patterns)),
     
-    # Health check endpoint (simple one for now)
     path('health/', lambda request: JsonResponse({'status': 'healthy'})),
 ]
 
-# Serve media files in development
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
     
-    # Add debug toolbar URLs
     if 'debug_toolbar' in settings.INSTALLED_APPS:
         import debug_toolbar
         urlpatterns = [
             path('__debug__/', include(debug_toolbar.urls)),
         ] + urlpatterns
 
-# Custom error handlers
 handler400 = 'apps.core.views.bad_request'
 handler403 = 'apps.core.views.permission_denied'
 handler404 = 'apps.core.views.page_not_found'
 handler500 = 'apps.core.views.server_error'
 
-# Admin site customization
 admin.site.site_header = 'Intelipro Insurance Renewal System'
 admin.site.site_title = 'Intelipro Admin'
 admin.site.index_title = 'Administration Dashboard' 

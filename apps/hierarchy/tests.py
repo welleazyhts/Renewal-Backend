@@ -8,7 +8,6 @@ User = get_user_model()
 
 class HierarchyNodeTests(TestCase):
     def setUp(self):
-        # Create a user for manager linking
         self.user = User.objects.create_user(
             email='test@example.com',
             password='testpassword123',
@@ -19,7 +18,6 @@ class HierarchyNodeTests(TestCase):
         self.client.force_authenticate(user=self.user)
 
     def test_create_root_node(self):
-        """Test creating a top-level node (Department)"""
         node = HierarchyNode.objects.create(
             unit_name="Head Office",
             unit_type="department",
@@ -30,7 +28,6 @@ class HierarchyNodeTests(TestCase):
         self.assertEqual(node.manager, self.user)
 
     def test_create_child_nodes(self):
-        """Test creating a hierarchy: Region -> State -> Branch"""
         region = HierarchyNode.objects.create(
             unit_name="North Region",
             unit_type="region"
@@ -48,26 +45,21 @@ class HierarchyNodeTests(TestCase):
             parent=state
         )
         
-        # Verify relationships
         self.assertEqual(state.parent, region)
         self.assertEqual(branch.parent, state)
         self.assertEqual(branch.parent.parent, region)
         
-        # Verify reverse relationships
         self.assertIn(state, region.children.all())
         self.assertIn(branch, state.children.all())
 
     def test_prevent_self_parenting(self):
-        """Test that a node cannot be its own parent"""
         node = HierarchyNode.objects.create(unit_name="Self Loop", unit_type="region")
         
         node.parent = node
-        with self.assertRaises(Exception): # ValidationError from model.clean()
+        with self.assertRaises(Exception): 
             node.save()
             
     def test_api_create_hierarchy(self):
-        """Test creating hierarchy via API"""
-        # 1. Create Parent
         response = self.client.post('/apps/hierarchy/api/units/', {
             'unit_name': 'API Region',
             'unit_type': 'region',
@@ -76,7 +68,6 @@ class HierarchyNodeTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         parent_id = response.data['data']['id']
         
-        # 2. Create Child
         response = self.client.post('/apps/hierarchy/api/units/', {
             'unit_name': 'API State',
             'unit_type': 'state',

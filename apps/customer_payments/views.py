@@ -52,7 +52,6 @@ class CustomerPaymentViewSet(viewsets.ModelViewSet):
         if is_auto_payment is not None:
             queryset = queryset.filter(is_auto_payment=is_auto_payment.lower() == 'true')
 
-        # Filter by amount range
         min_amount = self.request.query_params.get('min_amount')
         max_amount = self.request.query_params.get('max_amount')
         if min_amount:
@@ -60,7 +59,6 @@ class CustomerPaymentViewSet(viewsets.ModelViewSet):
         if max_amount:
             queryset = queryset.filter(payment_amount__lte=max_amount)
 
-        # Filter by payment date range
         payment_from = self.request.query_params.get('payment_from')
         payment_to = self.request.query_params.get('payment_to')
         if payment_from:
@@ -68,7 +66,6 @@ class CustomerPaymentViewSet(viewsets.ModelViewSet):
         if payment_to:
             queryset = queryset.filter(payment_date__lte=payment_to)
 
-        # Filter by due date range
         due_from = self.request.query_params.get('due_from')
         due_to = self.request.query_params.get('due_to')
         if due_from:
@@ -76,7 +73,6 @@ class CustomerPaymentViewSet(viewsets.ModelViewSet):
         if due_to:
             queryset = queryset.filter(due_date__lte=due_to)
 
-        # Filter overdue payments
         overdue_only = self.request.query_params.get('overdue_only')
         if overdue_only and overdue_only.lower() == 'true':
             today = timezone.now().date()

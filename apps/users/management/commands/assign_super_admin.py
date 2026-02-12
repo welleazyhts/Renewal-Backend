@@ -17,7 +17,6 @@ class Command(BaseCommand):
         email = options['email']
 
         try:
-            # Get the user
             try:
                 user = User.objects.get(email=email)
                 self.stdout.write(f'Found user: {user.email} ({user.full_name})')
@@ -27,7 +26,6 @@ class Command(BaseCommand):
                 )
                 return
 
-            # Get the super_admin role
             try:
                 super_admin_role = Role.objects.get(name='super_admin')
                 self.stdout.write(f'Found role: {super_admin_role.display_name} ({super_admin_role.name})')
@@ -40,13 +38,11 @@ class Command(BaseCommand):
                     self.stdout.write(f'  - {role.name} ({role.display_name})')
                 return
 
-            # Check current role
             if user.role:
                 self.stdout.write(f'Current role: {user.role.display_name} ({user.role.name})')
             else:
                 self.stdout.write('Current role: None')
 
-            # Assign super_admin role
             user.role = super_admin_role
             user.save(update_fields=['role'])
 
@@ -56,7 +52,6 @@ class Command(BaseCommand):
                 )
             )
 
-            # Show permissions
             permissions = user.get_permissions()
             if isinstance(permissions, list):
                 self.stdout.write(f'User permissions: {permissions}')

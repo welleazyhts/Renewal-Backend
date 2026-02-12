@@ -8,17 +8,9 @@ from .models import (
     SocialIntegrationStatistics,
 )
 
-
-# ============================================================
-# CUSTOM EXCEPTION
-# ============================================================
 class PlatformConnectionError(Exception):
     pass
 
-
-# ============================================================
-# PLATFORM VALIDATION HELPERS
-# ============================================================
 def validate_telegram(bot_token: str):
     url = f"https://api.telegram.org/bot{bot_token}/getMe"
     response = requests.get(url, timeout=10)
@@ -33,16 +25,9 @@ def validate_whatsapp(api_token: str):
     if response.status_code != 200:
         raise PlatformConnectionError("Invalid WhatsApp API token")
 
-
-# ============================================================
-# 1️⃣ SAVE PLATFORM CREDENTIALS + UPDATE CONNECT STATUS
-# ============================================================
 def save_platform_credentials(platform_name: str, credentials: dict) -> SocialPlatform:
     platform = SocialPlatform.objects.get(platform=platform_name)
 
-    # --------------------------------------------------------
-    # PLATFORM-SPECIFIC VALIDATION
-    # --------------------------------------------------------
     if platform_name == "telegram":
         token = credentials.get("telegram_bot_token")
         if not token:
@@ -66,10 +51,6 @@ def save_platform_credentials(platform_name: str, credentials: dict) -> SocialPl
         raise PlatformConnectionError(
             f"{platform_name} requires OAuth login. Manual credentials not allowed."
         )
-
-    # --------------------------------------------------------
-    # SAVE CREDENTIALS
-    # --------------------------------------------------------
     for key, value in credentials.items():
         if hasattr(platform, key):
             setattr(platform, key, value)
@@ -82,18 +63,7 @@ def save_platform_credentials(platform_name: str, credentials: dict) -> SocialPl
 
     return platform
 
-
-# ============================================================
-# 2️⃣ TEST VERIFICATION (NO CUSTOMER DATA STORED)
-# ============================================================
 def test_customer_verification(_payload: dict):
-    """
-    _payload is intentionally unused for now.
-
-    🔹 Future:
-    - Fetch customer from another table
-    - Pass customer_id instead
-    """
 
     settings = SocialVerificationSettings.objects.first()
     if not settings:
@@ -106,15 +76,12 @@ def test_customer_verification(_payload: dict):
         found = False
         verified = False
 
-        # ⚠️ TEMPORARY REAL-TIME CHECK PLACEHOLDER
-        # Replace this block with platform-specific API calls later
         raw_response = {
             "platform": platform.platform,
             "status": "checked",
             "note": "customer lookup will be added later",
         }
 
-        # Current behaviour preserved
         found = platform.is_connected
         verified = found and settings.auto_connect_on_verification
 
@@ -129,10 +96,6 @@ def test_customer_verification(_payload: dict):
 
     return results
 
-
-# ============================================================
-# 3️⃣ AUTO DELETE VERIFICATION DATA
-# ============================================================
 def apply_data_retention_cleanup():
 
     settings = SocialVerificationSettings.objects.first()
@@ -155,11 +118,6 @@ def apply_data_retention_cleanup():
     ).delete()
 
     return deleted_count
-
-
-# ============================================================
-# 4️⃣ UPDATE STATISTICS
-# ============================================================
 def generate_daily_statistics():
 
     connected_count = SocialPlatform.objects.filter(is_connected=True).count()

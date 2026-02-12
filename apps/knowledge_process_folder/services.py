@@ -13,63 +13,30 @@ from .models import KnowledgeDocument, KnowledgeWebsite
 
 logger = logging.getLogger(__name__)
 
-# =========================================================
-# TESSERACT CONFIG (WINDOWS SAFE)
-# =========================================================
 pytesseract.pytesseract.tesseract_cmd = (
     r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 )
 
 
 class KnowledgeService:
-    """
-    Service layer for Knowledge / Process Folder
-
-    Responsibilities:
-    - Intelligent text extraction (OCR only when needed)
-    - Website scraping (static, dynamic placeholder)
-    - Runs only when triggered by business actions (approval, scrape-now)
-    """
-
-    # =========================================================
-    # OCR / TEXT EXTRACTION CORE LOGIC (FINAL & SAFE)
-    # =========================================================
     @staticmethod
     def extract_text_from_document(file_path):
-        """
-        Intelligent document text extraction.
-
-        Rules:
-        - DOCX → direct text extraction (NO OCR)
-        - IMAGE → OCR
-        - PDF → OCR (PDF → IMAGE → OCR)
-        """
-
         if not file_path:
             raise ValueError("file_path is required for OCR")
 
         ext = os.path.splitext(file_path)[1].lower()
 
         try:
-            # ---------------------------------
-            # DOCX → DIRECT TEXT (NO OCR)
-            # ---------------------------------
             if ext == ".docx":
                 doc = Document(file_path)
                 text = "\n".join(p.text for p in doc.paragraphs)
                 return text.strip(), 100.0
 
-            # ---------------------------------
-            # IMAGE → OCR
-            # ---------------------------------
             if ext in [".png", ".jpg", ".jpeg", ".tiff"]:
                 image = Image.open(file_path)
                 text = pytesseract.image_to_string(image)
                 return text.strip(), 90.0
 
-            # ---------------------------------
-            # PDF → OCR (STRICT + SAFE)
-            # ---------------------------------
             if ext == ".pdf":
                 poppler_path = getattr(settings, "POPPLER_PATH", None)
 
@@ -101,25 +68,14 @@ class KnowledgeService:
 
                 return full_text.strip(), 85.0
 
-            # ---------------------------------
-            # UNSUPPORTED FILE TYPE
-            # ---------------------------------
             raise ValueError(f"Unsupported document type: {ext}")
 
         except Exception:
             logger.exception("Text extraction failed for file: %s", file_path)
             raise
 
-    # =========================================================
-    # OCR ENTRY POINT (CALLED AFTER APPROVAL)
-    # =========================================================
     @staticmethod
     def run_ocr_after_approval(document):
-        """
-        Runs OCR only after document is approved.
-        Prevents duplicate OCR processing.
-        """
-
         if not document.document_file:
             logger.warning("Document has no file: %s", document.id)
             return
@@ -156,16 +112,8 @@ class KnowledgeService:
                 ]
             )
             raise
-
-    # =========================================================
-    # STATIC WEBSITE SCRAPING
-    # =========================================================
     @staticmethod
     def scrape_static_website(url):
-        """
-        Scrapes static websites using requests + BeautifulSoup
-        """
-
         try:
             response = requests.get(
                 url,
@@ -181,25 +129,9 @@ class KnowledgeService:
             logger.exception("Static scraping failed for URL: %s", url)
             raise
 
-  
-   
-
-# =========================================================
 class KnowledgeService:
-    """
-    Website scraping service.
-    """
-
-    # =========================================================
-    # STATIC WEBSITE SCRAPING
-    # =========================================================
     @staticmethod
     def scrape_static_website(url):
-        """
-        Scrapes static websites using requests + BeautifulSoup.
-        Returns cleaned text.
-        """
-
         logger.info("Static scraping started for URL: %s", url)
 
         try:
@@ -214,7 +146,6 @@ class KnowledgeService:
 
             soup = BeautifulSoup(response.text, "html.parser")
 
-            # Remove non-content tags
             for tag in soup(["script", "style", "noscript", "iframe"]):
                 tag.decompose()
 
@@ -234,21 +165,12 @@ class KnowledgeService:
                 url,
             )
             raise
-
-    # =========================================================
-    # WEBSITE SCRAPE ENTRY POINT (OPTIONAL – NON-CELERY)
-    # =========================================================
     @staticmethod
     def scrape_website_now(website):
-        """
-        Synchronous scrape (NOT used by Celery).
-        Prefer Celery task for production.
-        """
-
         try:
             if website.scraping_type == "static":
                 extracted_text = KnowledgeService.scrape_static_website(
-                    website.url  #FIXED
+                    website.url  
                 )
             else:
                 logger.warning(

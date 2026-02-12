@@ -1,11 +1,8 @@
 from rest_framework import serializers
 from .models import CommonRenewalTimelineSettings
-from typing import Any  # for type: ignore hints
+from typing import Any 
 
-
-class CommonRenewalTimelineSettingsSerializer(serializers.ModelSerializer):
-    """Serializer for common renewal timeline settings"""
-    
+class CommonRenewalTimelineSettingsSerializer(serializers.ModelSerializer):    
     class Meta:
         model = CommonRenewalTimelineSettings
         fields = [
@@ -24,9 +21,7 @@ class CommonRenewalTimelineSettingsSerializer(serializers.ModelSerializer):
         read_only_fields = ['created_at', 'updated_at', 'created_by', 'updated_by']
 
 
-class CommonRenewalTimelineSettingsCreateSerializer(serializers.ModelSerializer):
-    """Serializer for creating common renewal timeline settings"""
-    
+class CommonRenewalTimelineSettingsCreateSerializer(serializers.ModelSerializer):    
     class Meta:
         model = CommonRenewalTimelineSettings
         fields = [

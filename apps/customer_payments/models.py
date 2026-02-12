@@ -28,7 +28,6 @@ class CustomerPayment(BaseModel):
         ('auto_debit', 'Auto Debit'),
     ]
     
-    # Foreign Keys
     customer = models.ForeignKey(
             Customer,
             on_delete=models.CASCADE,
@@ -45,7 +44,6 @@ class CustomerPayment(BaseModel):
         blank=True
     )
 
-    # Payment Details
     payment_amount = models.DecimalField(
         max_digits=12,
         decimal_places=2,
@@ -76,7 +74,6 @@ class CustomerPayment(BaseModel):
         help_text="Unique transaction identifier"
     )
     
-    # Additional Payment Information
     gateway_response = models.TextField(
         blank=True,
         help_text="Payment gateway response details"
@@ -107,7 +104,6 @@ class CustomerPayment(BaseModel):
         help_text="Exchange rate if payment in foreign currency"
     )
     
-    # Fee and Tax Information
     processing_fee = models.DecimalField(
         max_digits=10,
         decimal_places=2,
@@ -135,7 +131,6 @@ class CustomerPayment(BaseModel):
         help_text="Net amount after fees and taxes"
     )
     
-    # Payment Attempt Information
     attempt_count = models.PositiveIntegerField(
         default=1,
         help_text="Number of payment attempts"
@@ -146,7 +141,6 @@ class CustomerPayment(BaseModel):
         help_text="Whether this was an automatic payment"
     )
     
-    # Failure Information
     failure_reason = models.TextField(
         blank=True,
         help_text="Reason for payment failure"
@@ -158,7 +152,6 @@ class CustomerPayment(BaseModel):
         help_text="Payment gateway failure code"
     )
     
-    # Refund Information
     refund_amount = models.DecimalField(
         max_digits=12,
         decimal_places=2,
@@ -178,7 +171,6 @@ class CustomerPayment(BaseModel):
         help_text="Refund transaction reference"
     )
     
-    # Receipt Information
     receipt_number = models.CharField(
         max_length=50,
         blank=True,
@@ -190,7 +182,6 @@ class CustomerPayment(BaseModel):
         help_text="URL to download payment receipt"
     )
     
-    # Due Date Information
     due_date = models.DateField(
         null=True,
         blank=True,
@@ -202,7 +193,6 @@ class CustomerPayment(BaseModel):
         help_text="Grace period in days after due date"
     )
     
-    # Notes and Comments
     payment_notes = models.TextField(
         blank=True,
         help_text="Additional notes about the payment"

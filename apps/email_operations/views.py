@@ -318,7 +318,7 @@ Your Support Team
             
             # Prepare reply email data
             reply_data = {
-                'to_emails': original_email.from_email,  # Reply to the original sender
+                'to_emails': original_email.from_email,  
                 'subject': reply_subject,
                 'html_content': standard_reply_html,
                 'text_content': standard_reply_text,
@@ -510,7 +510,7 @@ Your Support Team
         
         return Response({
             'campaign_id': campaign_id,
-            'campaign_name': campaign_id,  # You might want to get this from a campaign model
+            'campaign_name': campaign_id,  
             'total_emails': total_emails,
             'sent_emails': sent_emails,
             'delivered_emails': delivered_emails,

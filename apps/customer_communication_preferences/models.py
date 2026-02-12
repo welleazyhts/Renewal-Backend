@@ -63,7 +63,6 @@ class CustomerCommunicationPreference(BaseModel):
         ('as', 'Assamese'),
     ]
     
-    # Foreign Key to Customer
     customer = models.ForeignKey(
         Customer,
         on_delete=models.CASCADE,
@@ -71,7 +70,6 @@ class CustomerCommunicationPreference(BaseModel):
         help_text="Customer these preferences belong to"
     )
     
-    # Communication Channel Preferences
     preferred_channel = models.CharField(
         max_length=20,
         choices=COMMUNICATION_CHANNEL_CHOICES,
@@ -86,7 +84,6 @@ class CustomerCommunicationPreference(BaseModel):
         help_text="Secondary communication channel"
     )
     
-    # Communication Type and Frequency
     communication_type = models.CharField(
         max_length=30,
         choices=COMMUNICATION_TYPE_CHOICES,
@@ -100,7 +97,6 @@ class CustomerCommunicationPreference(BaseModel):
         help_text="How frequently customer wants to receive this type of communication"
     )
     
-    # Channel-specific preferences
     email_enabled = models.BooleanField(
         default=True,
         help_text="Whether customer wants email communications"
@@ -131,7 +127,6 @@ class CustomerCommunicationPreference(BaseModel):
         help_text="Whether customer wants push notifications"
     )
     
-    # Time and Language Preferences
     preferred_time = models.CharField(
         max_length=20,
         choices=TIME_PREFERENCE_CHOICES,
@@ -146,7 +141,6 @@ class CustomerCommunicationPreference(BaseModel):
         help_text="Preferred language for communications"
     )
     
-    # Contact Information Override
     alternate_email = models.EmailField(
         blank=True,
         help_text="Alternate email for specific communication types"
@@ -159,7 +153,6 @@ class CustomerCommunicationPreference(BaseModel):
         help_text="Alternate phone number for specific communication types"
     )
     
-    # Do Not Disturb Settings
     do_not_disturb = models.BooleanField(
         default=False,
         help_text="Whether customer is in do not disturb mode"
@@ -177,7 +170,6 @@ class CustomerCommunicationPreference(BaseModel):
         help_text="End time for do not disturb period"
     )
     
-    # Special Preferences
     marketing_consent = models.BooleanField(
         default=True,
         help_text="Whether customer consents to marketing communications"
@@ -188,7 +180,6 @@ class CustomerCommunicationPreference(BaseModel):
         help_text="Whether customer consents to data sharing for communications"
     )
     
-    # Additional Settings
     is_active = models.BooleanField(
         default=True,
         help_text="Whether this preference setting is active"
@@ -310,7 +301,6 @@ class CommunicationLog(BaseModel):
         ('replied', 'Replied'),
     ]
     
-    # Foreign Key to Customer
     customer = models.ForeignKey(
         Customer,
         on_delete=models.CASCADE,
@@ -318,7 +308,6 @@ class CommunicationLog(BaseModel):
         help_text="Customer this communication was sent to"
     )
     
-    # Communication Details
     channel = models.CharField(
         max_length=20,
         choices=COMMUNICATION_CHANNEL_CHOICES,
@@ -335,7 +324,6 @@ class CommunicationLog(BaseModel):
         help_text="Result of the communication attempt"
     )
     
-    # Additional Details
     message_content = models.TextField(
         blank=True,
         help_text="Content of the message sent (optional)"
@@ -351,7 +339,6 @@ class CommunicationLog(BaseModel):
         help_text="Additional notes about the communication"
     )
     
-    # System Fields
     initiated_by = models.ForeignKey(
         'users.User',
         on_delete=models.SET_NULL,
@@ -361,7 +348,6 @@ class CommunicationLog(BaseModel):
         help_text="User who initiated this communication"
     )
     
-    # Duration
     duration_in_minutes = models.IntegerField(
         null=True, 
         blank=True, 

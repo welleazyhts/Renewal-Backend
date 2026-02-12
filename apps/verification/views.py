@@ -67,7 +67,6 @@ def verify_customer_data(request):
 
     elif verify_type == "phone":
         def normalize_phone_number(phone):
-            """Normalize phone number by removing + and country code for comparison"""
             phone = phone.strip()
             if phone.startswith('+'):
                 phone = phone[1:]

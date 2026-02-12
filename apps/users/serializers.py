@@ -6,7 +6,6 @@ from django.core.mail import send_mail
 from django.conf import settings
 
 class RoleSerializer(serializers.ModelSerializer):
-    """Serializer for Role model"""
     permissions = serializers.ListField(source='permission_list', read_only=True)
     default_permissions = serializers.ListField(read_only=True)
     
@@ -14,17 +13,12 @@ class RoleSerializer(serializers.ModelSerializer):
         model = Role
         fields = ['id', 'name', 'display_name', 'description', 'permissions','is_system','default_permissions']
     def validate_permissions(self, value):
-        """Ensure permissions are sent as a list of strings"""
         if isinstance(value, dict):
             return list(value.keys())
         if not isinstance(value, list):
             raise serializers.ValidationError("Permissions must be a list of strings.")
         return value
 class UserListSerializer(serializers.ModelSerializer):
-    """
-    Optimized serializer for the User Management Table.
-    Groups data to match specific table columns.
-    """
     user = serializers.SerializerMethodField()
     role= serializers.SerializerMethodField()
     permissions_count = serializers.SerializerMethodField()
@@ -43,17 +37,12 @@ class UserListSerializer(serializers.ModelSerializer):
         ]
 
     def get_user(self, obj):
-        """Bundles user info for the first column"""
         return {
             "full_name": obj.get_full_name(),
             "email": obj.email,
         }
 
     def get_role(self, obj):
-        """
-        Returns ID for he dropdown value and Name for display.
-        Handles users with no role (None).
-        """
         if obj.role:
             return {
                 "id": obj.role.id,          
@@ -63,12 +52,10 @@ class UserListSerializer(serializers.ModelSerializer):
         return None  
 
     def get_permissions_count(self, obj):
-        """Safely calculate number of permissions"""
         if obj.role and obj.role.permissions:
             return len(obj.role.permissions)
         return 0
 class UserSerializer(serializers.ModelSerializer):
-    """Full serializer for User model"""
     full_name = serializers.CharField(source='get_full_name', read_only=True)
     role_name = serializers.CharField(source='role.name', read_only=True)
     role_details = RoleSerializer(source='role', read_only=True)
@@ -91,9 +78,6 @@ class UserSerializer(serializers.ModelSerializer):
             'id', 'last_login', 'date_joined', 'created_at', 'updated_at'
         ]
     def create(self, validated_data):
-        """
-        Create User with dynamic password generation and email sending.
-        """
         send_email = validated_data.pop('send_welcome_email', False)
         
         if 'password' not in validated_data or not validated_data['password']:
@@ -116,16 +100,13 @@ class UserSerializer(serializers.ModelSerializer):
                 fail_silently=False,
             )
         except Exception as e:
-            # Log the error but don't crash the user creation
             print(f" Failed to send welcome email: {str(e)}")
     
     def get_assigned_customers_count(self, obj):
-        """Get count of assigned customers"""
         return obj.assigned_customers.count()
 
 
 class AgentSelectionSerializer(serializers.ModelSerializer):
-    """Simplified serializer for agent selection dropdowns"""
     full_name = serializers.CharField(source='get_full_name', read_only=True)
     role_name = serializers.CharField(source='role.name', read_only=True)
     workload = serializers.SerializerMethodField()
@@ -138,5 +119,4 @@ class AgentSelectionSerializer(serializers.ModelSerializer):
         ]
     
     def get_workload(self, obj):
-        """Get current workload count"""
         return obj.assigned_customers.filter(status='active').count()

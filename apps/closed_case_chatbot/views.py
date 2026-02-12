@@ -9,9 +9,6 @@ from .models import ClosedCaseChatbot, ClosedCaseChatbotMessage
 
 
 def generate_related_suggestions(user_message, ai_response):
-    """
-    Generate 3 related suggestions based on the user's question and AI response
-    """
     all_suggestions = [
         "What are closed cases?",
         "Show me trends in my closed cases",
@@ -109,9 +106,6 @@ def generate_related_suggestions(user_message, ai_response):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_suggestions(request):
-    """
-    Get quick suggestions for closed case chatbot
-    """
     suggestions = [
         "Analyze my current renewal portfolio performance",
         "What strategies can improve my renewal rates?",
@@ -132,9 +126,6 @@ def get_suggestions(request):
 
 
 def get_closed_cases_context():
-    """
-    Get context data from closed cases for AI response
-    """
     try:
         from apps.closed_cases.models import ClosedCase
         
@@ -166,9 +157,6 @@ def get_closed_cases_context():
 
 
 def is_case_related_question(message):
-    """
-    Check if the question is related to closed cases
-    """
     case_keywords = [
         'case', 'closed', 'policy', 'renewal', 'customer', 'premium', 
         'claim', 'insurance', 'portfolio', 'churn', 'retention', 'collection',
@@ -181,9 +169,6 @@ def is_case_related_question(message):
 
 
 def generate_ai_response(user_message, context_data):
-    """
-    Generate AI response using OpenAI API
-    """
     try:
         from openai import OpenAI
         
@@ -223,9 +208,6 @@ def generate_ai_response(user_message, context_data):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def send_request_get_response(request):
-    """
-    Send a request to chatbot and get AI response
-    """
     user_message = request.data.get('message', '')
     
     if not user_message:

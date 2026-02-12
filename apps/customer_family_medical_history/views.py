@@ -174,7 +174,6 @@ class CustomerFamilyMedicalHistoryViewSet(viewsets.ModelViewSet):
                     Q(severity_level__in=['severe', 'critical'])
                 )
 
-            # Search functionality
             search = request.query_params.get('search')
             if search:
                 medical_history = medical_history.filter(
@@ -188,7 +187,6 @@ class CustomerFamilyMedicalHistoryViewSet(viewsets.ModelViewSet):
                     Q(customer__customer_code__icontains=search)
                 )
 
-            # Serialize the data
             serializer = CustomerFamilyMedicalHistoryListSerializer(medical_history, many=True)
 
             return Response({

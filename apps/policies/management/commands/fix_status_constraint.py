@@ -10,13 +10,11 @@ class Command(BaseCommand):
         
         try:
             with connection.cursor() as cursor:
-                # Drop existing constraint
                 self.stdout.write('📝 Dropping existing constraint...')
                 cursor.execute("""
                     ALTER TABLE policies DROP CONSTRAINT IF EXISTS policies_status_check;
                 """)
                 
-                # Add new constraint with all status choices
                 self.stdout.write('✅ Adding new constraint with updated status choices...')
                 cursor.execute("""
                     ALTER TABLE policies ADD CONSTRAINT policies_status_check 
@@ -33,7 +31,6 @@ class Command(BaseCommand):
                     ));
                 """)
                 
-                # Verify the constraint
                 self.stdout.write('🔍 Verifying constraint...')
                 cursor.execute("""
                     SELECT conname, pg_get_constraintdef(oid) as definition

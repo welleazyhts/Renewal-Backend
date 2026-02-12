@@ -2,9 +2,7 @@ from rest_framework import serializers
 from decimal import Decimal
 from django.utils import timezone
 from .models import PaymentSchedule
-class PaymentScheduleSerializer(serializers.ModelSerializer):
-    """Serializer for PaymentSchedule model"""
-    
+class PaymentScheduleSerializer(serializers.ModelSerializer):    
     customer_name = serializers.CharField(read_only=True)
     policy_number = serializers.CharField(read_only=True)
     case_number = serializers.CharField(read_only=True)
@@ -89,9 +87,7 @@ class PaymentScheduleSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at']
 
 
-class PaymentScheduleCreateSerializer(serializers.ModelSerializer):
-    """Serializer for creating PaymentSchedule"""
-    
+class PaymentScheduleCreateSerializer(serializers.ModelSerializer):    
     class Meta:
         model = PaymentSchedule
         fields = [

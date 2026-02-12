@@ -121,10 +121,6 @@ class TestConnectionAPIView(APIView):
         return Response(test_results, status=status.HTTP_200_OK)
     
 class ProviderDefaultsAPIView(APIView):
-    """
-    Returns the default IMAP/SMTP settings for supported providers (Gmail, Outlook, etc.).
-    Used by the frontend to auto-fill the 'Add Account' form.
-    """
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
@@ -146,15 +142,12 @@ class GlobalTestConnectionAPIView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        # 3. Use the same test logic as the other button
         test_results = test_account_connection(account)
 
-        # 4. Save the result to the Global Settings (for the Green/Red Badge)
         settings, _ = EmailModuleSettings.objects.get_or_create(user=request.user)
         settings.imap_connection_status = test_results['success']
         settings.save()
 
-        # 5. Save the result to the Account itself
         account.connection_status = test_results['success']
         account.last_sync_at = timezone.now()
         account.save()

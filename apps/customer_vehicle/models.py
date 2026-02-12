@@ -179,7 +179,6 @@ class CustomerVehicle(BaseModel):
         }
         score += condition_scores.get(self.condition, 0)
         
-        # Score based on age (newer vehicles get higher scores)
         age = self.vehicle_age
         if age <= 2:
             score += 10

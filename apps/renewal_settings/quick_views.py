@@ -19,7 +19,6 @@ class QuickMessageSendView(APIView):
             "channel": "whatsapp" | "sms"
         }
         """
-        # 1. Validate Input
         phone = request.data.get('recipient_phone')
         text = request.data.get('template_text')
         context = request.data.get('context', {})
@@ -28,7 +27,6 @@ class QuickMessageSendView(APIView):
         if not phone or not text:
             return Response({"error": "Recipient phone and template text are required."}, status=400)
 
-        # 2. Call Service
         service = QuickMessageService()
         
         try:
@@ -41,6 +39,6 @@ class QuickMessageSendView(APIView):
             return Response({"message": "Message sent successfully", "provider_response": result}, status=200)
 
         except limitReachedException as e:
-            return Response({"error": str(e)}, status=429) # Too Many Requests
+            return Response({"error": str(e)}, status=429) 
         except Exception as e:
              return Response({"error": str(e)}, status=500)

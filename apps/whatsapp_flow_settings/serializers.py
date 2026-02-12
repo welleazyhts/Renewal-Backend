@@ -1,5 +1,4 @@
 from rest_framework import serializers
-# Make sure these imports are correct based on your project structure
 from apps.whatsapp_flow_management.models import WhatsAppMessageTemplate, WhatsAppFlow
 from .models import WhatsAppConfiguration, WhatsAppAccessPermission, FlowAccessRole, FlowAuditLog
 
@@ -26,7 +25,6 @@ class FlowAuditLogSerializer(serializers.ModelSerializer):
         fields = ['id', 'timestamp', 'actor_name', 'action_type', 'action_display', 'details']
 
 class WhatsAppConfigurationSerializer(serializers.ModelSerializer):
-    # Field definitions...
     whatsapp_api_settings = serializers.SerializerMethodField()
     flow_builder_settings = serializers.SerializerMethodField()
     business_hours_settings = serializers.SerializerMethodField()
@@ -46,29 +44,25 @@ class WhatsAppConfigurationSerializer(serializers.ModelSerializer):
             'messages_per_hour', 'enable_visual_flow_builder',
             'enable_message_templates', 'enable_auto_response',
             'enable_analytics_and_reports',
-            # Nested Objects
             'whatsapp_api_settings',
             'flow_builder_settings',
             'business_hours_settings',
             'message_settings',
             'rate_limiting',
-            'integration_status',     # <--- This will now contain the dynamic data
+            'integration_status',    
             'flow_access_permissions',
             'flow_activity_logs',
         ]
         read_only_fields = ['whatsapp_api_settings', 'integration_status', 'flow_activity_logs']
 
-    # --- Helper Methods for Logic (Reused) ---
 
     def _get_template_status_data(self):
-        """Helper to get template status logic"""
         pending_count = WhatsAppMessageTemplate.objects.filter(status='PENDING').count()
         if pending_count > 0:
             return {'status': f"{pending_count} templates pending approval"}
         return {'status': "All templates approved"}
 
     def _get_flow_status_data(self):
-        """Helper to get flow status logic"""
         active_flows = WhatsAppFlow.objects.filter(status='PUBLISHED').count()
         draft_flows = WhatsAppFlow.objects.filter(status='DRAFT').count()
         
@@ -79,7 +73,6 @@ class WhatsAppConfigurationSerializer(serializers.ModelSerializer):
         else:
             return {'status': "Ready to create flows"}
 
-    # --- Main Serializer Methods ---
 
     def get_whatsapp_api_settings(self, obj):
         return {
@@ -110,9 +103,7 @@ class WhatsAppConfigurationSerializer(serializers.ModelSerializer):
             'messages_per_hour': obj.messages_per_hour,
         }
 
-    # --- UPDATED INTEGRATION STATUS ---
     def get_integration_status(self, obj):
-        # 1. Reuse the logic for Templates and Flows
         template_data = self._get_template_status_data()
         flow_data = self._get_flow_status_data()
 
@@ -123,13 +114,11 @@ class WhatsAppConfigurationSerializer(serializers.ModelSerializer):
             'webhook_configuration': {
                 'status': 'Active' if obj.webhook_url and obj.is_enabled else 'Inactive'
             },
-            # 2. Inject Dynamic Data Here
             'message_templates': template_data,
             'flow_builder': flow_data
         }
 
     def get_flow_builder_settings(self, obj):
-        # This returns settings toggles, not status
         return {
             'enable_visual_flow_builder': obj.enable_visual_flow_builder,
             'enable_message_templates': obj.enable_message_templates,

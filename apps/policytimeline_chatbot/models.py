@@ -3,9 +3,6 @@ from django.contrib.auth.models import User
 
 
 class PolicyTimelineChatbot(models.Model):
-    """
-    Model for storing policy timeline chatbot interactions and data
-    """
     customer_id = models.CharField(max_length=100, unique=True, help_text="Unique identifier for the customer")
     customer_name = models.CharField(max_length=255, help_text="Name of the customer")
     policy_id = models.CharField(max_length=100, help_text="Policy ID associated with the timeline")
@@ -33,9 +30,6 @@ class PolicyTimelineChatbot(models.Model):
 
 
 class PolicyTimelineChatbotMessage(models.Model):
-    """
-    Model for storing individual chatbot messages and responses
-    """
     chatbot_session = models.ForeignKey(
         PolicyTimelineChatbot, 
         on_delete=models.CASCADE, 

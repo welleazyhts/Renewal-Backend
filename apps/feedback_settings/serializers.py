@@ -4,7 +4,6 @@ from .models import SurveySettings, IntegrationCredential
 class SurveySettingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = SurveySettings
-        # We keep '__all__' here so the "Update" API (PATCH) still accepts flat inputs
         fields = '__all__'
         read_only_fields = ('owner', 'created_at', 'updated_at')
 

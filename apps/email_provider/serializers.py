@@ -62,15 +62,12 @@ class EmailProviderConfigCreateSerializer(serializers.ModelSerializer):
         is_default = data.get('is_default', False)
         
         if is_default:
-            # Check if any other ACTIVE provider is already the default
-            # We filter by is_deleted=False to ignore soft-deleted records.
             existing_default = EmailProviderConfig.objects.filter(
                 is_default=True, 
                 is_deleted=False
             )
             
             if self.instance:
-                # Exclude the current instance if it's an update
                 existing_default = existing_default.exclude(pk=self.instance.pk)
             
             if existing_default.exists():
@@ -84,7 +81,6 @@ class EmailProviderConfigCreateSerializer(serializers.ModelSerializer):
         """Create a new email provider configuration"""
         validated_data['created_by'] = self.context['request'].user
         
-        # Encrypt sensitive credentials if they exist
         if 'smtp_password' in validated_data and validated_data['smtp_password']:
             from apps.email_provider.services import EmailProviderService
             service = EmailProviderService()
@@ -112,16 +108,14 @@ class EmailProviderConfigUpdateSerializer(serializers.ModelSerializer):
         """
         [NEW] Ensures only one provider is marked as default when updating an existing one.
         """
-        is_default = data.get('is_default', self.instance.is_default) # Use existing value if not provided
+        is_default = data.get('is_default', self.instance.is_default) 
         
         if is_default:
-            # Check if any other ACTIVE provider is already the default
             existing_default = EmailProviderConfig.objects.filter(
                 is_default=True, 
                 is_deleted=False
             )
             
-            # Exclude the instance being updated (its ID) from the check
             existing_default = existing_default.exclude(pk=self.instance.pk)
             
             if existing_default.exists():

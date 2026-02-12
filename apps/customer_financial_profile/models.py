@@ -22,7 +22,6 @@ class CustomerFinancialProfile(BaseModel):
         ('very_aggressive', 'Very Aggressive'),
     ]
     
-    # Foreign Key to Customer
     customer = models.OneToOneField(
         Customer,
         on_delete=models.CASCADE,
@@ -30,7 +29,6 @@ class CustomerFinancialProfile(BaseModel):
         help_text="Customer associated with this financial profile"
     )
     
-    # Income Information
     annual_income = models.DecimalField(
         max_digits=12,
         decimal_places=2,
@@ -53,7 +51,6 @@ class CustomerFinancialProfile(BaseModel):
         help_text="Primary source of customer's income"
     )
     
-    # Policy Capacity and Recommendations
     policy_capacity_utilization = models.PositiveIntegerField(
         null=True,
         blank=True,
@@ -71,7 +68,6 @@ class CustomerFinancialProfile(BaseModel):
         help_text="Total value of recommended policies"
     )
     
-    # Risk Assessment
     risk_profile = models.CharField(
         max_length=20,
         choices=RISK_PROFILE_CHOICES,
@@ -139,7 +135,6 @@ class CustomerFinancialProfile(BaseModel):
         
         base_percentage = 0.12  
         
-        # Adjust based on risk profile
         risk_multipliers = {
             'conservative': 0.8,
             'moderate': 1.0,
@@ -157,7 +152,6 @@ class CustomerFinancialProfile(BaseModel):
         if not self.annual_income:
             return
         
-        # Get total premium of active policies
         total_premium = self.customer.policies.filter(
             status='active',
             is_deleted=False
@@ -165,7 +159,6 @@ class CustomerFinancialProfile(BaseModel):
             total=models.Sum('premium_amount')
         )['total'] or 0
         
-        # Calculate utilization percentage
         recommended_premium = self.calculate_recommended_premium()
         if recommended_premium > 0:
             utilization = (float(total_premium) / recommended_premium) * 100

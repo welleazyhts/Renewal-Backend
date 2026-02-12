@@ -7,10 +7,6 @@ class SocialIntegrationConfig(AppConfig):
     name = "apps.social_integration"
 
     def ready(self):
-        """
-        Auto-create default social platforms.
-        Safe-guarded to avoid issues during migrations.
-        """
         try:
             from .models import SocialPlatform
 
@@ -31,5 +27,4 @@ class SocialIntegrationConfig(AppConfig):
                 )
 
         except (OperationalError, ProgrammingError):
-            # Database not ready (migrate / makemigrations)
             pass

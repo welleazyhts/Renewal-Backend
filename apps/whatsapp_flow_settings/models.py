@@ -7,10 +7,6 @@ from django.db.models import Manager,UniqueConstraint, Q
 import pytz
 
 class AuditLogModel(models.Model):
-    """
-    Abstract base class that provides self-updating
-    'created' and 'modified' fields, plus user tracking.
-    """
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created At")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Last Updated")
     is_deleted = models.BooleanField(default=False)
@@ -42,30 +38,25 @@ class AuditLogModel(models.Model):
         abstract = True
 
 class WhatsAppConfiguration(AuditLogModel):
-    # API Credentials
     phone_number_id = models.CharField(max_length=255, help_text="Meta Phone Number ID")
     access_token = models.TextField(help_text="Meta Access Token")
     webhook_url = models.URLField(help_text="Your public webhook URL")
     verify_token = models.CharField(max_length=255, help_text="Webhook Verify Token")
     is_enabled = models.BooleanField(default=True, verbose_name="Enable WhatsApp Business API")
 
-    # Business Hours
     enable_business_hours = models.BooleanField(default=True)
     business_start_time = models.TimeField(default="09:00", help_text="Opening time")
     business_end_time = models.TimeField(default="18:00", help_text="Closing time")
     TIMEZONE_CHOICES = tuple(zip(pytz.all_timezones, pytz.all_timezones))
     timezone = models.CharField(max_length=32, choices=TIMEZONE_CHOICES, default='Asia/Kolkata')
 
-    # Message Settings & 
     fallback_message = models.TextField(default="Thank you for your message. We will get back to you soon.")
     max_retries = models.PositiveSmallIntegerField(default=3, help_text="Maximum retry attempts for failed flows") 
     retry_delay = models.PositiveSmallIntegerField(default=300, help_text="Delay between retry attempts in seconds") 
-    # Rate Limiting
     enable_rate_limiting = models.BooleanField(default=True)
     messages_per_minute = models.PositiveIntegerField(default=60)
     messages_per_hour = models.PositiveIntegerField(default=1000)
     
-    # Flow Builder Settings
     enable_visual_flow_builder = models.BooleanField(default=True)
     enable_message_templates = models.BooleanField(default=True)
     enable_auto_response = models.BooleanField(default=True)
@@ -80,10 +71,6 @@ class WhatsAppConfiguration(AuditLogModel):
         return "WhatsApp Global Settings"
 
 class FlowAccessRole(AuditLogModel):
-    """
-    Stores roles dynamically (Admin, Editor, Viewer, etc.)
-    You can add/remove these without code changes.
-    """
     name = models.CharField(max_length=50, unique=True, help_text="e.g., 'Admin', 'Viewer'")
     description = models.TextField(blank=True, help_text="Detailed description of what this role can do.")    
     can_publish = models.BooleanField(default=False)
@@ -94,7 +81,6 @@ class FlowAccessRole(AuditLogModel):
 
 class NonDeletedManager(Manager):
     def get_queryset(self):
-        # This is the core logic: exclude records where is_deleted is True
         return super().get_queryset().filter(is_deleted=False)
 
 class SoftDeleteBase(models.Model):
@@ -110,9 +96,6 @@ class SoftDeleteBase(models.Model):
         self.save()
         
 class WhatsAppAccessPermission(SoftDeleteBase,AuditLogModel):
-    """
-    Assigns a dynamic role to a specific user.
-    """
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, 
         on_delete=models.CASCADE, 

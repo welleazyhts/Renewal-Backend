@@ -22,7 +22,6 @@ logger = logging.getLogger(__name__)
 
 
 class BaseSettingsView(APIView):
-    """Base view for settings endpoints with common logic."""
     permission_classes = [IsAuthenticated]
     serializer_class = None
 
@@ -45,56 +44,45 @@ class BaseSettingsView(APIView):
 
 
 class SystemSettingsView(BaseSettingsView):
-    """Full system settings - GET all or PUT/PATCH to update."""
     serializer_class = SystemSettingsSerializer
 
 
 class AIBasicConfigView(BaseSettingsView):
-    """Basic AI Configuration: Enable AI, Provider, Model, API Key."""
     serializer_class = AIBasicConfigSerializer
 
 
 class AIFeaturesView(BaseSettingsView):
-    """AI Feature toggles: Renewal Insights, Process Optimization, etc."""
     serializer_class = AIFeaturesSerializer
 
 
 class RateLimitingView(BaseSettingsView):
-    """Rate limiting configuration."""
     serializer_class = RateLimitingSerializer
 
 
 class AdvancedConfigView(BaseSettingsView):
-    """Advanced AI configuration: Temperature, Max Tokens, Timeout, Fallback."""
     serializer_class = AdvancedConfigSerializer
 
 
 class KnowledgeBaseView(BaseSettingsView):
-    """Knowledge base settings."""
     serializer_class = KnowledgeBaseSerializer
 
 
 class SystemPerformanceView(BaseSettingsView):
-    """System performance settings: Data Retention, Auto Backup."""
     serializer_class = SystemPerformanceSerializer
 
 
 class OllamaConfigView(BaseSettingsView):
-    """Ollama-specific configuration."""
     serializer_class = OllamaConfigSerializer
 
 
 class AIProvidersView(APIView):
-    """Get available AI providers and their models."""
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         settings = SystemSettings.get_settings()
         
-        # Get all providers
         providers = SystemSettings.get_all_providers()
         
-        # Get models for each provider
         models = {}
         for provider in SystemSettings.AI_PROVIDER_CHOICES:
             provider_key = provider[0]
@@ -104,7 +92,6 @@ class AIProvidersView(APIView):
                 for m in provider_models
             ]
         
-        # For Ollama, include cached models if available
         if settings.ollama_available_models:
             models['ollama'] = [
                 {"value": m, "label": m} 
@@ -120,7 +107,6 @@ class AIProvidersView(APIView):
 
 
 class TestAIConnectionView(APIView):
-    """Test connection to the configured AI provider."""
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -147,7 +133,6 @@ class TestAIConnectionView(APIView):
                 })
 
             if settings.ai_provider == "azure_openai":
-                # Test Azure OpenAI connection
                 if not settings.azure_endpoint:
                     return Response({
                         "success": False,
@@ -160,7 +145,6 @@ class TestAIConnectionView(APIView):
                     api_version=settings.azure_api_version,
                     azure_endpoint=settings.azure_endpoint,
                 )
-                # Try a simple completion to test
                 return Response({
                     "success": True, 
                     "message": "Azure OpenAI connected successfully",
@@ -170,7 +154,6 @@ class TestAIConnectionView(APIView):
             if settings.ai_provider == "anthropic":
                 import anthropic
                 client = anthropic.Anthropic(api_key=settings.api_key)
-                # Simple validation - the client creation itself validates the key format
                 return Response({
                     "success": True, 
                     "message": "Anthropic connected successfully",
@@ -180,7 +163,6 @@ class TestAIConnectionView(APIView):
             if settings.ai_provider == "google_ai":
                 import google.generativeai as genai
                 genai.configure(api_key=settings.api_key)
-                # List models to verify connection
                 models = genai.list_models()
                 return Response({
                     "success": True, 
@@ -208,7 +190,6 @@ class TestAIConnectionView(APIView):
 
 
 class OllamaModelsView(APIView):
-    """Fetch and refresh available Ollama models."""
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -221,7 +202,6 @@ class OllamaModelsView(APIView):
             
             models = [model.get("name") for model in data.get("models", [])]
             
-            # Update cached models in settings
             settings.ollama_available_models = models
             settings.ollama_last_model_refresh = timezone.now()
             settings.save()
@@ -248,7 +228,6 @@ class OllamaModelsView(APIView):
 
 
 class KnowledgeBaseUpdateView(APIView):
-    """Trigger a knowledge base update."""
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -261,8 +240,6 @@ class KnowledgeBaseUpdateView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            # TODO: Implement actual knowledge base update logic here
-            # For now, just update the timestamp
             settings.kb_last_updated = timezone.now()
             settings.save()
 

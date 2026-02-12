@@ -12,7 +12,6 @@ from .serializers import (
     PaymentScheduleListSerializer,
 )
 
-
 class CustomerPaymentScheduleViewSet(viewsets.ModelViewSet):
    
     queryset = PaymentSchedule.objects.filter(is_deleted=False)

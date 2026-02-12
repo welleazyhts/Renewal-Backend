@@ -6,11 +6,7 @@ from django.conf import settings
 from django.db.models import Q
 from .models import PolicyTimelineChatbot, PolicyTimelineChatbotMessage
 
-
 def generate_related_suggestions(user_message, ai_response):
-    """
-    Generate 3 related suggestions based on the user's question and AI response
-    """
     all_suggestions = [
         "What are my upcoming policy renewals?",
         "Tell me about my payment history",
@@ -125,9 +121,6 @@ def generate_related_suggestions(user_message, ai_response):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_suggestions(request):
-    """
-    Get quick suggestions for policy timeline chatbot
-    """
     suggestions = [
         "Show me my policy timeline events",
         "What are my upcoming policy renewals?",
@@ -164,9 +157,6 @@ def get_suggestions(request):
 
 
 def get_policy_timeline_context(customer_id=None, policy_id=None, user=None):
-    """
-    Get context data from policy timeline related tables for AI response
-    """
     try:
         context_data = {
             'customer_info': {},
@@ -565,9 +555,6 @@ def get_policy_timeline_context(customer_id=None, policy_id=None, user=None):
 
 
 def is_policy_timeline_related_question(message):
-    """
-    Check if the question is related to policy timeline
-    """
     policy_keywords = [
         'policy', 'timeline', 'renewal', 'premium', 'coverage', 'payment', 
         'customer', 'profile', 'preference', 'medical', 'history', 'claim',
@@ -585,9 +572,6 @@ def is_policy_timeline_related_question(message):
 
 
 def generate_ai_response(user_message, context_data):
-    """
-    Generate AI response using OpenAI API
-    """
     try:
         from openai import OpenAI
         
@@ -684,9 +668,6 @@ def generate_ai_response(user_message, context_data):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def send_request_get_response(request):
-    """
-    Send a request to chatbot and get AI response
-    """
     user_message = request.data.get('message', '')
     
     if not user_message:

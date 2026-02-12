@@ -62,7 +62,6 @@ class WhatsAppProvider(models.Model):
         help_text="The identifier for the phone number"
     )
     
-    # Maps to: App Name (Gupshup)
     app_id = models.CharField(
         max_length=100, 
         blank=True, 

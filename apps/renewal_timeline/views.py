@@ -14,7 +14,6 @@ from .serializers import (
 
 
 class CommonRenewalTimelineSettingsViewSet(viewsets.ModelViewSet):
-    """ViewSet for managing common renewal timeline settings"""
     
     def get_queryset(self):
         return CommonRenewalTimelineSettings.objects.all()
@@ -69,13 +68,11 @@ class CommonRenewalTimelineSettingsViewSet(viewsets.ModelViewSet):
         }
         """
         try:
-            # Extract data from request
             renewal_pattern = request.data.get('renewal_pattern', '')
             reminder_schedule = request.data.get('reminder_schedule', [])
             auto_renewal_enabled = request.data.get('auto_renewal_enabled', False)
             description = request.data.get('description', '')
             
-            # Convert reminder schedule to reminder_days format
             reminder_days = []
             formatted_reminder_schedule = []
             for reminder in reminder_schedule:
@@ -83,10 +80,8 @@ class CommonRenewalTimelineSettingsViewSet(viewsets.ModelViewSet):
                     days = reminder['days']
                     channel = reminder.get('channel', 'Email')
                     reminder_days.append(days)
-                    # Create formatted string for frontend display
                     formatted_reminder_schedule.append(f"{days} days before due date ({channel})")
             
-            # Get or create common timeline settings (only one active setting)
             common_settings, created = CommonRenewalTimelineSettings.objects.get_or_create(
                 is_active=True,
                 defaults={
@@ -100,7 +95,6 @@ class CommonRenewalTimelineSettingsViewSet(viewsets.ModelViewSet):
                 }
             )
             
-            # Update existing settings if not created
             if not created:
                 common_settings.renewal_pattern = renewal_pattern
                 common_settings.reminder_days = reminder_days
@@ -110,7 +104,6 @@ class CommonRenewalTimelineSettingsViewSet(viewsets.ModelViewSet):
                 common_settings.updated_by = request.user
                 common_settings.save()
             
-            # Serialize the response
             serializer = CommonRenewalTimelineSettingsSerializer(common_settings)
             
             return Response({
@@ -129,12 +122,7 @@ class CommonRenewalTimelineSettingsViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], url_path='get-common-timeline-settings')
     def get_common_timeline_settings(self, request):
-        """
-        Get common renewal timeline settings that apply to all customers
-        No query params needed - returns the active common settings
-        """
         try:
-            # Get the active common timeline settings
             common_settings = CommonRenewalTimelineSettings.objects.filter(is_active=True).first()
             
             if not common_settings:
@@ -144,11 +132,9 @@ class CommonRenewalTimelineSettingsViewSet(viewsets.ModelViewSet):
                     'data': None
                 }, status=status.HTTP_404_NOT_FOUND)
             
-            # Use the formatted reminder schedule if available, otherwise format from reminder_days
             if common_settings.reminder_schedule:
                 formatted_reminder_schedule = common_settings.reminder_schedule
             else:
-                # Fallback: format from reminder_days for backward compatibility
                 formatted_reminder_schedule = []
                 for days in common_settings.reminder_days:
                     if days == 30:

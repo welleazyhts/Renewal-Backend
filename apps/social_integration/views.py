@@ -23,10 +23,6 @@ from .services import (
     PlatformConnectionError,
 )
 
-
-# ============================================================
-# 1️⃣ PLATFORM VIEWSET
-# ============================================================
 class SocialPlatformViewSet(viewsets.ModelViewSet):
     queryset = SocialPlatform.objects.all()
     serializer_class = SocialPlatformSerializer
@@ -64,16 +60,9 @@ class SocialPlatformViewSet(viewsets.ModelViewSet):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
-# ============================================================
-# 2️⃣ SOCIAL VERIFICATION SETTINGS (VERSIONED)
-# ============================================================
 class SocialVerificationSettingsView(APIView):
 
     def get(self, request):
-        """
-        Always return latest settings
-        """
         settings = SocialVerificationSettings.objects.order_by("-id").first()
 
         if not settings:
@@ -88,9 +77,6 @@ class SocialVerificationSettingsView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
-        """
-        Create a NEW row for every change (versioned settings)
-        """
         latest = SocialVerificationSettings.objects.order_by("-id").first()
 
         new_settings = SocialVerificationSettings.objects.create(
@@ -114,30 +100,13 @@ class SocialVerificationSettingsView(APIView):
 
         serializer = SocialVerificationSettingsSerializer(new_settings)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-
-# ============================================================
-# 3️⃣ TEST SOCIAL VERIFICATION (REAL-TIME)
-# ============================================================
 class SocialVerificationTestView(APIView):
 
     def post(self, request):
-        """
-        Body example (temporary):
-        {
-            "phone": "9876543210",
-            "email": "test@example.com"
-        }
-        """
 
         results = test_customer_verification(request.data)
         serializer = SocialVerificationResultSerializer(results, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-# ============================================================
-# 4️⃣ STATISTICS
-# ============================================================
 class SocialIntegrationStatisticsView(APIView):
 
     def get(self, request):

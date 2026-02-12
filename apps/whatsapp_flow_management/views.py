@@ -7,7 +7,7 @@ import csv
 from itertools import chain
 from operator import attrgetter
 from django.http import HttpResponse
-import openpyxl  # For Excel
+import openpyxl  
 from reportlab.pdfgen import canvas 
 from reportlab.lib.pagesizes import letter
 
@@ -21,36 +21,26 @@ from .serializers import (
     AITemplateSerializer
 )
 
-# --- Base ViewSet with Soft Delete and Queryset Filtering ---
 class SoftDeleteModelViewSet(viewsets.ModelViewSet):
-    """
-    Base ViewSet that implements soft deletion and filters out deleted objects.
-    """
     def get_queryset(self):
-        # By default, only return records where is_deleted is False
         return super().get_queryset().filter(is_deleted=False)
 
     def perform_destroy(self, instance):
-        # Implement Soft Delete:
         instance.is_deleted = True
         instance.deleted_at = timezone.now()
         
-        # Set deleted_by user (assuming request.user is authenticated)
         user = self.request.user if self.request.user.is_authenticated else None
         instance.deleted_by = user
         
         instance.save()
 
-# --- 1. Flow Management CRUD (Flow Management Tab) ---
 class WhatsAppFlowViewSet(SoftDeleteModelViewSet):
     queryset = WhatsAppFlow.objects.all().order_by('-created_at')
     permission_classes = [permissions.IsAuthenticated]
 
     def get_serializer_class(self):
-        # Use detailed serializer for the flow builder canvas
         if self.action in ['retrieve', 'update', 'partial_update']:
             return WhatsAppFlowDetailSerializer
-        # Use the simpler serializer for the list view (the dashboard tiles)
         return WhatsAppFlowSerializer
 
     @action(detail=True, methods=['post'])
@@ -59,7 +49,6 @@ class WhatsAppFlowViewSet(SoftDeleteModelViewSet):
         if flow.status == 'DRAFT' or flow.status == 'PAUSED':
             flow.status = 'PUBLISHED'
             flow.save()
-            # Add logic here to create the FlowAnalytics object if it doesn't exist
             FlowAnalytics.objects.get_or_create(flow=flow)
             return Response({'status': 'Flow published'}, status=status.HTTP_200_OK)
         return Response({'detail': 'Flow cannot be published from its current status.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -72,37 +61,26 @@ class WhatsAppFlowViewSet(SoftDeleteModelViewSet):
         return Response({'status': 'Flow paused'}, status=status.HTTP_200_OK)
     @action(detail=True, methods=['get'])
     def analytics_details(self, request, pk=None):
-        """
-        Populates the Right Sidebar Analytics Tab.
-        Returns ONLY: Total Runs, Completion Rate, Avg Time, and Export Link.
-        """
         flow = self.get_object()
         
-        # Get Stats (Safe Access)
         stats, _ = FlowAnalytics.objects.get_or_create(flow=flow)
         
         total = stats.total_runs
         completed = stats.completed_runs
         
-        # Calculate Percentage
         completion_rate = (completed / total * 100) if total > 0 else 0
         
-        # Generate the Export URL for the button
         export_url = request.build_absolute_uri(f'/api/whatsapp_flow_management/flows/{flow.id}/export_report/?type=csv')
 
         return Response({
             "total_runs": total,
-            "completion_rate": f"{completion_rate:.0f}%", # Rounds to "94%"
-            "avg_response_time": f"{stats.avg_duration_seconds:.1f}s", # e.g. "2.3s"
-            "export_url": export_url  # Put this in the href of "Export Analytics Report" button
+            "completion_rate": f"{completion_rate:.0f}%", 
+            "avg_response_time": f"{stats.avg_duration_seconds:.1f}s", 
+            "export_url": export_url 
         })
 
-    # --- 2. EXPORT BUTTON ACTION ---
     @action(detail=True, methods=['get'])
     def export_report(self, request, pk=None):
-        """
-        Downloads the CSV when user clicks 'Export Analytics Report' in the sidebar.
-        """
         flow = self.get_object()
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = f'attachment; filename="{flow.name}_analytics.csv"'
@@ -119,10 +97,6 @@ class WhatsAppFlowViewSet(SoftDeleteModelViewSet):
         return response
     @action(detail=True, methods=['post'])
     def test_flow(self, request, pk=None):
-        """
-        Connect this to the 'Test' button.
-        It sends a REAL WhatsApp message to the number provided.
-        """
         flow = self.get_object()
         phone_number = request.data.get('phone_number')
         
@@ -145,7 +119,6 @@ class WhatsAppFlowViewSet(SoftDeleteModelViewSet):
             analytics.total_runs += 1
         elif event == "COMPLETE":
             analytics.completed_runs += 1
-            # Update Average Time
             if analytics.completed_runs > 1:
                 prev_total = analytics.avg_duration_seconds * (analytics.completed_runs - 1)
                 analytics.avg_duration_seconds = (prev_total + float(duration)) / analytics.completed_runs
@@ -153,28 +126,21 @@ class WhatsAppFlowViewSet(SoftDeleteModelViewSet):
                 analytics.avg_duration_seconds = float(duration)
         elif event == "DROP":
             analytics.dropped_off_runs += 1
-            # Optional: Add node drop-off logic here if sent from frontend
 
         analytics.save()
         return Response({"status": "Analytics Updated"})
     
     @action(detail=True, methods=['post'])
     def debug_flow(self, request, pk=None):
-        """
-        DRY RUN: Simulates the flow logic without sending real WhatsApp messages.
-        Returns the 'Path' (Trace) of blocks validation.
-        """
         flow = self.get_object()
-        user_input = request.data.get('mock_input', 'Hello') # Simulate user saying "Hello"
+        user_input = request.data.get('mock_input', 'Hello') 
         
         trace_log = []
         
-        # 1. Start at the first block (logic depends on your canvas structure)
-        # For this demo, let's assume we find the block with no incoming connections or a specific start flag
-        current_block = flow.blocks.first() # specific logic needed here based on your JSON structure
+        current_block = flow.blocks.first() 
         
         step_count = 0
-        while current_block and step_count < 10: # Limit steps to prevent infinite loops
+        while current_block and step_count < 10: 
             step_count += 1
             trace_log.append({
                 "step": step_count,
@@ -184,10 +150,7 @@ class WhatsAppFlowViewSet(SoftDeleteModelViewSet):
                 "message": f"Processed {current_block.block_type}"
             })
             
-            # Simulate moving to next block
             if current_block.connections:
-                # In a real engine, you evaluate IF/ELSE conditions here.
-                # For Debug, we just take the first 'success' path.
                 next_id = current_block.connections[0].get('target_block_id')
                 current_block = flow.blocks.filter(block_id=next_id).first()
             else:
@@ -200,11 +163,6 @@ class WhatsAppFlowViewSet(SoftDeleteModelViewSet):
         })
     @action(detail=False, methods=['get'])
     def demo_flow(self, request):
-        """
-        Returns a hardcoded 'Sample Flow' structure.
-        The Frontend uses this to render a 'Demo Canvas' showing the user
-        how a finished flow looks (e.g., Welcome -> Input -> End).
-        """
         demo_data = {
             "name": "Demo: Customer Feedback (Example)",
             "entry_point": "INBOUND",
@@ -248,7 +206,7 @@ class WhatsAppFlowViewSet(SoftDeleteModelViewSet):
         return Response(demo_data)
 class FlowAnalyticsReportViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = WhatsAppFlow.objects.all() 
-    serializer_class = WhatsAppFlowSerializer # Used for recent activity list items
+    serializer_class = WhatsAppFlowSerializer 
     permission_classes = [permissions.IsAuthenticated]
     @action(detail=False, methods=['get'])
     def summary(self, request):
@@ -279,7 +237,6 @@ class FlowAnalyticsReportViewSet(viewsets.ReadOnlyModelViewSet):
 
         return Response(response_data)
 
-# --- 3. Templates CRUD (Templates Tab) ---
 class WhatsAppMessageTemplateViewSet(SoftDeleteModelViewSet):
     queryset = WhatsAppMessageTemplate.objects.all().order_by('-created_at')
     serializer_class = WhatsAppMessageTemplateSerializer
@@ -306,50 +263,39 @@ class TemplatesDashboardViewSet(viewsets.ViewSet):
         flow_count = FlowTemplate.objects.filter(is_deleted=False).count()
         ai_count = AITemplate.objects.filter(is_deleted=False).count()
         
-        # Define the static UI labels (These are fine to keep here or move to a config file)
         cards_data = [
             {
-                # "id": "message_templates",
                 "title": "Message Templates",
-                "count": msg_count, # <--- Dynamic
+                "count": msg_count, 
                 "description": "Pre-approved message templates for marketing and notifications",
                 "button_text": "Manage Templates"
             },
             {
-                # "id": "flow_templates",
                 "title": "Flow Templates",
-                "count": flow_count, # <--- Dynamic
+                "count": flow_count, 
                 "description": "Complete flow templates for common use cases",
                 "button_text": "Browse Templates"
             },
             {
-                # "id": "ai_templates",
                 "title": "AI Templates",
-                "count": ai_count, # <--- Dynamic
+                "count": ai_count, 
                 "description": "AI-generated templates based on your business needs",
                 "button_text": "Generate New"
             }
         ]
 
-        # --- PART 2: FETCH & MERGE RECENT ITEMS ---
-        # 1. Fetch top 5 items from each table (Optimize query by only getting needed fields if necessary)
         recent_msgs = WhatsAppMessageTemplate.objects.filter(is_deleted=False).order_by('-updated_at')[:5]
         recent_flows = FlowTemplate.objects.filter(is_deleted=False).order_by('-updated_at')[:5]
         recent_ai = AITemplate.objects.filter(is_deleted=False).order_by('-updated_at')[:5]
         
-        # 2. Combine all three lists
         combined_list = list(chain(recent_msgs, recent_flows, recent_ai))
         
-        # 3. Sort by 'updated_at' (Newest first)
         combined_list.sort(key=attrgetter('updated_at'), reverse=True)
         
-        # 4. Take the top 5 most recent items across all types
         final_recent_list = combined_list[:5]
 
-        # 5. Format the data for the UI
         recent_data = []
         for item in final_recent_list:
-            # Determine type specific fields
             if isinstance(item, WhatsAppMessageTemplate):
                 type_label = "Message Template"
                 category = item.content_json.get('category', 'Marketing') if item.content_json else 'Marketing'
@@ -365,7 +311,7 @@ class TemplatesDashboardViewSet(viewsets.ViewSet):
             elif isinstance(item, AITemplate):
                 type_label = "AI Template"
                 category = getattr(item, 'category', 'AI Generated')
-                icon_type = "auto_awesome" # Example icon name for AI
+                icon_type = "auto_awesome"
                 status = getattr(item, 'status', 'Draft')
 
             recent_data.append({
@@ -382,15 +328,12 @@ class TemplatesDashboardViewSet(viewsets.ViewSet):
             "cards": cards_data,
             "recent_templates": recent_data
         })
-# In apps/whatsapp_flow_management/views.py
 
 class AnalyticsDashboardViewSet(viewsets.ViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     @action(detail=False, methods=['get'])
     def global_stats(self, request):
-        # --- 1. AGGREGATE REAL KPI METRICS ---
-        # Fetch sum of all runs across all flows
         agg_data = FlowAnalytics.objects.aggregate(
             total_sessions=Sum('total_runs'),
             total_completed=Sum('completed_runs'),
@@ -398,13 +341,11 @@ class AnalyticsDashboardViewSet(viewsets.ViewSet):
             avg_time=Avg('avg_duration_seconds')
         )
 
-        # Handle None values (if database is empty)
         total = agg_data['total_sessions'] or 0
         completed = agg_data['total_completed'] or 0
         dropped = agg_data['total_dropped'] or 0
         avg_time_val = agg_data['avg_time'] or 0.0
 
-        # Calculate Percentages
         completion_rate = (completed / total * 100) if total > 0 else 0
         drop_off_rate = (dropped / total * 100) if total > 0 else 0
         all_analytics = FlowAnalytics.objects.exclude(node_drop_off_data={})
@@ -417,7 +358,6 @@ class AnalyticsDashboardViewSet(viewsets.ViewSet):
         
         heatmap_data = []
         for node_name, count in sorted_drop_offs:
-            # Determine logic for Red/Orange/Green labels
             if count > 50:
                 level = "High Drop-off"
             elif count > 20:
@@ -426,13 +366,12 @@ class AnalyticsDashboardViewSet(viewsets.ViewSet):
                 level = "Low Drop-off"
                 
             heatmap_data.append({
-                "node": node_name, # Shows "node_1" or "Welcome Msg" depending on what you saved
+                "node": node_name, 
                 "value": count,
                 "drop_off_level": level
             })
 
 
-        # --- 3. GENERATE DOWNLOAD LINKS ---
         base_url = request.build_absolute_uri('/api/whatsapp_flow_management/analytics_dashboard/export_report/')
 
         return Response({
@@ -453,26 +392,20 @@ class AnalyticsDashboardViewSet(viewsets.ViewSet):
     def export_report(self, request):
         report_type = request.query_params.get('type', 'csv')
         
-        # 1. Fetch REAL data from your database
         flows = WhatsAppFlow.objects.filter(is_deleted=False).order_by('-created_at')
 
-        # CSV DOWNLOAD 
         if report_type == 'csv':
             response = HttpResponse(content_type='text/csv')
             response['Content-Disposition'] = 'attachment; filename="analytics_report.csv"'
             
             writer = csv.writer(response)
-            # Header
             writer.writerow(['Flow Name', 'Status', 'Created At', 'Total Runs'])
-            # Data Rows
             for flow in flows:
-                # fetch real analytics if they exist, else 0
                 runs = getattr(flow, 'analytics', None).total_runs if hasattr(flow, 'analytics') else 0
                 writer.writerow([flow.name, flow.get_status_display(), flow.created_at.strftime("%Y-%m-%d"), runs])
             
             return response
 
-        # --- OPTION 2: EXCEL DOWNLOAD ---
         elif report_type == 'excel':
             response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
             response['Content-Disposition'] = 'attachment; filename="analytics_report.xlsx"'
@@ -481,52 +414,45 @@ class AnalyticsDashboardViewSet(viewsets.ViewSet):
             ws = wb.active
             ws.title = "Flow Analytics"
 
-            # Header
             headers = ['Flow Name', 'Status', 'Created At', 'Total Runs']
             ws.append(headers)
 
-            # Data Rows
             for flow in flows:
                 runs = getattr(flow, 'analytics', None).total_runs if hasattr(flow, 'analytics') else 0
-                # Excel handles python dates automatically
                 ws.append([flow.name, flow.get_status_display(), flow.created_at.replace(tzinfo=None), runs])
 
             wb.save(response)
             return response
 
-        # --- OPTION 3: PDF DOWNLOAD ---
         elif report_type == 'pdf':
             response = HttpResponse(content_type='application/pdf')
             response['Content-Disposition'] = 'attachment; filename="analytics_report.pdf"'
 
             p = canvas.Canvas(response, pagesize=letter)
             width, height = letter
-            y = height - 40 # Start at the top of the page
+            y = height - 40 
 
-            # Title
             p.setFont("Helvetica-Bold", 16)
             p.drawString(30, y, "WhatsApp Flow Analytics Report")
             y -= 30
             
-            # Headers
             p.setFont("Helvetica-Bold", 12)
             p.drawString(30, y, "Flow Name")
             p.drawString(250, y, "Status")
             p.drawString(350, y, "Created Date")
             p.drawString(480, y, "Total Runs")
             y -= 20
-            p.line(30, y+15, 550, y+15) # Underline header
+            p.line(30, y+15, 550, y+15) 
 
-            # Data Rows
             p.setFont("Helvetica", 10)
             for flow in flows:
-                if y < 50: # Check if page is full
+                if y < 50: 
                     p.showPage()
                     y = height - 40
                 
                 runs = getattr(flow, 'analytics', None).total_runs if hasattr(flow, 'analytics') else 0
                 
-                p.drawString(30, y, flow.name[:35]) # Truncate long names
+                p.drawString(30, y, flow.name[:35]) 
                 p.drawString(250, y, flow.get_status_display())
                 p.drawString(350, y, flow.created_at.strftime("%Y-%m-%d"))
                 p.drawString(480, y, str(runs))

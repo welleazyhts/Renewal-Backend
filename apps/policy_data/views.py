@@ -44,26 +44,22 @@ def get_next_available_agent():
         return None
 
 def get_or_create_policy_agent(agent_name, agent_code=None):
-    """Get or create a PolicyAgent based on agent_name and optional agent_code"""
     if not agent_name or not str(agent_name).strip():
         return None
     
     agent_name = str(agent_name).strip()
     
     try:
-        # First try to find by agent_code if provided
         if agent_code and str(agent_code).strip():
             agent_code = str(agent_code).strip()
             agent = PolicyAgent.objects.filter(agent_code=agent_code).first()
             if agent:
                 return agent
         
-        # Try to find by agent_name
         agent = PolicyAgent.objects.filter(agent_name__iexact=agent_name).first()
         if agent:
             return agent
         
-        # Create new agent
         agent = PolicyAgent.objects.create(
             agent_name=agent_name,
             agent_code=agent_code 
@@ -75,7 +71,6 @@ def get_or_create_policy_agent(agent_name, agent_code=None):
         return None
 
 def log_communication_attempt(customer, channel, outcome='successful', message_content='', response_received='', notes='', initiated_by=None):
-    """Log a communication attempt with a customer"""
     from apps.customer_communication_preferences.models import CommunicationLog
     from django.utils import timezone
     
@@ -99,10 +94,8 @@ def get_customer_previous_policy_end_date(customer, current_policy_start_date=No
     from apps.policies.models import Policy
 
     try:
-        # Handle both Customer instance and customer_id
         customer_id = customer.id if hasattr(customer, 'id') else customer
 
-        # Build query to find previous policies
         query = Policy.objects.filter(customer_id=customer_id)
 
        
@@ -185,15 +178,12 @@ def calculate_policy_and_renewal_status(end_date, start_date=None, grace_period_
     return policy_status, renewal_status
 
 class FileUploadViewSet(viewsets.ModelViewSet):
-    """Enhanced file upload viewset with comprehensive Excel processing"""
-
     queryset = FileUpload.objects.all()
     serializer_class = FileUploadSerializer
     parser_classes = (MultiPartParser, FormParser)
     permission_classes = [IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
-        """Upload and process Excel file with enhanced validation"""
         try:
             uploaded_file = request.FILES.get('file') or request.FILES.get('upload_file')
             if not uploaded_file:
@@ -212,7 +202,6 @@ class FileUploadViewSet(viewsets.ModelViewSet):
                 from django.utils import timezone
                 from datetime import datetime
                 
-                # Format the uploaded date in a user-friendly way
                 uploaded_date = existing_file.created_at
                 if isinstance(uploaded_date, str):
                     uploaded_date = datetime.fromisoformat(uploaded_date.replace('Z', '+00:00'))
@@ -240,7 +229,6 @@ class FileUploadViewSet(viewsets.ModelViewSet):
                 
               
                 if not processing_result.get('valid', False):
-                    # Delete file records when processing completely fails
                     try:
                         if file_upload_record:
                             file_upload_record.delete()
@@ -258,7 +246,6 @@ class FileUploadViewSet(viewsets.ModelViewSet):
                 
                
                 if processing_result.get('failed_records', 0) > 0 and processing_result.get('successful_records', 0) == 0:
-                    # All records failed - delete file records
                     try:
                         if file_upload_record:
                             file_upload_record.delete()
@@ -274,7 +261,6 @@ class FileUploadViewSet(viewsets.ModelViewSet):
                         'processing_details': processing_result
                     }, status=status.HTTP_400_BAD_REQUEST)
                 
-                # Partial success - some records succeeded, keep the file records
                 if processing_result.get('failed_records', 0) > 0:
                     return Response({
                         'success': False,
@@ -296,7 +282,6 @@ class FileUploadViewSet(viewsets.ModelViewSet):
                 
               
                 if uploads_record.status == 'failed':
-                    # Delete file records when status is failed
                     try:
                         if file_upload_record:
                             file_upload_record.delete()
@@ -315,7 +300,6 @@ class FileUploadViewSet(viewsets.ModelViewSet):
                 print(f"Processing error: {str(process_error)}")
                 print(f"Uploads record status: {uploads_record.status}")
                 
-                # Delete file records when processing throws an exception
                 try:
                     if file_upload_record:
                         file_upload_record.delete()
@@ -373,7 +357,6 @@ class FileUploadViewSet(viewsets.ModelViewSet):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def _validate_file(self, file):
-        """Enhanced file validation with security checks"""
         allowed_extensions = ['.xlsx', '.xls', '.csv', '.txt']
         allowed_mime_types = [
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -450,14 +433,12 @@ class FileUploadViewSet(viewsets.ModelViewSet):
         return {'valid': True}
 
     def _calculate_file_hash(self, file):
-        """Calculate SHA-256 hash of the file"""
         hash_sha256 = hashlib.sha256()
         for chunk in file.chunks():
             hash_sha256.update(chunk)
         return hash_sha256.hexdigest()
 
     def _create_file_records(self, uploaded_file, file_hash, user):
-        """Create records in both file upload tables with secure naming"""
         try:
             secure_filename = self._generate_secure_filename(uploaded_file.name, user.id)
             uploaded_file.name = secure_filename
@@ -500,7 +481,6 @@ class FileUploadViewSet(viewsets.ModelViewSet):
             raise e
 
     def _generate_secure_filename(self, original_filename, user_id):
-        """Generate secure filename with timestamp and user ID"""
         import uuid
         from datetime import datetime
 
@@ -513,7 +493,6 @@ class FileUploadViewSet(viewsets.ModelViewSet):
         return secure_filename
 
     def _create_file_uploads_record(self, uploads_record, user):
-        """Create record in file_uploads table with all required fields"""
         import json
         try:
             file_upload_record = FileUpload.objects.create(
@@ -560,9 +539,7 @@ class FileUploadViewSet(viewsets.ModelViewSet):
 
 
     def _process_uploaded_excel_file(self, uploads_record, user, file_upload_record=None):
-        """Process Excel/CSV file directly from uploads_record"""
         try:
-            # df = self._read_file_data(uploads_record.file.path, uploads_record.original_name)
             uploaded_file = uploads_record.file
             uploaded_file.open()
             file_bytes = uploaded_file.read()
@@ -716,9 +693,7 @@ class FileUploadViewSet(viewsets.ModelViewSet):
         return {'valid': True}
 
     def _process_excel_file(self, file_upload_record, uploads_record, user):
-        """Process Excel/CSV file and extract data"""
         try:
-            # df = self._read_file_data(file_upload_record.uploaded_file.path, file_upload_record.original_filename)
             uploaded_file = file_upload_record.uploaded_file
             uploaded_file.open()
             file_bytes = uploaded_file.read()
@@ -778,7 +753,6 @@ class FileUploadViewSet(viewsets.ModelViewSet):
         return {'valid': True}
 
     def _process_excel_data(self, df, user):
-        """Process Excel data and create database records"""
         total_records = len(df)
         successful_records = 0
         failed_records = 0
@@ -822,7 +796,6 @@ class FileUploadViewSet(viewsets.ModelViewSet):
         }
 
     def _process_customer_data(self, row, user):
-        """Process customer data from Excel row"""
         email = str(row.get('email', '')).strip().lower() if row.get('email') and pd.notna(row.get('email')) else ''
         if not email:
             raise ValueError("Email is required for customer creation")
@@ -887,7 +860,6 @@ class FileUploadViewSet(viewsets.ModelViewSet):
                             created_by=user,
                             updated_by=None
                         )
-                    # Verify customer was actually created before setting flag
                     if customer and customer.id:
                         customer_created = True
 
@@ -1211,7 +1183,6 @@ class FileUploadViewSet(viewsets.ModelViewSet):
         return renewal_case
 
     def _get_or_create_channel(self, row, user):
-        """Get or create channel based on Excel data"""
         from apps.channels.models import Channel
 
         channel_name = str(row.get('channel', 'Online')).strip()
@@ -1276,7 +1247,6 @@ class FileUploadViewSet(viewsets.ModelViewSet):
             return default_channel
 
     def _parse_date(self, date_value):
-        """Parse date from various formats"""
         if pd.isna(date_value) or date_value is None:
             return None
 
@@ -1289,7 +1259,6 @@ class FileUploadViewSet(viewsets.ModelViewSet):
             return None
 
     def _parse_datetime(self, datetime_value):
-        """Parse datetime from various formats"""
         if pd.isna(datetime_value) or datetime_value is None:
             return None
 

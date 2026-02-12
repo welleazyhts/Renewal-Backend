@@ -7,5 +7,4 @@ class VerificationConfig(AppConfig):
     verbose_name = 'Customer Verification'
     
     def ready(self):
-        """Import signal handlers when the app is ready."""
         pass

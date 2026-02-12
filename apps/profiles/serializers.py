@@ -5,16 +5,10 @@ from django.utils.timesince import timesince
 User = get_user_model()
 
 class UserProfileSerializer(serializers.ModelSerializer):
-    """
-    Formatted specifically for the 'My Profile' UI layout.
-    """
-    # Section 1: Header Card (Left Side)
     my_profile = serializers.SerializerMethodField()
     
-    # Section 2: Profile Information (Right Side - Top)
     profile_information = serializers.SerializerMethodField()
     
-    # Section 3: Account Security (Right Side - Bottom)
     account_security = serializers.SerializerMethodField()
 
     class Meta:
@@ -53,9 +47,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
         }
 
 class ChangePasswordSerializer(serializers.Serializer):
-    """
-    Serializer for password change endpoint.
-    """
     old_password = serializers.CharField(required=True)
     new_password = serializers.CharField(required=True)
     confirm_new_password = serializers.CharField(required=True)
@@ -65,10 +56,6 @@ class ChangePasswordSerializer(serializers.Serializer):
             raise serializers.ValidationError({"new_password": "New passwords must match."})
         return data
 class UpdateUserProfileSerializer(serializers.ModelSerializer):
-    """
-    Serializer specifically for SAVING profile updates.
-    It accepts a flat JSON structure (easier for React forms).
-    """
     class Meta:
         model = User
         fields = [

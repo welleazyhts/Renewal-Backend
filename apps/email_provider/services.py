@@ -84,8 +84,6 @@ class EmailProviderService:
             if provider.can_send_email():
                 return provider
         
-        # If no healthy providers, try active providers with unknown health status
-        # This is useful for providers that haven't been health-checked yet
         active_providers = EmailProviderConfig.objects.filter(
             is_active=True,
             is_deleted=False,
@@ -108,18 +106,11 @@ class EmailProviderService:
                    bcc_emails: List[str] = None, attachments: List[Tuple[str, str, str]] = None,
                    custom_args: Dict[str, str] = None, customer=None, case=None,
                    check_notifications: bool = False) -> Dict[str, Any]:
-        """
-        Send email using the specific provider attached to the service instance 
-        (self.config) OR the best available provider if no config was attached.
-        """
-        
-        # --- REAL-TIME NOTIFICATION CHECK ---
         if check_notifications:
             User = get_user_model()
             all_recipients = (to_emails or []) + (cc_emails or []) + (bcc_emails or [])
             
             if all_recipients:
-                # Find users who have explicitly disabled email notifications
                 opt_out_emails = set(User.objects.filter(
                     email__in=all_recipients, 
                     email_notifications=False
@@ -135,7 +126,6 @@ class EmailProviderService:
                     if bcc_emails:
                         bcc_emails = [e for e in bcc_emails if e not in opt_out_emails]
                     
-                    # If everyone was filtered out, abort early
                     if not to_emails and not cc_emails and not bcc_emails:
                         return {
                             'success': False,
@@ -143,14 +133,10 @@ class EmailProviderService:
                             'provider_name': None
                         }
         
-        # --- Provider Selection Logic ---
         if self.config:
-            # Campaign manager forces a specific provider (self.config)
             provider = self.config
         else:
-            # Fallback to dynamic selection
             provider = self.get_available_provider() 
-        # --- End Provider Selection Logic ---
 
         if not provider:
             return {
@@ -190,7 +176,6 @@ class EmailProviderService:
             if result['success']:
                 provider.increment_usage(len(to_emails))
             
-            # --- BILLING INTEGRATION ---
             log_communication(
                 vendor_name=provider.name,
                 service_type='email',
@@ -214,7 +199,6 @@ class EmailProviderService:
             # Log failed usage
             self._log_usage(provider, len(to_emails), False, response_time)
             
-            # --- BILLING INTEGRATION (FAILURE) ---
             log_communication(
                 vendor_name=provider.name,
                 service_type='email',
@@ -273,14 +257,12 @@ class EmailProviderService:
             if bcc_emails:
                 mail.bcc = bcc_emails
             
-            # Add custom arguments for webhook tracking (using proper SendGrid syntax)
             if custom_args:
                 from sendgrid.helpers.mail import CustomArg
                 for key, value in custom_args.items():
                     mail.add_custom_arg(CustomArg(key, value))
                 logger.info(f"Added custom_args to SendGrid email: {custom_args}")
             
-            # Enable SendGrid click and open tracking (using proper SendGrid classes)
             from sendgrid.helpers.mail import ClickTracking, OpenTracking, TrackingSettings
             tracking_settings = TrackingSettings()
             tracking_settings.click_tracking = ClickTracking(enable=True, enable_text=True)
@@ -469,7 +451,6 @@ Provider: {provider.name}
             # Decrypt password
             smtp_password = self._decrypt_credential(provider.smtp_password)
             
-            # 1. Create a specific connection for this provider
             connection = get_connection(
                 backend='django.core.mail.backends.smtp.EmailBackend',
                 host=provider.smtp_host,
@@ -478,10 +459,9 @@ Provider: {provider.name}
                 password=smtp_password,
                 use_tls=provider.smtp_use_tls,
                 use_ssl=provider.smtp_use_ssl,
-                timeout=30 # Add a timeout to prevent hanging
+                timeout=30 
             )
 
-            # 2. Create the email message using this connection
             msg = EmailMultiAlternatives(
                 subject=subject,
                 body=text_content or html_content,
@@ -489,7 +469,7 @@ Provider: {provider.name}
                 to=to_emails,
                 cc=cc_emails or [],
                 bcc=bcc_emails or [],
-                connection=connection  # <--- Bind the specific connection here
+                connection=connection 
             )
             
             if html_content:

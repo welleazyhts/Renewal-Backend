@@ -128,9 +128,6 @@ class SystemConfiguration(TimestampedModel):
         return f"{self.category}.{self.key}"
 
 class APIRateLimit(TimestampedModel):
-    """
-    Model to track API rate limiting.
-    """
     identifier = models.CharField(max_length=255, db_index=True)  
     endpoint = models.CharField(max_length=255, db_index=True)
     request_count = models.PositiveIntegerField(default=1)

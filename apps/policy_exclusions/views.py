@@ -12,10 +12,7 @@ from .serializers import (
     PolicyExclusionDetailSerializer
 )
 
-
-class PolicyExclusionViewSet(viewsets.ModelViewSet):
-    """ViewSet for managing policy exclusions"""
-    
+class PolicyExclusionViewSet(viewsets.ModelViewSet):    
     queryset = PolicyExclusion.objects.select_related(
         'policy', 'policy__policy_type', 'created_by', 'updated_by'
     ).filter(is_deleted=False)
@@ -24,7 +21,6 @@ class PolicyExclusionViewSet(viewsets.ModelViewSet):
     filterset_fields = ['policy', 'exclusion_type', 'policy__policy_type']
     
     def get_serializer_class(self):
-        """Return appropriate serializer based on action"""
         if self.action == 'create':
             return PolicyExclusionCreateSerializer
         elif self.action in ['update', 'partial_update']:
@@ -32,20 +28,16 @@ class PolicyExclusionViewSet(viewsets.ModelViewSet):
         return PolicyExclusionSerializer
     
     def perform_create(self, serializer):
-        """Set created_by when creating new exclusion"""
         serializer.save(created_by=self.request.user)
     
     def perform_update(self, serializer):
-        """Set updated_by when updating exclusion"""
         serializer.save(updated_by=self.request.user)
     
     def perform_destroy(self, instance):
-        """Soft delete the exclusion"""
         instance.delete(user=self.request.user)
     
     @action(detail=False, methods=['get'])
     def by_policy(self, request):
-        """Get exclusions by policy ID or policy number"""
         policy_id = request.query_params.get('policy_id')
         policy_number = request.query_params.get('policy_number')
         
@@ -67,7 +59,6 @@ class PolicyExclusionViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def search(self, request):
-        """Search exclusions by description or exclusion type"""
         search_term = request.query_params.get('search', '').strip()
 
         if not search_term:
@@ -87,7 +78,6 @@ class PolicyExclusionViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def detailed_view(self, request):
-        """Get detailed exclusions data for frontend display"""
         policy_id = request.query_params.get('policy_id')
         policy_number = request.query_params.get('policy_number')
 
@@ -98,7 +88,6 @@ class PolicyExclusionViewSet(viewsets.ModelViewSet):
         elif policy_number:
             queryset = queryset.filter(policy__policy_number__iexact=policy_number)
 
-        # Group exclusions by type for frontend display
         exclusions_by_type = {}
         for exclusion in queryset:
             exclusion_type = exclusion.get_exclusion_type_display()
@@ -110,7 +99,6 @@ class PolicyExclusionViewSet(viewsets.ModelViewSet):
                     'color_class': self._get_color_class(exclusion.exclusion_type)
                 }
 
-            # Parse description into items
             if exclusion.description:
                 lines = exclusion.description.split('\n')
                 for line in lines:
@@ -129,7 +117,6 @@ class PolicyExclusionViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'])
     def bulk_create(self, request):
-        """Create multiple exclusions at once with detailed data"""
         exclusions_data = request.data.get('exclusions', [])
 
         if not exclusions_data:
@@ -161,16 +148,15 @@ class PolicyExclusionViewSet(viewsets.ModelViewSet):
         })
 
     def _get_color_class(self, exclusion_type):
-        """Return CSS color class based on exclusion type"""
         color_mapping = {
-            'not_covered': 'danger',  # Red
-            'conditions_apply': 'warning',  # Yellow/Orange
-            'partial_coverage': 'info',  # Blue
-            'waiting_period': 'secondary',  # Gray
-            'geographical_limit': 'primary',  # Blue
-            'age_limit': 'dark',  # Dark
-            'pre_existing_condition': 'danger',  # Red
-            'activity_exclusion': 'warning',  # Yellow
-            'other': 'secondary'  # Gray
+            'not_covered': 'danger', 
+            'conditions_apply': 'warning', 
+            'partial_coverage': 'info',  
+            'waiting_period': 'secondary',  
+            'geographical_limit': 'primary', 
+            'age_limit': 'dark', 
+            'pre_existing_condition': 'danger', 
+            'activity_exclusion': 'warning', 
+            'other': 'secondary' 
         }
         return color_mapping.get(exclusion_type, 'secondary')

@@ -1,7 +1,6 @@
 from django.contrib import admin
 from .models import PolicyTimelineChatbot, PolicyTimelineChatbotMessage
 
-
 @admin.register(PolicyTimelineChatbot)
 class PolicyTimelineChatbotAdmin(admin.ModelAdmin):
     list_display = [

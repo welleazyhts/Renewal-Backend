@@ -1,15 +1,7 @@
 from django.db import models
 from django.conf import settings
 
-# RenewalTimeline model removed - using CommonRenewalTimelineSettings instead
-
-
 class CommonRenewalTimelineSettings(models.Model):
-    """
-    Common renewal timeline settings that apply to all customers
-    These are global settings, not customer-specific
-    """
-    # Core preferences - common for all customers
     renewal_pattern = models.CharField(
         max_length=100, 
         help_text="e.g., 'Pays 7–14 days before due date'",
@@ -26,7 +18,6 @@ class CommonRenewalTimelineSettings(models.Model):
     )
     auto_renewal_enabled = models.BooleanField(default=False)
     
-    # Settings metadata
     is_active = models.BooleanField(default=True)
     description = models.TextField(
         blank=True, 
@@ -34,7 +25,6 @@ class CommonRenewalTimelineSettings(models.Model):
         help_text="Description of these timeline settings"
     )
     
-    # Audit fields
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(

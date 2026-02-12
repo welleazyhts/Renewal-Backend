@@ -4,11 +4,7 @@ from apps.core.models import BaseModel
 from apps.policies.models import Policy
 
 User = get_user_model()
-
-
-class PolicyCondition(BaseModel):
-    """Model to store policy conditions"""
-    
+class PolicyCondition(BaseModel):    
     policy = models.ForeignKey(
         Policy,
         on_delete=models.CASCADE,
@@ -33,10 +29,8 @@ class PolicyCondition(BaseModel):
     
     @property
     def policy_number(self):
-        """Return the policy number for easy access"""
         return self.policy.policy_number if self.policy else None
     
     @property
     def customer_name(self):
-        """Return the customer name for easy access"""
         return self.policy.customer.full_name if self.policy and self.policy.customer else None

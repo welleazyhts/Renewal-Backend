@@ -1,31 +1,11 @@
 from rest_framework import serializers
 from .models import KnowledgeDocument, KnowledgeWebsite, DocumentModule
 from django.utils import timezone
-
-
-# ======================================================
-# DOCUMENT MODULE SERIALIZER (ADDED)
-# ======================================================
 class DocumentModuleSerializer(serializers.ModelSerializer):
-    """
-    Serializer for document modules.
-    Used to expose dynamic module list to frontend.
-    """
-
     class Meta:
         model = DocumentModule
         fields = ["id", "name"]
-
-
-# ======================================================
-# KNOWLEDGE DOCUMENT SERIALIZER (UPDATED – FINAL)
-# ======================================================
 class KnowledgeDocumentSerializer(serializers.ModelSerializer):
-    """
-    Serializer aligned with UI + enterprise audit needs.
-    """
-
-    # -------- UI Friendly Fields --------
     uploaded_by = serializers.SerializerMethodField()
     approved_by = serializers.SerializerMethodField()
     rejected_by = serializers.SerializerMethodField()
@@ -35,7 +15,6 @@ class KnowledgeDocumentSerializer(serializers.ModelSerializer):
     approved_at = serializers.DateTimeField(format="%Y-%m-%d", read_only=True)
     rejected_at = serializers.DateTimeField(format="%Y-%m-%d", read_only=True)
 
-    # -------- Read-only System Fields --------
     document_type = serializers.CharField(read_only=True)
     document_size = serializers.SerializerMethodField()
 
@@ -46,10 +25,6 @@ class KnowledgeDocumentSerializer(serializers.ModelSerializer):
 
     rejection_reason = serializers.CharField(read_only=True)
     is_deleted = serializers.BooleanField(read_only=True)
-
-    # ==================================================
-    # EXPIRY VISIBILITY FIELDS
-    # ==================================================
     is_expired = serializers.SerializerMethodField()
     expiry_display = serializers.SerializerMethodField()
 
@@ -64,17 +39,14 @@ class KnowledgeDocumentSerializer(serializers.ModelSerializer):
             "modules",
             "expiry_date",
 
-            # Expiry helpers
             "expiry_display",
             "is_expired",
 
-            # Status & OCR
             "status",
             "ocr_status",
             "ocr_accuracy",
             "ocr_failure_reason",
 
-            # Audit
             "uploaded_by",
             "uploaded_at",
             "approved_by",
@@ -85,15 +57,7 @@ class KnowledgeDocumentSerializer(serializers.ModelSerializer):
             "deleted_by",
             "is_deleted",
         ]
-
-    # --------------------------------------------------
-    # Helper methods for UI
-    # --------------------------------------------------
     def get_document_size(self, obj):
-        """
-        Returns human-readable file size:
-        B, KB, MB, GB
-        """
         if not obj.document_file:
             return None
 
@@ -125,10 +89,6 @@ class KnowledgeDocumentSerializer(serializers.ModelSerializer):
         if obj.deleted_by:
             return obj.deleted_by.get_full_name() or obj.deleted_by.email
         return None
-
-    # ==================================================
-    # EXPIRY LOGIC (USES MODEL PROPERTY)
-    # ==================================================
     def get_is_expired(self, obj):
         return obj.is_expired
 
@@ -137,14 +97,7 @@ class KnowledgeDocumentSerializer(serializers.ModelSerializer):
             return "Expired"
         return obj.expiry_date
 
-    # ==================================================
-    # MODULE VALIDATION (IMPORTANT)
-    # ==================================================
     def validate_modules(self, value):
-        """
-        Ensures only valid and active document modules are saved.
-        Supports single or multiple modules.
-        """
         if not isinstance(value, list):
             raise serializers.ValidationError("Modules must be a list")
 
@@ -163,17 +116,9 @@ class KnowledgeDocumentSerializer(serializers.ModelSerializer):
 
 
 
-# ======================================================
-# KNOWLEDGE WEBSITE SERIALIZER (UPDATED – FIXED)
-# ======================================================
 class KnowledgeWebsiteSerializer(serializers.ModelSerializer):
-    """
-    Serializer aligned with Website list & modal UI.
-    """
-
     added_by = serializers.SerializerMethodField()
 
-    # FIX: DateTimeField instead of DateField
     added_at = serializers.DateTimeField(
         source="created_at",
         format="%Y-%m-%d",
@@ -210,9 +155,6 @@ class KnowledgeWebsiteSerializer(serializers.ModelSerializer):
         return None
     
 
-# ======================================================
-# KNOWLEDGE DOCUMENT – VIEW DETAILS SERIALIZER (ADDED)
-# ======================================================
 class KnowledgeDocumentViewDetailsSerializer(serializers.ModelSerializer):
     uploaded_by = serializers.SerializerMethodField()
     upload_date = serializers.SerializerMethodField()
@@ -238,12 +180,9 @@ class KnowledgeDocumentViewDetailsSerializer(serializers.ModelSerializer):
             "download_url",
         ]
 
-    # -----------------------------
-    # SAFE FIELD CONVERSIONS
-    # -----------------------------
     def get_upload_date(self, obj):
         if obj.uploaded_at:
-            return obj.uploaded_at.date()  # datetime → date (SAFE)
+            return obj.uploaded_at.date() 
         return None
 
     def get_uploaded_by(self, obj):

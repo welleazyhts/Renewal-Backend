@@ -5,10 +5,7 @@ from apps.policies.models import PolicyType
 
 User = get_user_model()
 
-
-class PolicyCoverage(BaseModel):
-    """Model to store comprehensive policy coverage details"""
-    
+class PolicyCoverage(BaseModel):    
     COVERAGE_TYPE_CHOICES = [
         ('primary', 'Primary Coverage'),
         ('vehicle_protection', 'Vehicle Protection'),
@@ -149,10 +146,8 @@ class PolicyCoverage(BaseModel):
 
     @property
     def policy_type_name(self):
-        """Return the policy type name for easy access"""
         return self.policy_type.name if self.policy_type else None
 
     @property
     def policy_type_category(self):
-        """Return the policy type category for easy access"""
         return self.policy_type.category if self.policy_type else None

@@ -81,7 +81,6 @@ class LostCaseUpdateAPIView(APIView):
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
 
-        # Update lost case fields
         case.status = "lost"
         case.lost_reason = data["lost_reason"]
         case.lost_date = data["lost_date"]

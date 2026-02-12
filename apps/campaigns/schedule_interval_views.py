@@ -13,7 +13,6 @@ from .serializers import (
 )
 
 class CampaignScheduleIntervalViewSet(viewsets.ModelViewSet):
-    """ViewSet for managing campaign schedule intervals"""
     
     queryset = CampaignScheduleInterval.objects.all()
     permission_classes = [IsAuthenticated]
@@ -42,7 +41,6 @@ class CampaignScheduleIntervalViewSet(viewsets.ModelViewSet):
         return queryset
     
     def create(self, request, *args, **kwargs):
-        """Override create to add success message"""
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
@@ -55,7 +53,6 @@ class CampaignScheduleIntervalViewSet(viewsets.ModelViewSet):
         }, status=status.HTTP_201_CREATED, headers=headers)
     
     def update(self, request, *args, **kwargs):
-        """Override update to add success message"""
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
@@ -69,7 +66,6 @@ class CampaignScheduleIntervalViewSet(viewsets.ModelViewSet):
         })
     
     def destroy(self, request, *args, **kwargs):
-        """Override destroy to add success message"""
         instance = self.get_object()
         self.perform_destroy(instance)
         
@@ -79,7 +75,6 @@ class CampaignScheduleIntervalViewSet(viewsets.ModelViewSet):
         }, status=status.HTTP_200_OK)
     
     def list(self, request, *args, **kwargs):
-        """Override list to add success message"""
         queryset = self.filter_queryset(self.get_queryset())
         page = self.paginate_queryset(queryset)
         
@@ -100,7 +95,6 @@ class CampaignScheduleIntervalViewSet(viewsets.ModelViewSet):
         })
     
     def retrieve(self, request, *args, **kwargs):
-        """Override retrieve to add success message"""
         instance = self.get_object()
         serializer = self.get_serializer(instance)
         

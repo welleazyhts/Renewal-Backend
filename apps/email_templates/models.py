@@ -119,7 +119,6 @@ class EmailTemplate(models.Model):
             'text_content': self.text_content
         }
         
-        # Simple variable replacement (you might want to use Django's template engine)
         for key, value in context.items():
             placeholder = f"{{{{{key}}}}}"
             rendered['subject'] = rendered['subject'].replace(placeholder, str(value))

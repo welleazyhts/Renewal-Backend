@@ -24,9 +24,6 @@ logger = logging.getLogger(__name__)
 
 
 def generate_related_suggestions(user_message, ai_response):
-    """
-    Generate 3 related suggestions based on the user's question and AI response
-    """
     all_suggestions = [
         "What is a campaign?",
         "How do I create a campaign?",
@@ -118,9 +115,7 @@ def generate_related_suggestions(user_message, ai_response):
     return final_suggestions[:3]
 
 
-class UploadChatbotView(View):
-    """Main view for upload chatbot functionality"""
-    
+class UploadChatbotView(View):    
     @method_decorator(csrf_exempt)
     def dispatch(self, *args, **kwargs):
         return super().dispatch(*args, **kwargs)
@@ -194,36 +189,28 @@ class UploadChatbotView(View):
             import re
             cleaned_response = re.sub(r'\s+', ' ', cleaned_response)
             
-            # Limit response to maximum 7 sentences, ensuring completeness
             sentences = re.split(r'(?<=[.!?])\s+', cleaned_response)
             if len(sentences) > 7:
-                # Take first 7 sentences
                 truncated_sentences = sentences[:7]
                 cleaned_response = ' '.join(truncated_sentences).strip()
                 
-                # Check if last sentence is incomplete
                 last_sentence = truncated_sentences[-1].strip()
-                # Check for incomplete patterns: just a number with period, very short, or ends with incomplete list item
                 is_incomplete = (
-                    re.match(r'^\d+\.?\s*$', last_sentence) or  # Just "3." or "3"
-                    len(last_sentence) < 15 or  # Very short (likely incomplete)
-                    re.match(r'^\d+\.?\s*\*\*?\w*\*\*?:\s*$', last_sentence) or  # "3. **Title**:" without content
-                    (not re.search(r'[a-zA-Z]{3,}', last_sentence))  # No significant words
+                    re.match(r'^\d+\.?\s*$', last_sentence) or 
+                    len(last_sentence) < 15 or  
+                    re.match(r'^\d+\.?\s*\*\*?\w*\*\*?:\s*$', last_sentence) or  
+                    (not re.search(r'[a-zA-Z]{3,}', last_sentence))  
                 )
                 
                 if is_incomplete:
-                    # Remove the incomplete last sentence and use previous complete ones
                     if len(truncated_sentences) > 1:
                         cleaned_response = ' '.join(truncated_sentences[:-1]).strip()
                     else:
-                        # If only one incomplete sentence, limit to first 6 instead
                         cleaned_response = ' '.join(sentences[:6]).strip()
                 
-                # Ensure it ends properly with punctuation
                 if not cleaned_response.endswith(('.', '!', '?')):
                     cleaned_response += '.'
             
-            # Rephrase boilerplate openings
             phrase_replacements = [
                 ('Based on the current system data provided', 'Based on my analysis'),
                 ('Based on current system data provided', 'Based on my analysis'),
@@ -297,7 +284,6 @@ class UploadChatbotView(View):
             }, status=500)
     
     def _get_or_create_conversation(self, user, session_id, user_message):
-        """Get existing conversation or create new one"""
         if session_id:
             try:
                 conversation = UploadChatbotConversation.objects.get(
@@ -322,7 +308,6 @@ class UploadChatbotView(View):
         return conversation
     
     def _get_conversation_history(self, conversation):
-        """Get conversation history for context"""
         messages = conversation.messages.all().order_by('timestamp')[-10:]  
         
         history = []
@@ -339,7 +324,6 @@ class UploadChatbotView(View):
 @csrf_exempt
 @require_http_methods(["POST", "GET"])
 def upload_chatbot_quick_suggestions(request):
-    """Get quick suggestions for upload chatbot"""
     try:
         upload_chatbot_service = get_upload_chatbot_service()
         
@@ -374,7 +358,6 @@ def upload_chatbot_quick_suggestions(request):
 @csrf_exempt
 @require_http_methods(["GET"])
 def upload_chatbot_conversations(request):
-    """Get user's upload chatbot conversations"""
     try:
         if not request.user.is_authenticated:
             return JsonResponse({
@@ -405,7 +388,6 @@ def upload_chatbot_conversations(request):
 @csrf_exempt
 @require_http_methods(["GET"])
 def upload_chatbot_conversation_detail(request, conversation_id):
-    """Get specific conversation with messages"""
     try:
         if not request.user.is_authenticated:
             return JsonResponse({
@@ -446,7 +428,6 @@ def upload_chatbot_conversation_detail(request, conversation_id):
 @csrf_exempt
 @require_http_methods(["DELETE"])
 def upload_chatbot_delete_conversation(request, conversation_id):
-    """Delete a conversation"""
     try:
         if not request.user.is_authenticated:
             return JsonResponse({
@@ -484,7 +465,6 @@ def upload_chatbot_delete_conversation(request, conversation_id):
 @csrf_exempt
 @require_http_methods(["GET"])
 def upload_chatbot_status(request):
-    """Get upload chatbot service status"""
     try:
         upload_chatbot_service = get_upload_chatbot_service()
         

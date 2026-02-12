@@ -6,10 +6,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Count, Q
 from .models import User, Role
 from .serializers import UserSerializer, UserListSerializer, RoleSerializer
-
-
 class UserViewSet(viewsets.ModelViewSet):
-    """ViewSet for User management"""
     queryset = User.objects.select_related('role').all()
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -19,26 +16,21 @@ class UserViewSet(viewsets.ModelViewSet):
     
     
     def get_serializer_class(self):
-        """Return appropriate serializer based on action"""
         if self.action == 'list':
             return UserListSerializer
         return UserSerializer
     
     @action(detail=False, methods=['get'])
     def agents(self, request):
-        """Get list of users who can be assigned as agents"""
-        # Filter active users who can be agents
         agents = User.objects.filter(
             status='active',
             is_active=True
         ).select_related('role')
         
-        # Optional role filtering
         role_filter = request.query_params.get('role')
         if role_filter:
             agents = agents.filter(role__name__icontains=role_filter)
         
-        # Add customer count annotation
         agents_with_workload = agents.annotate(
             assigned_customers_count=Count('assigned_customers')
         ).order_by('assigned_customers_count', 'first_name')
@@ -66,7 +58,6 @@ class UserViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def roles(self, request):
-        """Get list of available roles"""
         roles = Role.objects.all().order_by('name')
         serializer = RoleSerializer(roles, many=True)
         
@@ -77,10 +68,8 @@ class UserViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['get'])
     def workload(self, request, pk=None):
-        """Get workload details for a specific agent"""
         user = self.get_object()
         
-        # Get customer assignment statistics
         workload_stats = {
             'agent_id': user.id,
             'agent_name': user.get_full_name(),
@@ -96,12 +85,9 @@ class UserViewSet(viewsets.ModelViewSet):
             'customers_by_profile': {}
         }
         
-        # Get detailed breakdowns
-        # Note: Depending on your app structure, ensure 'apps.customers' exists
         try:
             from apps.customers.models import Customer
             
-            # Status breakdown
             status_counts = user.assigned_customers.values('status').annotate(
                 count=Count('id')
             ).order_by('status')
@@ -109,7 +95,6 @@ class UserViewSet(viewsets.ModelViewSet):
                 item['status']: item['count'] for item in status_counts
             }
             
-            # Priority breakdown
             priority_counts = user.assigned_customers.values('priority').annotate(
                 count=Count('id')
             ).order_by('priority')
@@ -117,7 +102,6 @@ class UserViewSet(viewsets.ModelViewSet):
                 item['priority']: item['count'] for item in priority_counts
             }
             
-            # Profile breakdown
             profile_counts = user.assigned_customers.values('profile').annotate(
                 count=Count('id')
             ).order_by('profile')
@@ -125,14 +109,12 @@ class UserViewSet(viewsets.ModelViewSet):
                 item['profile']: item['count'] for item in profile_counts
             }
         except ImportError:
-            # Fallback if customers app isn't ready yet
             pass
         
         return Response(workload_stats, status=status.HTTP_200_OK)
     
     @action(detail=False, methods=['get'])
     def workload_summary(self, request):
-        """Get workload summary for all agents"""
         agents_with_customers = User.objects.filter(
             status='active',
             assigned_customers__isnull=False
@@ -168,9 +150,6 @@ class UserViewSet(viewsets.ModelViewSet):
         }, status=status.HTTP_200_OK)
     @action(detail=False, methods=['get'])
     def departments(self, request):
-        """
-        Return list of departments for the frontend dropdown
-        """
         departments = [
             {"value": key, "label": label} 
             for key, label in User.DEPARTMENT_CHOICES
@@ -178,9 +157,6 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response(departments)
     @action(detail=False, methods=['get'])
     def languages(self, request):
-        """
-        Returns the complete list of portal languages as shown in the UI.
-        """
         languages = [
             {"value": "en", "label": "English"},
             {"value": "hi", "label": "Hindi (हिंदी)"},
@@ -199,14 +175,11 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response(languages)
     
 class RoleViewSet(viewsets.ModelViewSet):
-    """ViewSet for Role management"""
     queryset = Role.objects.all().order_by('id') 
     serializer_class = RoleSerializer
     permission_classes = [permissions.IsAuthenticated]
-    # pagination_class = CustomPageNumberPagination
     @action(detail=True, methods=['post'], url_path='reset')
     def reset_to_default(self, request, pk=None):
-        """Reset a system role to its default permissions"""
         role = self.get_object()
         
         if not role.is_system:
@@ -221,7 +194,6 @@ class RoleViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def perform_destroy(self, instance):
-        """Block deletion of System Roles"""
         if instance.is_system:
             from rest_framework.exceptions import ValidationError
             raise ValidationError({
@@ -237,9 +209,6 @@ class RoleViewSet(viewsets.ModelViewSet):
         instance.delete()
     @action(detail=False, methods=['get'], url_path='permissions')
     def available_permissions(self, request):
-        """
-        Returns the exact permission structure to match the UI screenshots.
-        """
         permission_structure = {
             "Core Pages": [
                 {"key": "dashboard", "label": "Dashboard", "description": "View main dashboard with analytics and overview"},

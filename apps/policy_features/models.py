@@ -4,11 +4,7 @@ from apps.core.models import BaseModel
 from apps.policies.models import PolicyType
 
 User = get_user_model()
-
-
-class PolicyFeature(BaseModel):
-    """Model to store policy features for different policies"""
-    
+class PolicyFeature(BaseModel):    
     FEATURE_TYPE_CHOICES = [
         ('vehicle_insurance', 'Vehicle Insurance'),
         ('life_insurance', 'Life Insurance'),
@@ -88,10 +84,8 @@ class PolicyFeature(BaseModel):
 
     @property
     def policy_type_name(self):
-        """Return the policy type name for easy access"""
         return self.policy_type.name if self.policy_type else None
 
     @property
     def policy_type_code(self):
-        """Return the policy type code for easy access"""
         return self.policy_type.code if self.policy_type else None

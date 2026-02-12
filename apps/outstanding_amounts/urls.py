@@ -1,7 +1,3 @@
-"""
-URLs for Outstanding Amounts functionality
-"""
-
 from django.urls import path
 from .views import (
     get_outstanding_summary_api,

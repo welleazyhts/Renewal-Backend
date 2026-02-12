@@ -1,7 +1,3 @@
-"""
-Serializers for Other Insurance Policies app.
-"""
-
 from rest_framework import serializers
 from .models import OtherInsurancePolicy
 from apps.customers.models import Customer
@@ -9,7 +5,6 @@ from apps.policies.models import PolicyType
 
 
 class OtherInsurancePolicySerializer(serializers.ModelSerializer):
-    """Serializer for OtherInsurancePolicy model"""
     
     customer_name = serializers.CharField(source='customer.full_name', read_only=True)
     customer_code = serializers.CharField(source='customer.customer_code', read_only=True)
@@ -75,9 +70,7 @@ class OtherInsurancePolicySerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at']
 
 
-class OtherInsurancePolicyCreateSerializer(serializers.ModelSerializer):
-    """Serializer for creating OtherInsurancePolicy"""
-    
+class OtherInsurancePolicyCreateSerializer(serializers.ModelSerializer):    
     class Meta:
         model = OtherInsurancePolicy
         fields = [
@@ -113,8 +106,6 @@ class OtherInsurancePolicyCreateSerializer(serializers.ModelSerializer):
         ]
     
     def validate(self, data):
-        """Validate the policy data"""
-        # Validate dates
         start_date = data.get('start_date')
         end_date = data.get('end_date')
         
@@ -123,28 +114,24 @@ class OtherInsurancePolicyCreateSerializer(serializers.ModelSerializer):
                 "End date must be after start date."
             )
         
-        # Validate premium amount
         premium_amount = data.get('premium_amount')
         if premium_amount and premium_amount <= 0:
             raise serializers.ValidationError(
                 "Premium amount must be greater than zero."
             )
         
-        # Validate sum assured
         sum_assured = data.get('sum_assured')
         if sum_assured and sum_assured <= 0:
             raise serializers.ValidationError(
                 "Sum assured must be greater than zero."
             )
         
-        # Validate satisfaction rating
         satisfaction_rating = data.get('satisfaction_rating')
         if satisfaction_rating and (satisfaction_rating < 1 or satisfaction_rating > 5):
             raise serializers.ValidationError(
                 "Satisfaction rating must be between 1 and 5."
             )
         
-        # Check for duplicate policy
         customer = data.get('customer')
         policy_number = data.get('policy_number')
         insurance_company = data.get('insurance_company')
@@ -166,7 +153,6 @@ class OtherInsurancePolicyCreateSerializer(serializers.ModelSerializer):
 
 
 class OtherInsurancePolicyUpdateSerializer(serializers.ModelSerializer):
-    """Serializer for updating OtherInsurancePolicy"""
     
     class Meta:
         model = OtherInsurancePolicy
@@ -198,8 +184,6 @@ class OtherInsurancePolicyUpdateSerializer(serializers.ModelSerializer):
         ]
     
     def validate(self, data):
-        """Validate the policy data"""
-        # Validate dates
         end_date = data.get('end_date', self.instance.end_date if self.instance else None)
         start_date = self.instance.start_date if self.instance else None
         
@@ -208,21 +192,18 @@ class OtherInsurancePolicyUpdateSerializer(serializers.ModelSerializer):
                 "End date must be after start date."
             )
         
-        # Validate premium amount
         premium_amount = data.get('premium_amount', self.instance.premium_amount if self.instance else None)
         if premium_amount and premium_amount <= 0:
             raise serializers.ValidationError(
                 "Premium amount must be greater than zero."
             )
         
-        # Validate sum assured
         sum_assured = data.get('sum_assured', self.instance.sum_assured if self.instance else None)
         if sum_assured and sum_assured <= 0:
             raise serializers.ValidationError(
                 "Sum assured must be greater than zero."
             )
         
-        # Validate satisfaction rating
         satisfaction_rating = data.get('satisfaction_rating', self.instance.satisfaction_rating if self.instance else None)
         if satisfaction_rating and (satisfaction_rating < 1 or satisfaction_rating > 5):
             raise serializers.ValidationError(
@@ -232,9 +213,7 @@ class OtherInsurancePolicyUpdateSerializer(serializers.ModelSerializer):
         return data
 
 
-class OtherInsurancePolicyListSerializer(serializers.ModelSerializer):
-    """Serializer for listing OtherInsurancePolicy with minimal data"""
-    
+class OtherInsurancePolicyListSerializer(serializers.ModelSerializer):    
     customer_name = serializers.CharField(source='customer.full_name', read_only=True)
     customer_code = serializers.CharField(source='customer.customer_code', read_only=True)
     policy_type_name = serializers.CharField(source='policy_type.name', read_only=True)
@@ -275,9 +254,7 @@ class OtherInsurancePolicyListSerializer(serializers.ModelSerializer):
         ]
 
 
-class OtherInsurancePolicyCompetitiveAnalysisSerializer(serializers.ModelSerializer):
-    """Serializer for competitive analysis of other insurance policies"""
-    
+class OtherInsurancePolicyCompetitiveAnalysisSerializer(serializers.ModelSerializer):    
     customer_name = serializers.CharField(source='customer.full_name', read_only=True)
     customer_code = serializers.CharField(source='customer.customer_code', read_only=True)
     policy_type_name = serializers.CharField(source='policy_type.name', read_only=True)
@@ -313,9 +290,7 @@ class OtherInsurancePolicyCompetitiveAnalysisSerializer(serializers.ModelSeriali
         ]
 
 
-class OtherInsurancePolicySummarySerializer(serializers.ModelSerializer):
-    """Serializer for policy summary and analytics"""
-    
+class OtherInsurancePolicySummarySerializer(serializers.ModelSerializer):    
     customer_name = serializers.CharField(source='customer.full_name', read_only=True)
     customer_code = serializers.CharField(source='customer.customer_code', read_only=True)
     policy_type_name = serializers.CharField(source='policy_type.name', read_only=True)
