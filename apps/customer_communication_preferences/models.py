@@ -2,8 +2,6 @@ from django.db import models
 from django.core.validators import RegexValidator
 from apps.core.models import BaseModel
 from apps.customers.models import Customer
-
-
 class CustomerCommunicationPreference(BaseModel):
     COMMUNICATION_CHANNEL_CHOICES = [
         ('email', 'Email'),
@@ -221,7 +219,6 @@ class CustomerCommunicationPreference(BaseModel):
     
     @property
     def communication_summary(self):
-        """Return a summary of communication preferences"""
         channels = []
         if self.email_enabled:
             channels.append('Email')
@@ -240,7 +237,6 @@ class CustomerCommunicationPreference(BaseModel):
     
     @property
     def is_contactable(self):
-        """Check if customer can be contacted based on preferences"""
         if self.do_not_disturb:
             return False
         
@@ -254,7 +250,6 @@ class CustomerCommunicationPreference(BaseModel):
         ])
     
     def get_enabled_channels(self):
-        """Get list of enabled communication channels"""
         enabled_channels = []
         
         if self.email_enabled:
@@ -273,9 +268,7 @@ class CustomerCommunicationPreference(BaseModel):
         return enabled_channels
 
 
-class CommunicationLog(BaseModel):
-    """Log of all communication attempts with customers"""
-    
+class CommunicationLog(BaseModel):    
     COMMUNICATION_CHANNEL_CHOICES = [
         ('email', 'Email'),
         ('sms', 'SMS'),
@@ -367,5 +360,4 @@ class CommunicationLog(BaseModel):
     
     @property
     def customer_name(self):
-        """Return customer's full name for easy access"""
         return self.customer.full_name if self.customer else None

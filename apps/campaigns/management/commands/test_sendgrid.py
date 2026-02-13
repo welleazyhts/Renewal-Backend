@@ -36,7 +36,6 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS('🎉 SendGrid integration test completed!'))
 
     def test_sendgrid_provider(self):
-        """Test if SendGrid provider is configured"""
         self.stdout.write('\n🔍 Checking SendGrid provider configuration...')
         
         sendgrid_providers = EmailProviderConfig.objects.filter(
@@ -60,7 +59,6 @@ class Command(BaseCommand):
         return provider
 
     def test_sendgrid_send_email(self, test_email):
-        """Test sending email via SendGrid"""
         self.stdout.write(f'\n📧 Testing SendGrid email sending to {test_email}...')
         
         email_service = EmailProviderService()
@@ -94,7 +92,6 @@ class Command(BaseCommand):
         return result['success']
 
     def test_campaign_email_integration(self, campaign_id):
-        """Test campaign email integration with SendGrid"""
         self.stdout.write(f'\n🎯 Testing campaign email integration for campaign {campaign_id}...')
         
         try:

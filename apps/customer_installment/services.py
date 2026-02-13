@@ -42,7 +42,6 @@ class InstallmentIntegrationService:
     
     @staticmethod
     def _create_monthly_installments(policy, renewal_case):
-        """Create monthly installments for a policy"""
         installments = []
         monthly_amount = policy.premium_amount / 12
         
@@ -63,7 +62,6 @@ class InstallmentIntegrationService:
     
     @staticmethod
     def _create_quarterly_installments(policy, renewal_case):
-        """Create quarterly installments for a policy"""
         installments = []
         quarterly_amount = policy.premium_amount / 4
         
@@ -84,7 +82,6 @@ class InstallmentIntegrationService:
     
     @staticmethod
     def _create_yearly_installments(policy, renewal_case):
-        """Create yearly installments for a policy"""
         installments = []
         
         installment = CustomerInstallment.objects.create(
@@ -101,7 +98,6 @@ class InstallmentIntegrationService:
     
     @staticmethod
     def _create_single_installment(policy, renewal_case):
-        """Create single installment for one-time payment"""
         installments = []
         
         installment = CustomerInstallment.objects.create(
@@ -142,7 +138,6 @@ class InstallmentIntegrationService:
     
     @staticmethod
     def _find_matching_installment(payment):
-        """Find the most appropriate installment for a payment"""
         if hasattr(payment, 'renewal_case') and payment.renewal_case:
             installment = CustomerInstallment.objects.filter(
                 customer=payment.customer,

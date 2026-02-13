@@ -6,9 +6,7 @@ from apps.core.models import BaseModel
 import uuid
 
 User = get_user_model()
-class CustomerSegment(BaseModel):
-    """Model for customer segmentation"""
-    
+class CustomerSegment(BaseModel):    
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True)
     criteria = models.JSONField(
@@ -25,12 +23,9 @@ class CustomerSegment(BaseModel):
         return self.name
     
     def get_customer_count(self):
-        """Get number of customers in this segment"""
         return self.customers.filter(is_deleted=False).count()
 
-class Customer(BaseModel):
-    """Main customer model"""
-    
+class Customer(BaseModel):    
     CUSTOMER_TYPE_CHOICES = [
         ('individual', 'Individual'),
         ('corporate', 'Corporate'),
@@ -58,11 +53,9 @@ class Customer(BaseModel):
         ('HNI', 'HNI (High Net-Worth Individual)'),
     ]
     
-    # Basic Information
     customer_code = models.CharField(max_length=20, unique=True, db_index=True, help_text="Auto-generated customer code like CUS2025001")
     customer_type = models.CharField(max_length=20, choices=CUSTOMER_TYPE_CHOICES, default='individual')
     
-    # Personal/Company Details
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100, blank=True)
     company_name = models.CharField(max_length=200, blank=True)
@@ -74,7 +67,6 @@ class Customer(BaseModel):
         blank=True
     )
     
-    # Contact Information
     email = models.EmailField(validators=[EmailValidator()], db_index=True)
     phone = models.CharField(
         max_length=20,
@@ -87,7 +79,6 @@ class Customer(BaseModel):
         validators=[RegexValidator(r'^\+?1?\d{9,15}$', 'Enter a valid phone number.')]
     )
     
-    # Address Information
     address_line1 = models.CharField(max_length=255, blank=True)
     address_line2 = models.CharField(max_length=255, blank=True)
     city = models.CharField(max_length=100, blank=True, db_index=True)
@@ -95,14 +86,12 @@ class Customer(BaseModel):
     postal_code = models.CharField(max_length=20, blank=True, db_index=True)
     country = models.CharField(max_length=100, default='India', db_index=True)
     
-    # Business Information (for corporate customers)
     industry = models.CharField(max_length=100, blank=True, db_index=True)
     business_registration_number = models.CharField(max_length=50, blank=True)
     tax_id = models.CharField(max_length=50, blank=True)
     annual_revenue = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
     employee_count = models.PositiveIntegerField(null=True, blank=True)
     
-    # Customer Management
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active', db_index=True)
     priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='medium', db_index=True)
     profile = models.CharField(max_length=10, choices=PROFILE_CHOICES, default='Normal', db_index=True, help_text="Customer profile based on policy count")
@@ -130,7 +119,6 @@ class Customer(BaseModel):
         related_name='customers'
     )
     
-    # Preferences
     preferred_contact_method = models.CharField(
         max_length=20,
         choices=[
@@ -145,13 +133,11 @@ class Customer(BaseModel):
     document_language = models.CharField(max_length=50, default='English')
     timezone = models.CharField(max_length=50, default='Asia/Kolkata')
     
-    # Communication Preferences
     email_notifications = models.BooleanField(default=True)
     sms_notifications = models.BooleanField(default=True)
     whatsapp_notifications = models.BooleanField(default=False)
     marketing_communications = models.BooleanField(default=True)
     
-    # KYC Information
     kyc_status = models.CharField(
         max_length=20,
         choices=[
@@ -165,7 +151,6 @@ class Customer(BaseModel):
     )
     kyc_documents = models.CharField(max_length=200, blank=True, help_text="KYC documents list from Excel")
     
-    # Verification Status (Bureau API)
     email_verified = models.BooleanField(default=False, db_index=True, help_text="Whether the email has been verified")
     phone_verified = models.BooleanField(default=False, db_index=True, help_text="Whether the phone number has been verified")
     pan_verified = models.BooleanField(default=False, db_index=True, help_text="Whether the PAN number has been verified")
@@ -174,23 +159,19 @@ class Customer(BaseModel):
     pan_verified_at = models.DateTimeField(blank=True, null=True, help_text="Timestamp when PAN was verified")
     pan_number = models.CharField(blank=True, max_length=10, help_text="PAN number for verification")
 
-    # Financial Information
     credit_score = models.PositiveIntegerField(null=True, blank=True)
     payment_terms = models.CharField(max_length=50, blank=True)
     credit_limit = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     
-    # Important Dates
     first_policy_date = models.DateField(null=True, blank=True)
     last_policy_date = models.DateField(null=True, blank=True)
     last_contact_date = models.DateTimeField(null=True, blank=True)
     next_followup_date = models.DateTimeField(null=True, blank=True)
     
-    # Metrics
     total_policies = models.PositiveIntegerField(default=0)
     total_premium = models.DecimalField(max_digits=15, decimal_places=2, default=0)
     lifetime_value = models.DecimalField(max_digits=15, decimal_places=2, default=0)
     
-    # Additional Information
     internal_notes = models.TextField(blank=True)
     tags = models.JSONField(default=list, blank=True)
     custom_fields = models.JSONField(default=dict, blank=True)
@@ -221,14 +202,12 @@ class Customer(BaseModel):
     
     @property
     def full_name(self):
-        """Return customer's full name"""
         if self.customer_type == 'individual':
             return f"{self.first_name} {self.last_name}".strip()
         return self.company_name
     
     @property
     def display_name(self):
-        """Return display name for UI"""
         name = self.full_name
         if self.title:
             name = f"{self.title} {name}"
@@ -236,7 +215,6 @@ class Customer(BaseModel):
     
     @property
     def full_address(self):
-        """Return formatted full address"""
         address_parts = [
             self.address_line1,
             self.address_line2,
@@ -248,11 +226,9 @@ class Customer(BaseModel):
         return ', '.join(filter(None, address_parts))
     
     def get_active_policies_count(self):
-        """Get count of active policies"""
         return self.policies.filter(status='active', is_deleted=False).count()
     
     def get_total_premium_current_year(self):
-        """Get total premium for current year"""
         current_year = timezone.now().year
         return self.policies.filter(
             start_date__year=current_year,
@@ -262,7 +238,6 @@ class Customer(BaseModel):
         )['total'] or 0
     
     def update_metrics(self):
-        """Update customer metrics"""
         policies = self.policies.filter(is_deleted=False)
 
         self.total_policies = policies.count()
@@ -277,7 +252,6 @@ class Customer(BaseModel):
         else:
             self.profile = 'Normal'
 
-        # Update policy dates
         if policies.exists():
             self.first_policy_date = policies.order_by('start_date').first().start_date
             self.last_policy_date = policies.order_by('-start_date').first().start_date
@@ -288,9 +262,7 @@ class Customer(BaseModel):
         ])
 
 
-class CustomerContact(BaseModel):
-    """Additional contacts for customers (family members, employees, etc.)"""
-    
+class CustomerContact(BaseModel):    
     RELATIONSHIP_CHOICES = [
         ('spouse', 'Spouse'),
         ('child', 'Child'),
@@ -324,9 +296,7 @@ class CustomerContact(BaseModel):
         return f"{self.first_name} {self.last_name} ({self.relationship}) - {self.customer}"
 
 
-class CustomerDocument(BaseModel):
-    """Documents associated with customers"""
-    
+class CustomerDocument(BaseModel):    
     DOCUMENT_TYPE_CHOICES = [
         ('id_proof', 'ID Proof'),
         ('address_proof', 'Address Proof'),
@@ -350,7 +320,6 @@ class CustomerDocument(BaseModel):
         related_name='customer_documents'
     )
     
-    # Verification
     is_verified = models.BooleanField(default=False)
     verified_by = models.ForeignKey(
         User,
@@ -362,11 +331,9 @@ class CustomerDocument(BaseModel):
     verified_at = models.DateTimeField(null=True, blank=True)
     verification_notes = models.TextField(blank=True)
     
-    # Expiration
     issue_date = models.DateField(null=True, blank=True)
     expiry_date = models.DateField(null=True, blank=True)
     
-    # Additional info
     issuing_authority = models.CharField(max_length=200, blank=True)
     notes = models.TextField(blank=True)
     
@@ -382,22 +349,18 @@ class CustomerDocument(BaseModel):
         return f"{self.customer} - {self.get_document_type_display()}"
     
     def is_expired(self):
-        """Check if document is expired"""
         if self.expiry_date:
             return timezone.now().date() > self.expiry_date
         return False
     
     def days_until_expiry(self):
-        """Get days until document expiry"""
         if self.expiry_date:
             delta = self.expiry_date - timezone.now().date()
             return delta.days
         return None
 
 
-class CustomerInteraction(BaseModel):
-    """Track all interactions with customers"""
-    
+class CustomerInteraction(BaseModel):    
     INTERACTION_TYPE_CHOICES = [
         ('call', 'Phone Call'),
         ('email', 'Email'),
@@ -429,16 +392,13 @@ class CustomerInteraction(BaseModel):
     direction = models.CharField(max_length=10, choices=DIRECTION_CHOICES)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='completed')
     
-    # Interaction details
     subject = models.CharField(max_length=200)
     description = models.TextField()
     outcome = models.TextField(blank=True)
     
-    # Timing
     scheduled_at = models.DateTimeField(null=True, blank=True)
     duration_minutes = models.PositiveIntegerField(null=True, blank=True)
     
-    # Follow-up
     requires_followup = models.BooleanField(default=False)
     followup_date = models.DateTimeField(null=True, blank=True)
     followup_notes = models.TextField(blank=True)
@@ -449,7 +409,6 @@ class CustomerInteraction(BaseModel):
         related_name='customer_interactions'
     )
     
-    # Additional data
     metadata = models.JSONField(default=dict, blank=True)
     
     class Meta:
@@ -464,9 +423,7 @@ class CustomerInteraction(BaseModel):
         return f"{self.customer} - {self.get_interaction_type_display()} ({self.created_at.date()})"
 
 
-class CustomerNote(BaseModel):
-    """Internal notes about customers"""
-    
+class CustomerNote(BaseModel):    
     PRIORITY_CHOICES = [
         ('low', 'Low'),
         ('medium', 'Medium'),

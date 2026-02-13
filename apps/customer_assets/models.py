@@ -83,7 +83,6 @@ class CustomerAssets(BaseModel):
     
     @property
     def residence_summary(self):
-        """Return a summary of residence information"""
         parts = []
         if self.residence_type:
             parts.append(self.get_residence_type_display())

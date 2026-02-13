@@ -1290,7 +1290,6 @@ class EmailManagerInboxViewSet(viewsets.ModelViewSet):
                             "premium_amount": related.premium_amount or "",
                         }
 
-                    # Render template
                     html_body = DjangoTemplate(tpl.content).render(Context(context_data))
                     text_body = strip_tags(html_body)
 

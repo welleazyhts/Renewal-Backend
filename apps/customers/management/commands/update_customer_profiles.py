@@ -1,7 +1,3 @@
-"""
-Management command to update customer profiles based on policy count.
-"""
-
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from apps.customers.models import Customer
@@ -37,12 +33,10 @@ class Command(BaseCommand):
             for customer in customers:
                 old_profile = customer.profile
                 
-                # Update metrics (which includes profile calculation)
                 if not dry_run:
                     customer.update_metrics()
                     customer.refresh_from_db()
                 else:
-                    # Calculate what the profile would be
                     policy_count = customer.policies.filter(is_deleted=False).count()
                     new_profile = 'HNI' if policy_count > 1 else 'Normal'
                     customer.profile = new_profile
@@ -60,7 +54,6 @@ class Command(BaseCommand):
                 else:
                     normal_count += 1
         
-        # Summary
         self.stdout.write('\n' + '='*50)
         self.stdout.write(f'SUMMARY:')
         self.stdout.write(f'Total customers processed: {total_customers}')

@@ -4,11 +4,7 @@ from django.utils import timezone
 from apps.customers.models import Customer
 
 User = get_user_model()
-
-
 class CustomerFile(models.Model):
-    """Model to store customer file information based on the schema provided"""
-
     DOCUMENT_TYPE_CHOICES = [
         ('id_proof', 'ID Proof'),
         ('address_proof', 'Address Proof'),
@@ -152,13 +148,11 @@ class CustomerFile(models.Model):
     
     @property
     def customer_name(self):
-        """Return the customer name for easy access"""
         if self.customer:
             return f"{self.customer.first_name} {self.customer.last_name}".strip()
         return None
     
     def verify(self, user=None):
-        """Mark the document as verified"""
         self.is_verified = True
         self.verified_at = timezone.now()
         if user:
@@ -166,7 +160,6 @@ class CustomerFile(models.Model):
         self.save()
     
     def get_file_size_display(self):
-        """Return human readable file size"""
         size = self.file_size
         for unit in ['B', 'KB', 'MB', 'GB']:
             if size < 1024.0:

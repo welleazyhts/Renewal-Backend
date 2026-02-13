@@ -4,11 +4,7 @@ from django.utils import timezone
 import uuid
 
 User = get_user_model()
-
-
-class EmailWebhook(models.Model):
-    """Webhook events from email providers"""
-    
+class EmailWebhook(models.Model):    
     PROVIDER_CHOICES = [
         ('sendgrid', 'SendGrid'),
         ('aws_ses', 'AWS SES'),
@@ -42,25 +38,20 @@ class EmailWebhook(models.Model):
     event_type = models.CharField(max_length=20, choices=EVENT_TYPES)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     
-    # Webhook data
     raw_data = models.JSONField(default=dict, help_text="Raw webhook payload")
     processed_data = models.JSONField(default=dict, blank=True, help_text="Processed webhook data")
     
-    # Email identification
     email_message_id = models.CharField(max_length=255, blank=True, null=True)
     provider_message_id = models.CharField(max_length=255, blank=True, null=True)
     
-    # Event details
     event_time = models.DateTimeField(blank=True, null=True)
     ip_address = models.GenericIPAddressField(blank=True, null=True)
     user_agent = models.TextField(blank=True, null=True)
     
-    # Processing
     processing_notes = models.TextField(blank=True, null=True)
     error_message = models.TextField(blank=True, null=True)
     retry_count = models.PositiveIntegerField(default=0)
     
-    # Metadata
     created_at = models.DateTimeField(auto_now_add=True)
     processed_at = models.DateTimeField(blank=True, null=True)
     
@@ -79,9 +70,7 @@ class EmailWebhook(models.Model):
         return f"{self.provider} - {self.get_event_type_display()} ({self.status})"
 
 
-class EmailAutomation(models.Model):
-    """Email automation rules and workflows"""
-    
+class EmailAutomation(models.Model):    
     TRIGGER_TYPES = [
         ('email_received', 'Email Received'),
         ('email_opened', 'Email Opened'),
@@ -118,29 +107,23 @@ class EmailAutomation(models.Model):
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True, null=True)
     
-    # Trigger configuration
     trigger_type = models.CharField(max_length=20, choices=TRIGGER_TYPES)
     trigger_conditions = models.JSONField(default=dict, help_text="Trigger conditions and filters")
     
-    # Action configuration
     action_type = models.CharField(max_length=20, choices=ACTION_TYPES)
     action_config = models.JSONField(default=dict, help_text="Action configuration and parameters")
     
-    # Settings
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
     is_active = models.BooleanField(default=True)
     priority = models.PositiveIntegerField(default=0, help_text="Execution priority")
     
-    # Execution settings
     max_executions = models.PositiveIntegerField(default=0, help_text="Maximum executions (0 = unlimited)")
     execution_count = models.PositiveIntegerField(default=0)
     last_executed = models.DateTimeField(blank=True, null=True)
     
-    # Timing
     delay_seconds = models.PositiveIntegerField(default=0, help_text="Delay before execution in seconds")
     cooldown_seconds = models.PositiveIntegerField(default=0, help_text="Cooldown between executions")
     
-    # Metadata
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_email_automations')
@@ -159,16 +142,12 @@ class EmailAutomation(models.Model):
         return self.name
     
     def soft_delete(self):
-        """Soft delete the automation"""
         self.is_deleted = True
         self.deleted_at = timezone.now()
         self.is_active = False
         self.save(update_fields=['is_deleted', 'deleted_at', 'is_active'])
 
-
-class EmailAutomationLog(models.Model):
-    """Log of automation executions"""
-    
+class EmailAutomationLog(models.Model):    
     STATUS_CHOICES = [
         ('pending', 'Pending'),
         ('running', 'Running'),
@@ -180,21 +159,17 @@ class EmailAutomationLog(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     automation = models.ForeignKey(EmailAutomation, on_delete=models.CASCADE, related_name='logs')
     
-    # Execution details
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     trigger_data = models.JSONField(default=dict, help_text="Data that triggered the automation")
     execution_data = models.JSONField(default=dict, blank=True, help_text="Data used during execution")
     
-    # Results
     result_data = models.JSONField(default=dict, blank=True, help_text="Execution results")
     error_message = models.TextField(blank=True, null=True)
     
-    # Timing
     started_at = models.DateTimeField(blank=True, null=True)
     completed_at = models.DateTimeField(blank=True, null=True)
     duration_seconds = models.FloatField(blank=True, null=True, help_text="Execution duration in seconds")
     
-    # Metadata
     created_at = models.DateTimeField(auto_now_add=True)
     executed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='executed_email_automations')
     
@@ -208,9 +183,7 @@ class EmailAutomationLog(models.Model):
         return f"{self.automation.name} - {self.get_status_display()} ({self.created_at})"
 
 
-class EmailIntegration(models.Model):
-    """Third-party integrations for email system"""
-    
+class EmailIntegration(models.Model):    
     INTEGRATION_TYPES = [
         ('crm', 'CRM System'),
         ('helpdesk', 'Helpdesk System'),
@@ -233,24 +206,20 @@ class EmailIntegration(models.Model):
     integration_type = models.CharField(max_length=20, choices=INTEGRATION_TYPES)
     description = models.TextField(blank=True, null=True)
     
-    # Configuration
     api_endpoint = models.URLField(blank=True, null=True)
     api_key = models.TextField(blank=True, null=True, help_text="API key (encrypted)")
     api_secret = models.TextField(blank=True, null=True, help_text="API secret (encrypted)")
     configuration = models.JSONField(default=dict, help_text="Integration-specific configuration")
     
-    # Status and health
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     last_sync = models.DateTimeField(blank=True, null=True)
     last_error = models.TextField(blank=True, null=True)
     error_count = models.PositiveIntegerField(default=0)
     
-    # Sync settings
     sync_enabled = models.BooleanField(default=True)
     sync_interval = models.PositiveIntegerField(default=3600, help_text="Sync interval in seconds")
     auto_sync = models.BooleanField(default=False)
     
-    # Metadata
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_email_integrations')
@@ -269,16 +238,13 @@ class EmailIntegration(models.Model):
         return f"{self.name} ({self.get_integration_type_display()})"
     
     def soft_delete(self):
-        """Soft delete the integration"""
         self.is_deleted = True
         self.deleted_at = timezone.now()
         self.status = 'inactive'
         self.save(update_fields=['is_deleted', 'deleted_at', 'status'])
 
 
-class EmailSLA(models.Model):
-    """Service Level Agreements for email operations"""
-    
+class EmailSLA(models.Model):    
     SLA_TYPES = [
         ('response_time', 'Response Time'),
         ('resolution_time', 'Resolution Time'),
@@ -297,27 +263,22 @@ class EmailSLA(models.Model):
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True, null=True)
     
-    # SLA configuration
     sla_type = models.CharField(max_length=20, choices=SLA_TYPES)
     priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES)
     target_value = models.PositiveIntegerField(help_text="Target value in minutes")
     warning_threshold = models.PositiveIntegerField(help_text="Warning threshold in minutes")
     
-    # Conditions
     conditions = models.JSONField(default=dict, help_text="SLA conditions and filters")
     
-    # Settings
     is_active = models.BooleanField(default=True)
     is_escalation_enabled = models.BooleanField(default=True)
     escalation_recipients = models.JSONField(default=list, help_text="List of escalation email addresses")
     
-    # Statistics
     total_incidents = models.PositiveIntegerField(default=0)
     met_sla_count = models.PositiveIntegerField(default=0)
     breached_sla_count = models.PositiveIntegerField(default=0)
     warning_count = models.PositiveIntegerField(default=0)
     
-    # Metadata
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_email_slas')
@@ -336,16 +297,13 @@ class EmailSLA(models.Model):
         return f"{self.name} ({self.get_priority_display()})"
     
     def soft_delete(self):
-        """Soft delete the SLA"""
         self.is_deleted = True
         self.deleted_at = timezone.now()
         self.is_active = False
         self.save(update_fields=['is_deleted', 'deleted_at', 'is_active'])
 
 
-class EmailTemplateVariable(models.Model):
-    """Dynamic template variables for email templates"""
-    
+class EmailTemplateVariable(models.Model):    
     VARIABLE_TYPES = [
         ('text', 'Text'),
         ('number', 'Number'),
@@ -362,21 +320,17 @@ class EmailTemplateVariable(models.Model):
     display_name = models.CharField(max_length=200)
     description = models.TextField(blank=True, null=True)
     
-    # Variable configuration
     variable_type = models.CharField(max_length=20, choices=VARIABLE_TYPES)
     default_value = models.TextField(blank=True, null=True)
     is_required = models.BooleanField(default=False)
     validation_rules = models.JSONField(default=dict, help_text="Validation rules for the variable")
     
-    # Usage tracking
     usage_count = models.PositiveIntegerField(default=0)
     last_used = models.DateTimeField(blank=True, null=True)
     
-    # Settings
     is_active = models.BooleanField(default=True)
     is_system = models.BooleanField(default=False, help_text="System-defined variable")
     
-    # Metadata
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_email_template_variables')
@@ -395,19 +349,15 @@ class EmailTemplateVariable(models.Model):
         return f"{{{{{self.name}}}}}"
     
     def soft_delete(self):
-        """Soft delete the template variable"""
         self.is_deleted = True
         self.deleted_at = timezone.now()
         self.is_active = False
         self.save(update_fields=['is_deleted', 'deleted_at', 'is_active'])
 
 
-class EmailIntegrationAnalytics(models.Model):
-    """Analytics for email integration features"""
-    
+class EmailIntegrationAnalytics(models.Model):    
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     
-    # Time period
     date = models.DateField()
     period_type = models.CharField(max_length=20, choices=[
         ('daily', 'Daily'),
@@ -416,7 +366,6 @@ class EmailIntegrationAnalytics(models.Model):
         ('yearly', 'Yearly'),
     ], default='daily')
     
-    # Integration metrics
     webhook_events_received = models.PositiveIntegerField(default=0)
     webhook_events_processed = models.PositiveIntegerField(default=0)
     webhook_events_failed = models.PositiveIntegerField(default=0)
@@ -429,17 +378,14 @@ class EmailIntegrationAnalytics(models.Model):
     integration_successes = models.PositiveIntegerField(default=0)
     integration_failures = models.PositiveIntegerField(default=0)
     
-    # Calculated metrics
     webhook_success_rate = models.FloatField(default=0.0)
     automation_success_rate = models.FloatField(default=0.0)
     integration_success_rate = models.FloatField(default=0.0)
     
-    # Response times
     avg_webhook_processing_time = models.FloatField(default=0.0)
     avg_automation_execution_time = models.FloatField(default=0.0)
     avg_integration_sync_time = models.FloatField(default=0.0)
     
-    # Metadata
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -454,7 +400,6 @@ class EmailIntegrationAnalytics(models.Model):
         return f"Integration Analytics - {self.date} ({self.period_type})"
     
     def calculate_rates(self):
-        """Calculate success rates"""
         if self.webhook_events_received > 0:
             self.webhook_success_rate = (self.webhook_events_processed / self.webhook_events_received) * 100
         
@@ -467,5 +412,3 @@ class EmailIntegrationAnalytics(models.Model):
         self.save(update_fields=[
             'webhook_success_rate', 'automation_success_rate', 'integration_success_rate'
         ])
-
-

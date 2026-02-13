@@ -5,11 +5,9 @@ from django.core.validators import FileExtensionValidator
 User = get_user_model()
 
 def upload_to_path(instance, filename):
-    """Generate upload path for files"""
     return f"uploads/{filename}"
 
 class FileUpload(models.Model):
-    """Model to store uploaded Excel file info and processing results."""
     uploaded_file = models.FileField(
         upload_to='uploads/',
         validators=[FileExtensionValidator(allowed_extensions=['csv', 'xlsx'])]
@@ -47,7 +45,6 @@ class FileUpload(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    # Soft delete fields
     is_deleted = models.BooleanField(default=False)
     deleted_at = models.DateTimeField(null=True, blank=True)
     deleted_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='deleted_file_uploads')

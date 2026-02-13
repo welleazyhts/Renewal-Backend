@@ -21,9 +21,7 @@ from .models import (
 
 logger = logging.getLogger(__name__)
 
-class EmailInboxService:
-    """Service for managing email inbox operations"""
-    
+class EmailInboxService:    
     def __init__(self):
         pass
     
@@ -100,34 +98,28 @@ class EmailInboxService:
             content = (email_message.text_content or email_message.html_content or '').lower()
             text = f"{subject} {content}"
             
-            # Default
             category = 'uncategorized'
             priority = 'normal'
             sentiment = 'neutral'
 
-            # 1. Refund (Yellow)
             if any(w in text for w in ['refund', 'money back', 'reimbursement', 'wrong charge', 'deducted']):
                 category = 'refund'
                 priority = 'high'
             
-            # 2. Complaint (Red)
             elif any(w in text for w in ['complaint', 'angry', 'issue', 'bad service', 'fail', 'disappointed']):
                 category = 'complaint'
                 priority = 'high'
                 sentiment = 'negative'
 
-            # 3. Appointment (Green)
             elif any(w in text for w in ['appointment', 'schedule', 'meeting', 'book a call', 'visit', 'calendar']):
                 category = 'appointment'
                 priority = 'normal'
 
-            # 4. Feedback (Blue)
             elif any(w in text for w in ['feedback', 'review', 'suggestion', 'opinion', 'rate', 'star']):
                 category = 'feedback'
                 priority = 'low'
                 sentiment = 'positive'
 
-            # Save Classification
             email_message.category = category
             email_message.priority = priority
             email_message.sentiment = sentiment
@@ -138,7 +130,6 @@ class EmailInboxService:
 
 
     def _apply_filters(self, email_message: EmailInboxMessage):
-        """Apply email filters to the message"""
         try:
             filters = EmailFilter.objects.filter(
                 is_active=True,
@@ -157,7 +148,6 @@ class EmailInboxService:
             logger.error(f"Error applying filters: {str(e)}")
     
     def _matches_filter(self, email_message: EmailInboxMessage, filter_obj: EmailFilter) -> bool:
-        """Check if email message matches filter criteria"""
         try:
             if filter_obj.filter_type == 'subject':
                 text = email_message.subject
@@ -199,7 +189,6 @@ class EmailInboxService:
             return False
     
     def _apply_filter_action(self, email_message: EmailInboxMessage, filter_obj: EmailFilter):
-        """Apply filter action to email message"""
         try:
             if filter_obj.action == 'move_to_folder':
                 if filter_obj.action_value:
@@ -231,7 +220,6 @@ class EmailInboxService:
             logger.error(f"Error applying filter action: {str(e)}")
     
     def _process_attachments(self, email_message: EmailInboxMessage, attachments: List[Dict[str, Any]]):
-        """Process email attachments"""
         try:
             for attachment_data in attachments:
                 EmailAttachment.objects.create(
@@ -247,7 +235,6 @@ class EmailInboxService:
             logger.error(f"Error processing attachments: {str(e)}")
     
     def _update_conversation_thread(self, email_message: EmailInboxMessage):
-        """Update conversation thread for email message"""
         try:
             thread_id = self._extract_thread_id(email_message.subject)
             
@@ -255,7 +242,6 @@ class EmailInboxService:
                 email_message.thread_id = thread_id
                 email_message.save()
                 
-                # Update or create conversation
                 conversation, created = EmailConversation.objects.get_or_create(
                     thread_id=thread_id,
                     defaults={
@@ -267,14 +253,12 @@ class EmailInboxService:
                 )
                 
                 if not created:
-                    # Update existing conversation
                     conversation.message_count += 1
                     if email_message.status == 'unread':
                         conversation.unread_count += 1
                     conversation.last_message_at = email_message.received_at
                     conversation.last_message_from = email_message.from_email
                     
-                    # Update participants
                     participants = set(conversation.participants)
                     participants.add(email_message.from_email)
                     participants.add(email_message.to_email)
@@ -286,14 +270,12 @@ class EmailInboxService:
             logger.error(f"Error updating conversation thread: {str(e)}")
     
     def _extract_thread_id(self, subject: str) -> str:
-        """Extract thread ID from email subject"""
         if subject.lower().startswith(('re:', 'fwd:')):
             return subject[4:].strip()
         return None
     
     def send_outbound_email(self, email_message_obj, attachments=None):
         try:
-            # 1. Identify Sender Account
             sender_address = email_message_obj.from_email
             
             account = EmailAccount.objects.filter(
@@ -305,7 +287,6 @@ class EmailInboxService:
                 logger.warning(f"No EmailAccount found for {sender_address}. Using default backend.")
                 return self._send_via_django_backend(email_message_obj, attachments)
 
-            # 2. Decrypt Credentials
             password = decrypt_credential(account.access_credential)
             if not password:
                 return False, "Account has no password saved."
@@ -313,7 +294,6 @@ class EmailInboxService:
             def clean_list(recipients):
                 if not recipients: return []
                 if isinstance(recipients, str): return [recipients]
-                # Filter out None and empty strings
                 return [r.strip() for r in recipients if r and isinstance(r, str) and r.strip()]
 
             to_list = clean_list(email_message_obj.to_emails)
@@ -323,7 +303,6 @@ class EmailInboxService:
             if not to_list:
                 return False, "No valid 'To' recipients found."
 
-            # 4. Construct the Email (MIME)
             msg = MIMEMultipart('alternative')
             msg['Subject'] = email_message_obj.subject
             msg['From'] = f"{account.account_name} <{account.email_address}>"
@@ -335,7 +314,6 @@ class EmailInboxService:
             if email_message_obj.reply_to:
                 msg['Reply-To'] = email_message_obj.reply_to
 
-            # Attach Body
             body_html = email_message_obj.html_content or email_message_obj.text_content
             body_text = email_message_obj.text_content or "Please view in HTML."
             
@@ -343,7 +321,6 @@ class EmailInboxService:
             if body_html:
                 msg.attach(MIMEText(body_html, 'html'))
 
-            # 5. Handle Attachments
             if attachments:
                 for file in attachments:
                     try:
@@ -362,7 +339,6 @@ class EmailInboxService:
                     except Exception as e:
                         logger.error(f"Attachment error: {e}")
 
-            # 6. CONNECT & SEND
             if account.use_ssl_tls and account.smtp_port == 465:
                 server = smtplib.SMTP_SSL(account.smtp_server, account.smtp_port, timeout=10)
             else:
@@ -386,7 +362,6 @@ class EmailInboxService:
             return False, str(e)
 
     def _send_via_django_backend(self, email_message_obj, attachments=None):
-        """Fallback method using standard Django settings"""
         try:
             msg = EmailMultiAlternatives(
                 subject=email_message_obj.subject,
@@ -407,7 +382,6 @@ class EmailInboxService:
                        text_content: str = '', to_emails: List[str] = None,
                        cc_emails: List[str] = None, bcc_emails: List[str] = None,
                        priority: str = 'normal', tags: List[str] = None) -> Dict[str, Any]:
-        """Reply to an email with Smart Account Detection"""
         try:
             original_email = EmailInboxMessage.objects.get(id=email_id)
             
@@ -488,7 +462,6 @@ class EmailInboxService:
                       message: str = '', cc_emails: List[str] = None,
                       bcc_emails: List[str] = None, priority: str = 'normal',
                       tags: List[str] = None) -> Dict[str, Any]:
-        """Forward an email"""
         try:
             original_email = EmailInboxMessage.objects.get(id=email_id)
             
@@ -536,11 +509,9 @@ class EmailInboxService:
             return {'success': False, 'message': f'Error forwarding email: {str(e)}'}
     
     def search_emails(self, query_params: Dict[str, Any]) -> Dict[str, Any]:
-        """Search emails based on query parameters"""
         try:
             queryset = EmailInboxMessage.objects.filter(is_deleted=False)
             
-            # Apply filters
             if query_params.get('query'):
                 search_query = query_params['query']
                 queryset = queryset.filter(
@@ -597,7 +568,6 @@ class EmailInboxService:
                 for tag in query_params['tags']:
                     queryset = queryset.filter(tags__contains=[tag])
             
-            # Apply sorting
             sort_by = query_params.get('sort_by', 'received_at')
             sort_order = query_params.get('sort_order', 'desc')
             
@@ -606,7 +576,6 @@ class EmailInboxService:
             
             queryset = queryset.order_by(sort_by)
             
-            # Apply pagination
             page = query_params.get('page', 1)
             page_size = query_params.get('page_size', 20)
             start = (page - 1) * page_size
@@ -652,7 +621,6 @@ class EmailInboxService:
             "uncategorized": 0
         }
         
-        # Fill with actual DB counts
         db_counts = emails.values('category').annotate(count=Count('id'))
         for item in db_counts:
             cat_key = item['category']
@@ -707,18 +675,15 @@ class EmailInboxService:
         
         agent_performance = []
         for agent in agents:
-            # 1. Emails Assigned
             assigned_msgs = emails.filter(assigned_to=agent)
             
             if not assigned_msgs.exists():
 
                 pass
 
-            # 2. Emails Handled (Replied or Resolved)
             handled = assigned_msgs.filter(status__in=['replied', 'resolved']).count()
             total = assigned_msgs.count()
             
-            # 3. Response Time (Only for emails with a reply)
             replied_msgs = assigned_msgs.filter(replied_at__isnull=False, received_at__isnull=False)
             avg_hours = 0.0
             if replied_msgs.exists():
@@ -740,10 +705,8 @@ class EmailInboxService:
                 "efficiency": efficiency
             })
 
-        # C. Campaign Stats (THE FIX)
         total_campaigns = campaigns.count()
         
-        # Aggregates
         agg_stats = campaigns.aggregate(
             recipients=Sum('total_recipients'),
             success=Sum('successful_sends'),
@@ -756,15 +719,12 @@ class EmailInboxService:
         t_opened = agg_stats['opened'] or 0
         t_clicked = agg_stats['clicked'] or 0
         
-        # Calculate Rates
         avg_delivery = round((t_success / t_recipients * 100), 1) if t_recipients > 0 else 0
         avg_open_rate = round((t_opened / t_success * 100), 1) if t_success > 0 else 0
         avg_click_rate = round((t_clicked / t_opened * 100), 1) if t_opened > 0 else 0
 
-        # Recent Campaigns List
         recent_campaigns_list = []
         for camp in campaigns.order_by('-created_at')[:5]:
-            # Per Campaign Open Rate
             c_open = round((camp.opened_count / camp.successful_sends * 100), 1) if camp.successful_sends > 0 else 0
             c_click = round((camp.clicked_count / camp.opened_count * 100), 1) if camp.opened_count > 0 else 0
             

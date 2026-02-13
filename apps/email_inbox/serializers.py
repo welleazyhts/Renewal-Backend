@@ -16,9 +16,7 @@ class EmailInternalNoteSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'author', 'created_at']
 
 
-class EmailFolderSerializer(serializers.ModelSerializer):
-    """Serializer for EmailFolder"""
-    
+class EmailFolderSerializer(serializers.ModelSerializer):    
     folder_type_display = serializers.CharField(source='get_folder_type_display', read_only=True)
     message_count = serializers.SerializerMethodField()
     unread_count = serializers.SerializerMethodField()
@@ -41,27 +39,21 @@ class EmailFolderSerializer(serializers.ModelSerializer):
         ]
     
     def get_message_count(self, obj):
-        """Get count of messages in this folder"""
         return obj.messages.filter(is_deleted=False).count()
     
     def get_unread_count(self, obj):
-        """Get count of unread messages in this folder"""
         return obj.messages.filter(is_deleted=False, status='unread').count()
     
     def create(self, validated_data):
-        """Set created_by when creating a new folder"""
         validated_data['created_by'] = self.context['request'].user
         return super().create(validated_data)
     
     def update(self, instance, validated_data):
-        """Set updated_by when updating a folder"""
         validated_data['updated_by'] = self.context['request'].user
         return super().update(instance, validated_data)
 
 
-class EmailAttachmentSerializer(serializers.ModelSerializer):
-    """Serializer for EmailAttachment"""
-    
+class EmailAttachmentSerializer(serializers.ModelSerializer):    
     file_size_display = serializers.SerializerMethodField()
     created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
     
@@ -77,7 +69,6 @@ class EmailAttachmentSerializer(serializers.ModelSerializer):
         ]
     
     def get_file_size_display(self, obj):
-        """Format file size for display"""
         size = obj.file_size
         for unit in ['B', 'KB', 'MB', 'GB']:
             if size < 1024.0:
@@ -86,9 +77,7 @@ class EmailAttachmentSerializer(serializers.ModelSerializer):
         return f"{size:.1f} TB"
 
 
-class EmailInboxMessageSerializer(serializers.ModelSerializer):
-    """Serializer for EmailInboxMessage"""
-    
+class EmailInboxMessageSerializer(serializers.ModelSerializer):    
     priority_display = serializers.CharField(source='get_priority_display', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     category_display = serializers.CharField(source='get_category_display', read_only=True)
@@ -110,7 +99,6 @@ class EmailInboxMessageSerializer(serializers.ModelSerializer):
             'priority_display', 'sentiment', 'sentiment_display', 'status',
             'status_display', 'folder', 'folder_name', 'is_starred',
             'is_important', 'tags', 'thread_id',
-            #   'parent',
             'is_processed', 'processing_notes', 'assigned_to', 'assigned_to_name',
             'received_at', 'read_at', 'replied_at', 'forwarded_at',
             'raw_headers', 'raw_body', 'attachments', 'created_at', 'updated_at',
@@ -131,9 +119,7 @@ class EmailInboxMessageSerializer(serializers.ModelSerializer):
             'updated_by', 'is_deleted', 'deleted_at', 'deleted_by'
         ]
 
-class EmailInboxMessageCreateSerializer(serializers.ModelSerializer):
-    """Serializer for creating EmailInboxMessage"""
-    
+class EmailInboxMessageCreateSerializer(serializers.ModelSerializer):    
     class Meta:
         model = EmailInboxMessage
         fields = [
@@ -144,7 +130,6 @@ class EmailInboxMessageCreateSerializer(serializers.ModelSerializer):
         ]
     
     def create(self, validated_data):
-        """Create a new email inbox message"""
         import uuid
         validated_data['message_id'] = str(uuid.uuid4())
         validated_data['created_by'] = self.context['request'].user
@@ -156,27 +141,21 @@ class EmailInboxMessageCreateSerializer(serializers.ModelSerializer):
         
 
 
-class EmailInboxMessageUpdateSerializer(serializers.ModelSerializer):
-    """Serializer for updating EmailInboxMessage"""
-    
+class EmailInboxMessageUpdateSerializer(serializers.ModelSerializer):    
     class Meta:
         model = EmailInboxMessage
         fields = [
             'category', 'priority', 'sentiment', 'status', 'folder',
             'is_starred', 'is_important', 'tags', 'is_processed',
             'processing_notes',
-            #   'assigned_to'
         ]
     
     def update(self, instance, validated_data):
-        """Update an email inbox message"""
         validated_data['updated_by'] = self.context['request'].user
         return super().update(instance, validated_data)
 
 
-class EmailConversationSerializer(serializers.ModelSerializer):
-    """Serializer for EmailConversation"""
-    
+class EmailConversationSerializer(serializers.ModelSerializer):    
     class Meta:
         model = EmailConversation
         fields = [
@@ -187,9 +166,7 @@ class EmailConversationSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at']
 
 
-class EmailFilterSerializer(serializers.ModelSerializer):
-    """Serializer for EmailFilter"""
-    
+class EmailFilterSerializer(serializers.ModelSerializer):    
     filter_type_display = serializers.CharField(source='get_filter_type_display', read_only=True)
     operator_display = serializers.CharField(source='get_operator_display', read_only=True)
     action_display = serializers.CharField(source='get_action_display', read_only=True)
@@ -212,19 +189,15 @@ class EmailFilterSerializer(serializers.ModelSerializer):
         ]
     
     def create(self, validated_data):
-        """Set created_by when creating a new filter"""
         validated_data['created_by'] = self.context['request'].user
         return super().create(validated_data)
     
     def update(self, instance, validated_data):
-        """Set updated_by when updating a filter"""
         validated_data['updated_by'] = self.context['request'].user
         return super().update(instance, validated_data)
 
 
-class EmailSearchQuerySerializer(serializers.ModelSerializer):
-    """Serializer for EmailSearchQuery"""
-    
+class EmailSearchQuerySerializer(serializers.ModelSerializer):    
     created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
     updated_by_name = serializers.CharField(source='updated_by.get_full_name', read_only=True)
     
@@ -242,19 +215,15 @@ class EmailSearchQuerySerializer(serializers.ModelSerializer):
         ]
     
     def create(self, validated_data):
-        """Set created_by when creating a new search query"""
         validated_data['created_by'] = self.context['request'].user
         return super().create(validated_data)
     
     def update(self, instance, validated_data):
-        """Set updated_by when updating a search query"""
         validated_data['updated_by'] = self.context['request'].user
         return super().update(instance, validated_data)
 
 
-class EmailReplySerializer(serializers.Serializer):
-    """Serializer for replying to emails"""
-    
+class EmailReplySerializer(serializers.Serializer):    
     subject = serializers.CharField(max_length=500)
     html_content = serializers.CharField(required=False, allow_blank=True)
     text_content = serializers.CharField(required=False, allow_blank=True)
@@ -284,9 +253,7 @@ class EmailReplySerializer(serializers.Serializer):
     )
 
 
-class EmailForwardSerializer(serializers.Serializer):
-    """Serializer for forwarding emails"""
-    
+class EmailForwardSerializer(serializers.Serializer):    
     to_emails = serializers.ListField(
         child=serializers.EmailField(),
         help_text="Recipients to forward to"
@@ -314,9 +281,7 @@ class EmailForwardSerializer(serializers.Serializer):
     )
 
 
-class BulkEmailActionSerializer(serializers.Serializer):
-    """Serializer for bulk email actions"""
-    
+class BulkEmailActionSerializer(serializers.Serializer):    
     email_ids = serializers.ListField(
         child=serializers.UUIDField(),
         help_text="List of email IDs to perform action on"
@@ -347,9 +312,7 @@ class BulkEmailActionSerializer(serializers.Serializer):
     )
 
 
-class EmailSearchSerializer(serializers.Serializer):
-    """Serializer for email search"""
-    
+class EmailSearchSerializer(serializers.Serializer):    
     query = serializers.CharField(required=False, allow_blank=True, help_text="Search query")
     folder_id = serializers.UUIDField(required=False, allow_null=True)
     category = serializers.ChoiceField(
@@ -397,9 +360,7 @@ class EmailSearchSerializer(serializers.Serializer):
     )
 
 
-class EmailStatisticsSerializer(serializers.Serializer):
-    """Serializer for email statistics"""
-    
+class EmailStatisticsSerializer(serializers.Serializer):    
     total_emails = serializers.IntegerField()
     unread_emails = serializers.IntegerField()
     read_emails = serializers.IntegerField()
@@ -414,7 +375,6 @@ class EmailStatisticsSerializer(serializers.Serializer):
     top_senders = serializers.ListField()
     response_time_stats = serializers.DictField()
 class EmailComposeSerializer(serializers.Serializer):
-    """Serializer for composing and sending a new email"""
     to_emails = serializers.ListField(child=serializers.EmailField())
     cc_emails = serializers.ListField(child=serializers.EmailField(), required=False, default=list)
     bcc_emails = serializers.ListField(child=serializers.EmailField(), required=False, default=list)
@@ -422,7 +382,6 @@ class EmailComposeSerializer(serializers.Serializer):
     html_content = serializers.CharField(required=False, allow_blank=True)
     text_content = serializers.CharField(required=False, allow_blank=True)
 class EmailInboxListSerializer(serializers.ModelSerializer):
-    # Only fields needed for the columns
     due_status = serializers.SerializerMethodField()
     date_column = serializers.SerializerMethodField()
     due_date_column = serializers.SerializerMethodField()
@@ -453,8 +412,6 @@ class EmailInboxListSerializer(serializers.ModelSerializer):
         return obj.attachment_count > 0
     
     def get_snippet(self, obj):
-        """Returns the first 100 characters of the email body, stripped of HTML."""
-        # Get raw content
         body = obj.text_content or obj.html_content or ""
         
         clean_body = strip_tags(body)
@@ -487,7 +444,6 @@ class EmailAttachmentSimpleSerializer(serializers.ModelSerializer):
         fields = ['id', 'filename', 'file_path', 'file_size', 'content_type']
 
 class EmailInboxDetailSerializer(serializers.ModelSerializer):
-    # Full details for the page view
     internal_notes = serializers.SerializerMethodField()
     attachments = EmailAttachmentSimpleSerializer(many=True, read_only=True)
     formatted_date = serializers.SerializerMethodField()
@@ -509,11 +465,9 @@ class EmailInboxDetailSerializer(serializers.ModelSerializer):
             'received_at',
             'formatted_date',
             
-            # Content
             'html_content',     
             'text_content',
             
-            # Metadata
             'tags',            
             'customer_type',
             'priority',
@@ -521,7 +475,6 @@ class EmailInboxDetailSerializer(serializers.ModelSerializer):
             'category',       
             'folder',
             
-            # Related Data
             'attachments',     
             'internal_notes',
             'thread_history'
@@ -650,7 +603,6 @@ class RecipientImportSerializer(serializers.Serializer):
         return data
 
 class CampaignPreviewSerializer(serializers.Serializer):
-    """Serializer for previewing a campaign email"""
     template_id = serializers.UUIDField(required=False)
     custom_subject = serializers.CharField(required=False, allow_blank=True)
     additional_message = serializers.CharField(required=False, allow_blank=True)

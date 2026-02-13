@@ -1,9 +1,7 @@
 from rest_framework import serializers
 from .models import CustomerPolicyPreference
 
-class CustomerPolicyPreferenceSerializer(serializers.ModelSerializer):
-    """Serializer for CustomerPolicyPreference model"""
-    
+class CustomerPolicyPreferenceSerializer(serializers.ModelSerializer):    
     customer_name = serializers.CharField(source='customer.full_name', read_only=True)
     customer_code = serializers.CharField(source='customer.customer_code', read_only=True)
     customer_email = serializers.CharField(source='customer.email', read_only=True)
@@ -48,9 +46,7 @@ class CustomerPolicyPreferenceSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at', 'created_vy']
 
 
-class CustomerPolicyPreferenceCreateSerializer(serializers.ModelSerializer):
-    """Serializer for creating CustomerPolicyPreference"""
-    
+class CustomerPolicyPreferenceCreateSerializer(serializers.ModelSerializer):    
     class Meta:
         model = CustomerPolicyPreference
         fields = [
@@ -70,7 +66,6 @@ class CustomerPolicyPreferenceCreateSerializer(serializers.ModelSerializer):
         ]
     
     def validate(self, data):
-        """Validate the preference data"""
         customer = data.get('customer')
         renewal_cases = data.get('renewal_cases')
         
@@ -97,9 +92,7 @@ class CustomerPolicyPreferenceCreateSerializer(serializers.ModelSerializer):
         return data
 
 
-class CustomerPolicyPreferenceUpdateSerializer(serializers.ModelSerializer):
-    """Serializer for updating CustomerPolicyPreference"""
-    
+class CustomerPolicyPreferenceUpdateSerializer(serializers.ModelSerializer):    
     class Meta:
         model = CustomerPolicyPreference
         fields = [
@@ -117,8 +110,6 @@ class CustomerPolicyPreferenceUpdateSerializer(serializers.ModelSerializer):
         ]
     
     def validate(self, data):
-        """Validate the preference data"""
-        # Validate budget range
         budget_min = data.get('budget_range_min', self.instance.budget_range_min if self.instance else None)
         budget_max = data.get('budget_range_max', self.instance.budget_range_max if self.instance else None)
         
@@ -128,9 +119,7 @@ class CustomerPolicyPreferenceUpdateSerializer(serializers.ModelSerializer):
             )
         
         return data
-class CustomerPolicyPreferenceListSerializer(serializers.ModelSerializer):
-    """Serializer for listing CustomerPolicyPreference with minimal data"""
-    
+class CustomerPolicyPreferenceListSerializer(serializers.ModelSerializer):    
     customer_name = serializers.CharField(source='customer.full_name', read_only=True)
     customer_code = serializers.CharField(source='customer.customer_code', read_only=True)
     customer_email = serializers.CharField(source='customer.email', read_only=True)
@@ -165,9 +154,7 @@ class CustomerPolicyPreferenceListSerializer(serializers.ModelSerializer):
         ]
 
 
-class CustomerPolicyPreferenceSummarySerializer(serializers.ModelSerializer):
-    """Serializer for preference summary and analytics"""
-    
+class CustomerPolicyPreferenceSummarySerializer(serializers.ModelSerializer):    
     customer_name = serializers.CharField(source='customer.full_name', read_only=True)
     customer_code = serializers.CharField(source='customer.customer_code', read_only=True)
     preference_summary = serializers.CharField(read_only=True)

@@ -127,9 +127,7 @@ class AIInsightHistory(BaseModel):
         return f"History for {self.insight.insight_title} - {self.changed_at}"
 
 
-class AIConversation(BaseModel):
-    """Model to store AI conversation sessions"""
-    
+class AIConversation(BaseModel):    
     STATUS_CHOICES = [
         ('active', 'Active'),
         ('archived', 'Archived'),
@@ -192,9 +190,7 @@ class AIConversation(BaseModel):
         self.message_count = self.messages.count()
         self.save(update_fields=['message_count'])
 
-class AIMessage(BaseModel):
-    """Model to store individual messages in AI conversations"""
-    
+class AIMessage(BaseModel):    
     ROLE_CHOICES = [
         ('user', 'User'),
         ('assistant', 'AI Assistant'),
@@ -240,9 +236,7 @@ class AIMessage(BaseModel):
     def __str__(self):
         return f"{self.role}: {self.content[:50]}..."
 
-class AIAnalytics(BaseModel):
-    """Model to store AI-generated analytics and insights"""
-    
+class AIAnalytics(BaseModel):    
     ANALYTICS_TYPE_CHOICES = [
         ('dashboard_summary', 'Dashboard Summary'),
         ('renewal_analysis', 'Renewal Analysis'),

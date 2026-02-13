@@ -41,23 +41,17 @@ SENDING_METHOD_CHOICES = [
 ]
 
 class EmailAccount(models.Model):
-    """
-    Stores configuration for a single connected email account (IMAP/SMTP).
-    """
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, help_text="The owner of this configuration.")
     account_name = models.CharField(max_length=100, help_text="A friendly name for the account (e.g., 'Support Inbox').")
     email_address = models.EmailField(unique=True)
     email_provider = models.CharField(max_length=50, choices=PROVIDER_CHOICES, default='gmail')
     
-    # IMAP Settings (Incoming)
     imap_server = models.CharField(max_length=255, blank=True)
     imap_port = models.IntegerField(default=993, validators=[MinValueValidator(1), MaxValueValidator(65535)])
     
-    # SMTP Settings (Outgoing)
     smtp_server = models.CharField(max_length=255, blank=True)
     smtp_port = models.IntegerField(default=587, validators=[MinValueValidator(1), MaxValueValidator(65535)])
     
-    # Sync Settings
     use_ssl_tls = models.BooleanField(default=True, help_text="Use SSL/TLS encryption for connections.")
     auto_sync_enabled = models.BooleanField(default=True)
     sync_interval_minutes = models.IntegerField(choices=SYNC_INTERVAL_CHOICES, default=5)
@@ -125,41 +119,32 @@ class EmailAccount(models.Model):
         return decrypt_credential(self.access_credential)
 
     def soft_delete(self, user):
-        """Soft deletes the instance."""
         self.is_deleted = True
         self.deleted_at = timezone.now()
         self.deleted_by = user
         self.save()
 
 class EmailModuleSettings(models.Model):
-    """
-    Stores general, global, processing, and AI features settings, unique per user.
-    """
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, primary_key=True)
     
-    # Connection Settings
     imap_connection_status = models.BooleanField(default=False, help_text="Status of the main IMAP test connection.")
     enable_webhook_notifications = models.BooleanField(default=False)
     webhook_url = models.URLField(max_length=500, blank=True, null=True)
     
-    # Mail Merge Configuration
     enable_mail_merge = models.BooleanField(default=False)
     auto_generate_documents = models.BooleanField(default=False, help_text="Automatically create documents during bulk email campaigns")
     attach_to_emails = models.BooleanField(default=True, help_text="Automatically attach generated documents to emails")
     document_storage_path = models.CharField(max_length=255, default="/documents/templates")
     output_directory = models.CharField(max_length=255, default="/documents/generated")
     
-    # Processing Settings
     email_polling_interval_minutes = models.IntegerField(choices=SYNC_INTERVAL_CHOICES, default=5)
     auto_categorization_enabled = models.BooleanField(default=True)
     fallback_tagging_enabled = models.BooleanField(default=True)
     
-    # Inbox Preferences
     emails_per_page = models.IntegerField(default=25, validators=[MinValueValidator(10), MaxValueValidator(100)])
     auto_refresh_inbox = models.BooleanField(default=True)
     mark_read_on_open = models.BooleanField(default=True)
     
-    # AI Features
     ai_intent_classification = models.BooleanField(default=True)
     ai_sentiment_analysis = models.BooleanField(default=True)
     ai_realtime_collaboration = models.BooleanField(default=True)
@@ -171,8 +156,6 @@ class EmailModuleSettings(models.Model):
     is_deleted = models.BooleanField(default=False)
     deleted_at = models.DateTimeField(blank=True, null=True)
     deleted_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='deleted_email_module_settings')
-
-
     class Meta:
         db_table = 'email_module_settings'
         verbose_name = "Email Module Settings"
@@ -182,9 +165,6 @@ class EmailModuleSettings(models.Model):
         return f"Settings for {self.user.username}"
 
 class ClassificationRule(models.Model):
-    """
-    Stores keyword-based rules for automatic email classification.
-    """
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     keyword = models.CharField(max_length=100, help_text="Keyword to match in email subject or content.")
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES, default='uncategorized')
@@ -208,17 +188,11 @@ class ClassificationRule(models.Model):
         return f"Rule: '{self.keyword}' -> {self.category} ({self.priority})"
     
     def soft_delete(self, user):
-        """Soft deletes the instance."""
         self.is_deleted = True
         self.deleted_at = timezone.now()
         self.deleted_by = user
         self.save()
-
-
 class EmailMessage(models.Model):
-    """
-    Stores individual email messages fetched from connected accounts.
-    """
     email_account = models.ForeignKey(EmailAccount, on_delete=models.CASCADE, related_name='messages')
     message_id = models.CharField(max_length=255, unique=True, help_text="Unique ID from the email provider to prevent duplicates.")
     subject = models.CharField(max_length=998, blank=True)
@@ -231,7 +205,6 @@ class EmailMessage(models.Model):
     is_read = models.BooleanField(default=False)
     folder = models.CharField(max_length=50, default='INBOX')
     
-    # Auto-classification fields
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES, default='uncategorized')
     priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='medium')
     is_processed = models.BooleanField(default=False, help_text="True if AI/Rules have already run on this email.")

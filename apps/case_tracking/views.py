@@ -286,7 +286,6 @@ class CaseTrackingViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=True, methods=['get'], url_path='case-logs')
     def case_logs(self, request, pk=None):
-        """Get all case logs for a specific renewal case"""
         renewal_case = get_object_or_404(RenewalCase, id=pk)
 
         case_logs = CaseLog.objects.filter(
@@ -319,7 +318,6 @@ class CaseTrackingViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=True, methods=['get'], url_path='comment-history-formatted')
     def comment_history_formatted(self, request, case_id=None):
-        """Get formatted comment history for a case"""
         try:
             renewal_case = get_object_or_404(RenewalCase, id=case_id)
 

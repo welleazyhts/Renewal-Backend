@@ -1,8 +1,6 @@
 from django.db import models
 from apps.core.models import BaseModel
 from apps.templates.models import Template
-
-
 class EmailManager(BaseModel):
     PRIORITY_CHOICES = [
         ('Normal', 'Normal'),
@@ -136,8 +134,6 @@ class EmailManager(BaseModel):
         db_column='templates_id',
         help_text="Associated template"
     )
-
-    
     class Meta:
         db_table = 'email_manager'
         ordering = ['-created_at']
@@ -219,7 +215,6 @@ class EmailManagerInbox(BaseModel):
         default=False,
         help_text="Indicates whether processing for this inbox email has started"
     )
-
 
     class Meta:
         db_table = 'email_manager_inbox'

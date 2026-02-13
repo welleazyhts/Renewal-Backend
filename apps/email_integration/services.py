@@ -14,10 +14,7 @@ from .models import (
 
 logger = logging.getLogger(__name__)
 
-
-class EmailIntegrationService:
-    """Service for managing email integration features"""
-    
+class EmailIntegrationService:    
     def __init__(self):
         pass
     
@@ -138,7 +135,6 @@ class EmailIntegrationService:
             }
     
     def _process_incoming_email_data(self, provider: str, raw_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Process incoming email data based on provider"""
         try:
             if provider == 'sendgrid':
                 return self._process_sendgrid_incoming_email(raw_data)
@@ -157,7 +153,6 @@ class EmailIntegrationService:
             }
     
     def _process_sendgrid_incoming_email(self, raw_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Process SendGrid incoming email data"""
         try:
             email_data = {
                 'from_email': raw_data.get('from', ''),
@@ -204,7 +199,6 @@ class EmailIntegrationService:
             }
 
     def _process_webhook_data(self, provider: str, event_type: str, raw_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Process webhook data based on provider"""
         try:
             if provider == 'sendgrid':
                 return self._process_sendgrid_webhook(event_type, raw_data)
@@ -226,9 +220,7 @@ class EmailIntegrationService:
             }
     
     def _process_sendgrid_webhook(self, event_type: str, raw_data: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """Process SendGrid webhook data"""
         try:
-            # SendGrid sends an array of events
             if not raw_data or not isinstance(raw_data, list):
                 return {'error': 'Invalid SendGrid webhook data'}
             
@@ -248,7 +240,6 @@ class EmailIntegrationService:
             return {'error': str(e)}
     
     def _process_aws_ses_webhook(self, event_type: str, raw_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Process AWS SES webhook data"""
         try:
             return {
                 'provider': 'aws_ses',
@@ -263,7 +254,6 @@ class EmailIntegrationService:
             return {'error': str(e)}
     
     def _update_email_status_from_webhook(self, webhook: EmailWebhook, processed_data: Dict[str, Any]):
-        """Update email message status based on webhook data"""
         try:
             from apps.email_operations.models import EmailMessage
             
@@ -321,7 +311,6 @@ class EmailIntegrationService:
                     'message': 'Automation has reached maximum execution limit'
                 }
             
-            # Check cooldown
             if automation.cooldown_seconds > 0 and automation.last_executed:
                 time_since_last = timezone.now() - automation.last_executed
                 if time_since_last.total_seconds() < automation.cooldown_seconds:
@@ -330,7 +319,6 @@ class EmailIntegrationService:
                         'message': 'Automation is in cooldown period'
                     }
             
-            # Create execution log
             log = EmailAutomationLog.objects.create(
                 automation=automation,
                 trigger_data=trigger_data or {},
@@ -338,10 +326,8 @@ class EmailIntegrationService:
                 started_at=timezone.now()
             )
             
-            # Execute automation
             result = self._execute_automation_action(automation, trigger_data or {})
             
-            # Update log
             log.status = 'completed' if result['success'] else 'failed'
             log.completed_at = timezone.now()
             log.duration_seconds = (log.completed_at - log.started_at).total_seconds()
@@ -350,7 +336,6 @@ class EmailIntegrationService:
                 log.error_message = result.get('message', 'Unknown error')
             log.save()
             
-            # Update automation
             automation.execution_count += 1
             automation.last_executed = timezone.now()
             automation.save()
@@ -370,7 +355,6 @@ class EmailIntegrationService:
             }
     
     def _execute_automation_action(self, automation: EmailAutomation, trigger_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Execute the automation action"""
         try:
             action_type = automation.action_type
             action_config = automation.action_config
@@ -409,14 +393,12 @@ class EmailIntegrationService:
             }
     
     def _execute_send_email_action(self, action_config: Dict[str, Any], trigger_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Execute send email action"""
         try:
             from apps.email_operations.services import EmailOperationsService
             
             service = EmailOperationsService()
             service.context = {'user': None}
             
-            # Merge trigger data with action config
             email_data = {**action_config, **trigger_data}
             
             result = service.send_email(**email_data)
@@ -430,13 +412,11 @@ class EmailIntegrationService:
             }
     
     def _execute_reply_email_action(self, action_config: Dict[str, Any], trigger_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Execute reply email action"""
         try:
             from apps.email_inbox.services import EmailInboxService
             
             service = EmailInboxService()
             
-            # Get original email ID from trigger data
             original_email_id = trigger_data.get('email_id')
             if not original_email_id:
                 return {
@@ -444,7 +424,6 @@ class EmailIntegrationService:
                     'message': 'No original email ID provided'
                 }
             
-            # Merge action config with trigger data
             reply_data = {**action_config, **trigger_data}
             
             result = service.reply_to_email(original_email_id, **reply_data)
@@ -458,13 +437,11 @@ class EmailIntegrationService:
             }
     
     def _execute_forward_email_action(self, action_config: Dict[str, Any], trigger_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Execute forward email action"""
         try:
             from apps.email_inbox.services import EmailInboxService
             
             service = EmailInboxService()
             
-            # Get original email ID from trigger data
             original_email_id = trigger_data.get('email_id')
             if not original_email_id:
                 return {
@@ -472,7 +449,6 @@ class EmailIntegrationService:
                     'message': 'No original email ID provided'
                 }
             
-            # Merge action config with trigger data
             forward_data = {**action_config, **trigger_data}
             
             result = service.forward_email(original_email_id, **forward_data)
@@ -486,7 +462,6 @@ class EmailIntegrationService:
             }
     
     def _execute_move_to_folder_action(self, action_config: Dict[str, Any], trigger_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Execute move to folder action"""
         try:
             from apps.email_inbox.models import EmailInboxMessage, EmailFolder
             
@@ -518,7 +493,6 @@ class EmailIntegrationService:
             }
     
     def _execute_add_tag_action(self, action_config: Dict[str, Any], trigger_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Execute add tag action"""
         try:
             from apps.email_inbox.models import EmailInboxMessage
             
@@ -550,7 +524,6 @@ class EmailIntegrationService:
             }
     
     def _execute_assign_to_user_action(self, action_config: Dict[str, Any], trigger_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Execute assign to user action"""
         try:
             from apps.email_inbox.models import EmailInboxMessage
             from django.contrib.auth import get_user_model
@@ -585,7 +558,6 @@ class EmailIntegrationService:
             }
     
     def _execute_create_task_action(self, action_config: Dict[str, Any], trigger_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Execute create task action"""
         try:
             return {
                 'success': True,
@@ -600,7 +572,6 @@ class EmailIntegrationService:
             }
     
     def _execute_update_crm_action(self, action_config: Dict[str, Any], trigger_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Execute update CRM action"""
         try:
             return {
                 'success': True,
@@ -615,7 +586,6 @@ class EmailIntegrationService:
             }
     
     def _execute_webhook_call_action(self, action_config: Dict[str, Any], trigger_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Execute webhook call action"""
         try:
             url = action_config.get('url')
             method = action_config.get('method', 'POST')
@@ -650,7 +620,6 @@ class EmailIntegrationService:
             }
     
     def _execute_delay_action(self, action_config: Dict[str, Any], trigger_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Execute delay action"""
         try:
             import time
             
@@ -719,7 +688,6 @@ class EmailIntegrationService:
             }
     
     def _sync_crm_integration(self, integration: EmailIntegration, sync_type: str) -> Dict[str, Any]:
-        """Sync CRM integration"""
         try:
             return {
                 'success': True,
@@ -735,7 +703,6 @@ class EmailIntegrationService:
             }
     
     def _sync_helpdesk_integration(self, integration: EmailIntegration, sync_type: str) -> Dict[str, Any]:
-        """Sync helpdesk integration"""
         try:
             return {
                 'success': True,
@@ -751,7 +718,6 @@ class EmailIntegrationService:
             }
     
     def _sync_analytics_integration(self, integration: EmailIntegration, sync_type: str) -> Dict[str, Any]:
-        """Sync analytics integration"""
         try:
             return {
                 'success': True,
@@ -767,19 +733,15 @@ class EmailIntegrationService:
             }
     
     def get_integration_statistics(self, start_date: str = None, end_date: str = None) -> Dict[str, Any]:
-        """Get integration statistics"""
         try:
-            # Build filter
             filters = {}
             if start_date:
                 filters['date__gte'] = start_date
             if end_date:
                 filters['date__lte'] = end_date
             
-            # Get analytics data
             analytics = EmailIntegrationAnalytics.objects.filter(**filters)
             
-            # Calculate totals
             total_webhook_events = analytics.aggregate(
                 total=models.Sum('webhook_events_received')
             )['total'] or 0
@@ -792,7 +754,6 @@ class EmailIntegrationService:
                 total=models.Sum('integration_syncs')
             )['total'] or 0
             
-            # Calculate success rates
             webhook_success_rate = analytics.aggregate(
                 avg=models.Avg('webhook_success_rate')
             )['avg'] or 0
@@ -805,7 +766,6 @@ class EmailIntegrationService:
                 avg=models.Avg('integration_success_rate')
             )['avg'] or 0
             
-            # Get recent activity
             recent_webhooks = EmailWebhook.objects.filter(
                 created_at__gte=timezone.now() - timedelta(days=7)
             ).count()

@@ -17,7 +17,6 @@ class FileUploadSerializer(serializers.ModelSerializer):
         read_only_fields = ['filename', 'original_filename', 'file_size', 'file_type', 'upload_status']
 
     def validate_file(self, value):
-        """Validate uploaded file to ensure it's CSV or XLSX format"""
         if not value:
             raise serializers.ValidationError("No file provided.")
 
@@ -51,8 +50,6 @@ class FileUploadSerializer(serializers.ModelSerializer):
 
         return file_instance
 class FileUploadListSerializer(serializers.ModelSerializer):
-    """Serializer for listing file upload details"""
-
     file_size_formatted = serializers.SerializerMethodField()
     processing_duration = serializers.SerializerMethodField()
     success_rate = serializers.SerializerMethodField()
@@ -81,7 +78,6 @@ class FileUploadListSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
     def get_file_size_formatted(self, obj):
-        """Format file size in human readable format"""
         if not obj.file_size:
             return "0 B"
 
@@ -93,28 +89,23 @@ class FileUploadListSerializer(serializers.ModelSerializer):
         return f"{size:.1f} TB"
 
     def get_processing_duration(self, obj):
-        """Calculate processing duration in seconds"""
         if obj.processing_started_at and obj.processing_completed_at:
             duration = obj.processing_completed_at - obj.processing_started_at
             return duration.total_seconds()
         return None
 
     def get_success_rate(self, obj):
-        """Calculate success rate percentage"""
         if obj.total_records and obj.total_records > 0:
             return round((obj.successful_records / obj.total_records) * 100, 2)
         return 0.0
 
     def get_uploaded_by_name(self, obj):
-        """Get the name of the user who uploaded the file"""
         if obj.uploaded_by:
             return f"{obj.uploaded_by.first_name} {obj.uploaded_by.last_name}".strip() or obj.uploaded_by.email
         return "Unknown"
 
 
 class FileUploadDetailSerializer(serializers.ModelSerializer):
-    """Detailed serializer for individual file upload"""
-
     file_size_formatted = serializers.SerializerMethodField()
     processing_duration = serializers.SerializerMethodField()
     success_rate = serializers.SerializerMethodField()
@@ -153,7 +144,6 @@ class FileUploadDetailSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
     def get_file_size_formatted(self, obj):
-        """Format file size in human readable format"""
         if not obj.file_size:
             return "0 B"
 
@@ -165,20 +155,17 @@ class FileUploadDetailSerializer(serializers.ModelSerializer):
         return f"{size:.1f} TB"
 
     def get_processing_duration(self, obj):
-        """Calculate processing duration in seconds"""
         if obj.processing_started_at and obj.processing_completed_at:
             duration = obj.processing_completed_at - obj.processing_started_at
             return duration.total_seconds()
         return None
 
     def get_success_rate(self, obj):
-        """Calculate success rate percentage"""
         if obj.total_records and obj.total_records > 0:
             return round((obj.successful_records / obj.total_records) * 100, 2)
         return 0.0
 
     def get_uploaded_by_details(self, obj):
-        """Get detailed info about the user who uploaded the file"""
         if obj.uploaded_by:
             return {
                 'id': obj.uploaded_by.id,
@@ -188,7 +175,6 @@ class FileUploadDetailSerializer(serializers.ModelSerializer):
         return None
 
     def get_created_by_details(self, obj):
-        """Get detailed info about the user who created the record"""
         if obj.created_by:
             return {
                 'id': obj.created_by.id,
@@ -198,7 +184,6 @@ class FileUploadDetailSerializer(serializers.ModelSerializer):
         return None
 
     def get_updated_by_details(self, obj):
-        """Get detailed info about the user who last updated the record"""
         if obj.updated_by:
             return {
                 'id': obj.updated_by.id,

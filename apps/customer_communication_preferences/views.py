@@ -13,7 +13,6 @@ class CustomerCommunicationPreferenceViewSet(viewsets.ModelViewSet):
     pagination_class = StandardResultsSetPagination
 
     def get_serializer_class(self):
-        """Return appropriate serializer based on action"""
         if self.action == 'create':
             return CustomerCommunicationPreferenceCreateSerializer
         elif self.action == 'list':
@@ -21,7 +20,6 @@ class CustomerCommunicationPreferenceViewSet(viewsets.ModelViewSet):
         return CustomerCommunicationPreferenceListSerializer
 
     def get_queryset(self):
-        """Filter queryset based on query parameters"""
         queryset = self.queryset.select_related('customer')
         
         customer_id = self.request.query_params.get('customer_id')
@@ -54,7 +52,6 @@ class CustomerCommunicationPreferenceViewSet(viewsets.ModelViewSet):
         return queryset
 
     def create(self, request, *args, **kwargs):
-        """Create a new customer communication preference"""
         try:
             serializer = self.get_serializer(data=request.data)
             if serializer.is_valid():
@@ -82,7 +79,6 @@ class CustomerCommunicationPreferenceViewSet(viewsets.ModelViewSet):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def list(self, request, *args, **kwargs):
-        """List customer communication preferences"""
         try:
             queryset = self.get_queryset()
             page = self.paginate_queryset(queryset)
@@ -115,5 +111,4 @@ class CustomerCommunicationPreferenceViewSet(viewsets.ModelViewSet):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def perform_create(self, serializer):
-        """Set created_by when creating"""
         serializer.save(created_by=self.request.user)

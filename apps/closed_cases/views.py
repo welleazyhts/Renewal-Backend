@@ -42,7 +42,6 @@ class ClosedCasesViewSet(viewsets.ReadOnlyModelViewSet):
         ).order_by('-updated_at') 
     
     def get_serializer_class(self):
-        """Return appropriate serializer based on action"""
         if self.action == 'retrieve':
             return ClosedCasesDetailSerializer
         return ClosedCasesListSerializer
@@ -132,7 +131,6 @@ class ClosedCasesViewSet(viewsets.ReadOnlyModelViewSet):
         })
     
     def retrieve(self, request, case_id=None, *args, **kwargs):
-        """Get detailed information for a specific closed case"""
         queryset = self.get_queryset()
         case = get_object_or_404(queryset, id=case_id)
         serializer = self.get_serializer(case)
@@ -765,7 +763,6 @@ class ClosedCasesCommentListView(generics.ListCreateAPIView):
         return CaseCommentCreateSerializer
     
     def get_queryset(self):
-        """Get comments for the specified case (only if case is renewed) using CaseLog."""
         from apps.case_logs.models import CaseLog
         
         case_number = self.kwargs['case_number']
@@ -787,7 +784,6 @@ class ClosedCasesCommentListView(generics.ListCreateAPIView):
         return CaseLog.objects.filter(renewal_case=case, is_deleted=False).exclude(comment='').exclude(comment__isnull=True)
     
     def create(self, request, *args, **kwargs):
-        """Create a new comment for the specified case (only if case is renewed) using CaseLog."""
         from apps.case_logs.serializers import CaseCommentCreateSerializer, CaseCommentSerializer
         
         case_number = self.kwargs['case_number']
@@ -839,7 +835,6 @@ class ClosedCasesCommentDetailView(generics.RetrieveUpdateDestroyAPIView):
         return CaseCommentSerializer
     
     def get_queryset(self):
-        """Get comments for the specified case (only if case is renewed) using CaseLog."""
         from apps.case_logs.models import CaseLog
         
         case_number = self.kwargs['case_number']
@@ -861,7 +856,6 @@ class ClosedCasesCommentDetailView(generics.RetrieveUpdateDestroyAPIView):
         return CaseLog.objects.filter(renewal_case=case, is_deleted=False).exclude(comment='').exclude(comment__isnull=True)
     
     def perform_update(self, serializer):
-        """Update comment and create history entry."""
         from apps.case_history.models import CaseHistory
         
         comment = serializer.save()
@@ -874,7 +868,6 @@ class ClosedCasesCommentDetailView(generics.RetrieveUpdateDestroyAPIView):
         )
     
     def perform_destroy(self, instance):
-        """Delete comment and create history entry."""
         from apps.case_history.models import CaseHistory
         
         CaseHistory.objects.create(
@@ -895,7 +888,6 @@ class ClosedCasesUpdateStatusView(generics.UpdateAPIView):
         return UpdateCaseStatusSerializer
     
     def get_queryset(self):
-        """Filter cases - only renewed cases"""
         queryset = RenewalCase.objects.filter(
             status='renewed',
             is_deleted=False
@@ -907,7 +899,6 @@ class ClosedCasesUpdateStatusView(generics.UpdateAPIView):
         return queryset
     
     def update(self, request, *args, **kwargs):
-        """Handle PUT/PATCH request to update case status and related fields."""
         partial = kwargs.pop('partial', False)
         
         case_number = self.kwargs['case_number']

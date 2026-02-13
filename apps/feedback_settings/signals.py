@@ -1,4 +1,4 @@
-import requests # Make sure to install: pip install requests
+import requests
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from apps.feedback_and_surveys.models import SurveySubmission
@@ -10,14 +10,12 @@ def survey_notification_handler(sender, instance, created, **kwargs):
     if not created:
         return
 
-    # 1. Get Settings & Owner
     owner = instance.survey.owner
     try:
         settings = SurveySettings.objects.get(owner=owner)
     except SurveySettings.DoesNotExist:
         return 
 
-    # --- EMAIL LOGIC (Existing) ---
     is_urgent = instance.rating < settings.negative_feedback_threshold
     if settings.email_notifications and is_urgent:
         email_service = EmailProviderService() 

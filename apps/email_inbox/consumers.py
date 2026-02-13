@@ -58,9 +58,6 @@ class InboxConsumer(AsyncWebsocketConsumer):
             )
 
     async def update_presence(self, join=True):
-        """
-        Updates the count of agents viewing this email.
-        """
         if not self.user or not self.user.is_authenticated:
             return
 
@@ -74,7 +71,6 @@ class InboxConsumer(AsyncWebsocketConsumer):
         
         cache.set(cache_key, current_viewers, timeout=3600)
 
-        # Broadcast the new count
         await self.channel_layer.group_send(
             self.presence_group,
             {
@@ -92,9 +88,6 @@ class InboxConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def get_user_from_token(self, token):
-        """
-        Manually decodes the JWT token to find the user.
-        """
         try:
             from rest_framework_simplejwt.tokens import AccessToken
             

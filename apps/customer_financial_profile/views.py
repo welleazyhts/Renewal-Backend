@@ -48,7 +48,6 @@ class CustomerFinancialProfileViewSet(viewsets.ModelViewSet):
         return queryset.select_related('customer').order_by('-created_at')
 
     def list(self, request, *args, **kwargs):
-        """List customer financial profiles with success response"""
         try:
             queryset = self.filter_queryset(self.get_queryset())
             page = self.paginate_queryset(queryset)
@@ -77,7 +76,6 @@ class CustomerFinancialProfileViewSet(viewsets.ModelViewSet):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def create(self, request, *args, **kwargs):
-        """Create/Store new customer financial profile"""
         try:
             serializer = self.get_serializer(data=request.data)
             if serializer.is_valid():

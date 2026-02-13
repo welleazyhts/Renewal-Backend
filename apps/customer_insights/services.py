@@ -27,9 +27,7 @@ COMMUNICATION_TOPICS = {
     'coverage_updates': ['coverage update', 'change of address', 'nominee update'],
 }
 
-class CustomerInsightsService:
-    """Service class for calculating and managing customer insights"""
-    
+class CustomerInsightsService:    
     def __init__(self):
         self.now = timezone.now()
         self.today = self.now.date()
@@ -45,7 +43,6 @@ class CustomerInsightsService:
             return obj
 
     def get_customer_insights(self, customer_id: int, force_recalculate: bool = False) -> Dict[str, Any]:
-        """Get comprehensive customer insights with caching"""
         try:
             customer = Customer.objects.get(id=customer_id, is_deleted=False)
         except Customer.DoesNotExist:
@@ -188,7 +185,6 @@ class CustomerInsightsService:
             "overall_risk_score": self._calculate_risk_score(customer, policies)
         }
     def get_payment_history(self, customer: Customer, years: int = 10) -> Dict[str, Any]:
-        """Get detailed 10-year payment history with Summary Bar and Yearly Breakdown"""
         start_date = self.today - timedelta(days=years * 365)
         
         payments = CustomerPayment.objects.filter(

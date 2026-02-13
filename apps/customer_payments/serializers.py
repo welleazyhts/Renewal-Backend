@@ -71,7 +71,6 @@ class CustomerPaymentSerializer(serializers.ModelSerializer):
 
 
 class CustomerPaymentCreateSerializer(serializers.ModelSerializer):
-    """Serializer for creating CustomerPayment"""
     customer_id = serializers.PrimaryKeyRelatedField(
         queryset=Customer.objects.all(),
         source="customer"   
@@ -111,7 +110,6 @@ class CustomerPaymentCreateSerializer(serializers.ModelSerializer):
         ]
     
     def validate(self, data):
-        """Validate the payment data"""
         payment_amount = data.get('payment_amount')
         if payment_amount and payment_amount <= 0:
             raise serializers.ValidationError(
@@ -156,7 +154,6 @@ class CustomerPaymentCreateSerializer(serializers.ModelSerializer):
         return data
     
     def create(self, validated_data):
-        """Create payment and calculate net amount"""
         payment = CustomerPayment(**validated_data)
         payment.calculate_net_amount()
         payment.save()
@@ -310,7 +307,6 @@ class PaymentRefundSerializer(serializers.Serializer):
     )
     
     def validate_refund_amount(self, value):
-        """Validate refund amount against payment amount"""
         payment = self.context.get('payment')
         if payment and value > payment.payment_amount:
             raise serializers.ValidationError(
@@ -320,7 +316,6 @@ class PaymentRefundSerializer(serializers.Serializer):
 
 
 class PaymentStatusUpdateSerializer(serializers.Serializer):
-    """Serializer for updating payment status"""
     
     payment_status = serializers.ChoiceField(
         choices=CustomerPayment.PAYMENT_STATUS_CHOICES
@@ -351,7 +346,6 @@ class PaymentStatusUpdateSerializer(serializers.Serializer):
     )
     
     def validate(self, data):
-        """Validate status update data"""
         payment_status = data.get('payment_status')
         
         if payment_status == 'failed':

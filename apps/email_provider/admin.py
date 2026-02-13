@@ -4,7 +4,6 @@ from django.urls import reverse
 from django.utils.safestring import mark_safe
 from .models import EmailProviderConfig, EmailProviderHealthLog, EmailProviderUsageLog, EmailProviderTestResult
 
-
 @admin.register(EmailProviderConfig)
 class EmailProviderConfigAdmin(admin.ModelAdmin):
     list_display = [
@@ -72,7 +71,6 @@ class EmailProviderConfigAdmin(admin.ModelAdmin):
 
         percent_val = (sent / limit) * 100
 
-    # Compute colour coding
         if percent_val > 90:
             color = "red"
         elif percent_val > 75:
@@ -80,7 +78,6 @@ class EmailProviderConfigAdmin(admin.ModelAdmin):
         else:
             color = "green"
 
-    # Format BEFORE passing to format_html
         percent_val = f"{percent_val:.1f}%"
 
         return format_html(
@@ -91,21 +88,17 @@ class EmailProviderConfigAdmin(admin.ModelAdmin):
         
     
     def monthly_usage_percentage(self, obj):
-        # 1. Get raw values safely
         sent = obj.emails_sent_this_month or 0
         limit = obj.monthly_limit or 0
         
-        # 2. Prevent Division by Zero
         if limit == 0:
             return "N/A (No Limit)"
             
-        # 3. Calculate percentage
         try:
             percent_val = (float(sent) / float(limit)) * 100
         except (ValueError, TypeError):
             return "Error"
 
-        # 4. Determine color
         if percent_val > 90:
             color = 'red'
         elif percent_val > 75:
@@ -113,7 +106,6 @@ class EmailProviderConfigAdmin(admin.ModelAdmin):
         else:
             color = 'green'
 
-        # 5. Return formatted HTML
         from django.utils.html import format_html
         return format_html(
             '<span style="color: {}; font-weight: bold;">{}%</span>',
@@ -123,32 +115,27 @@ class EmailProviderConfigAdmin(admin.ModelAdmin):
     
     monthly_usage_percentage.short_description = "Monthly Usage"
     def get_queryset(self, request):
-        """Filter out soft-deleted providers"""
         return super().get_queryset(request).filter(is_deleted=False)
     
     actions = ['activate_providers', 'deactivate_providers', 'reset_daily_usage', 'reset_monthly_usage']
     
     def activate_providers(self, request, queryset):
-        """Activate selected providers"""
         count = queryset.update(is_active=True)
         self.message_user(request, f"{count} providers activated successfully.")
     activate_providers.short_description = "Activate selected providers"
     
     def deactivate_providers(self, request, queryset):
-        """Deactivate selected providers"""
         count = queryset.update(is_active=False)
         self.message_user(request, f"{count} providers deactivated successfully.")
     deactivate_providers.short_description = "Deactivate selected providers"
     
     def reset_daily_usage(self, request, queryset):
-        """Reset daily usage for selected providers"""
         for provider in queryset:
             provider.reset_daily_usage()
         self.message_user(request, f"Daily usage reset for {queryset.count()} providers.")
     reset_daily_usage.short_description = "Reset daily usage"
     
     def reset_monthly_usage(self, request, queryset):
-        """Reset monthly usage for selected providers"""
         for provider in queryset:
             provider.reset_monthly_usage()
         self.message_user(request, f"Monthly usage reset for {queryset.count()} providers.")
@@ -168,7 +155,6 @@ class EmailProviderHealthLogAdmin(admin.ModelAdmin):
     date_hierarchy = 'checked_at'
     
     def get_queryset(self, request):
-        """Optimize queryset"""
         return super().get_queryset(request).select_related('provider')
 
 
@@ -185,7 +171,6 @@ class EmailProviderUsageLogAdmin(admin.ModelAdmin):
     date_hierarchy = 'logged_at'
     
     def success_rate(self, obj):
-        """Calculate success rate"""
         if obj.emails_sent == 0:
             return "N/A"
         rate = (obj.success_count / obj.emails_sent) * 100
@@ -197,7 +182,6 @@ class EmailProviderUsageLogAdmin(admin.ModelAdmin):
     success_rate.short_description = "Success Rate"
     
     def average_response_time(self, obj):
-        """Calculate average response time"""
         if obj.success_count == 0:
             return "N/A"
         avg_time = obj.total_response_time / obj.success_count
@@ -205,7 +189,6 @@ class EmailProviderUsageLogAdmin(admin.ModelAdmin):
     average_response_time.short_description = "Avg Response Time"
     
     def get_queryset(self, request):
-        """Optimize queryset"""
         return super().get_queryset(request).select_related('provider')
 
 
@@ -225,5 +208,4 @@ class EmailProviderTestResultAdmin(admin.ModelAdmin):
     date_hierarchy = 'tested_at'
     
     def get_queryset(self, request):
-        """Optimize queryset"""
         return super().get_queryset(request).select_related('provider', 'tested_by')

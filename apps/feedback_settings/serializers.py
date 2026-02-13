@@ -8,21 +8,15 @@ class SurveySettingsSerializer(serializers.ModelSerializer):
         read_only_fields = ('owner', 'created_at', 'updated_at')
 
     def to_representation(self, instance):
-        """
-        Custom Output: We manually construct the JSON to hide 
-        created_at, updated_at, deleted_at, and owner fields.
-        """
         return {
             "id": instance.id,
             
-            # Group 1: General
             "general_settings": {
                 "default_language": instance.default_language,
                 "data_retention_period": instance.data_retention_period,
                 "auto_archive_responses": instance.auto_archive_responses,
             },
 
-            # Group 2: Notifications
             "notifications": {
                 "email_notifications": instance.email_notifications,
                 "sms_alerts": instance.sms_alerts,
@@ -31,7 +25,6 @@ class SurveySettingsSerializer(serializers.ModelSerializer):
                 "negative_feedback_threshold": instance.negative_feedback_threshold,
             },
 
-            # Group 3: Automation
             "automation": {
                 "auto_send_post_purchase": instance.auto_send_post_purchase,
                 "follow_up_reminders": instance.follow_up_reminders,
@@ -49,9 +42,6 @@ class IntegrationCredentialSerializer(serializers.ModelSerializer):
         }
 
     def to_representation(self, instance):
-        """
-        Clean output for Integrations (Hiding base model fields)
-        """
         data = super().to_representation(instance)
         return {
             "id": data['id'],

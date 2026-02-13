@@ -14,7 +14,6 @@ class GeneralSettingsViewSet(viewsets.GenericViewSet):
     serializer_class = UserSettingsSerializer
 
     def get_object(self):
-        # Retrieve the settings for the current user
         obj, created = UserSettings.objects.get_or_create(user=self.request.user)
         return obj
 

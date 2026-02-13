@@ -51,7 +51,6 @@ class CampaignSerializer(serializers.ModelSerializer):
         fields = [f for f in fields if f is not None]
 
     def get_simplified_status(self, obj):
-        """Get simplified status for frontend"""
         return obj.get_simplified_status()
 
     def get_email_provider_name(self, obj):
@@ -631,7 +630,6 @@ class CampaignCreateSerializer(serializers.Serializer):
         return recipients_created
 
     def _add_email_tracking(self, recipient):
-        """Add tracking pixel and convert links for email tracking"""
         import logging
         logger = logging.getLogger(__name__)
 
@@ -644,9 +642,7 @@ class CampaignCreateSerializer(serializers.Serializer):
         except Exception as e:
             logger.warning(f"Failed to add email tracking for recipient {recipient.id}: {str(e)}")
 
-    def _create_schedule_intervals(self, campaign, schedule_intervals):
-        """Create CampaignScheduleInterval objects for advanced scheduling intervals"""
-       
+    def _create_schedule_intervals(self, campaign, schedule_intervals):       
         created_intervals = []
         
         for i, interval_data in enumerate(schedule_intervals, 1):
@@ -681,7 +677,6 @@ class CampaignCreateSerializer(serializers.Serializer):
         return created_intervals
     
     def _calculate_interval_time(self, base_time, delay_value, delay_unit):
-        """Calculate the scheduled time for an interval"""
         if delay_unit == 'minutes':
             return base_time + timedelta(minutes=delay_value)
         elif delay_unit == 'hours':
@@ -692,9 +687,7 @@ class CampaignCreateSerializer(serializers.Serializer):
             return base_time + timedelta(weeks=delay_value)
         else:
             return base_time
-class CampaignScheduleIntervalSerializer(serializers.ModelSerializer):
-    """Serializer for CampaignScheduleInterval model"""
-    
+class CampaignScheduleIntervalSerializer(serializers.ModelSerializer):    
     campaign_name = serializers.CharField(source='campaign.name', read_only=True)
     template_name = serializers.CharField(source='template.name', read_only=True)
     channel_display = serializers.CharField(source='get_channel_display', read_only=True)
@@ -716,7 +709,6 @@ class CampaignScheduleIntervalSerializer(serializers.ModelSerializer):
             'is_sent', 'sent_at', 'created_at', 'updated_at'
         ]
 class CampaignScheduleIntervalCreateSerializer(serializers.ModelSerializer):
-    """Serializer for creating CampaignScheduleInterval"""
     class Meta:
         model = CampaignScheduleInterval
         fields = [
@@ -767,7 +759,6 @@ class CampaignScheduleIntervalCreateSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
 class CampaignScheduleIntervalUpdateSerializer(serializers.ModelSerializer):
-    """Serializer for updating CampaignScheduleInterval"""
     class Meta:
         model = CampaignScheduleInterval
         fields = [

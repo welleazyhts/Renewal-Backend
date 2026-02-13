@@ -31,7 +31,6 @@ class CampaignScheduleIntervalViewSet(viewsets.ModelViewSet):
         return CampaignScheduleIntervalSerializer
     
     def get_queryset(self):
-        """Filter queryset based on campaign parameter and exclude deleted records"""
         queryset = CampaignScheduleInterval.objects.filter(is_deleted=False)
         campaign_id = self.request.query_params.get('campaign_id')
         
@@ -105,20 +104,16 @@ class CampaignScheduleIntervalViewSet(viewsets.ModelViewSet):
         })
     
     def perform_create(self, serializer):
-        """Set created_by user"""
         serializer.save(created_by=self.request.user)
     
     def perform_update(self, serializer):
-        """Set updated_by user"""
         serializer.save(updated_by=self.request.user)
     
     def perform_destroy(self, instance):
-        """Soft delete the interval"""
         instance.soft_delete(user=self.request.user)
     
     @action(detail=True, methods=['post'])
     def activate(self, request, pk=None):
-        """Activate a schedule interval"""
         interval = self.get_object()
         interval.is_active = True
         interval.updated_by = request.user
@@ -133,7 +128,6 @@ class CampaignScheduleIntervalViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'])
     def deactivate(self, request, pk=None):
-        """Deactivate a schedule interval"""
         interval = self.get_object()
         interval.is_active = False
         interval.updated_by = request.user
@@ -148,7 +142,6 @@ class CampaignScheduleIntervalViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'])
     def mark_sent(self, request, pk=None):
-        """Mark a schedule interval as sent"""
         interval = self.get_object()
         interval.is_sent = True
         interval.sent_at = timezone.now()
@@ -164,7 +157,6 @@ class CampaignScheduleIntervalViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def by_campaign(self, request):
-        """Get all schedule intervals for a specific campaign"""
         campaign_id = request.query_params.get('campaign_id')
         if not campaign_id:
             return Response({

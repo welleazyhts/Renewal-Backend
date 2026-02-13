@@ -81,29 +81,24 @@ class CustomerPaymentViewSet(viewsets.ModelViewSet):
                 payment_status__in=['pending', 'failed']
             )
 
-        # Filter successful payments
         successful_only = self.request.query_params.get('successful_only')
         if successful_only and successful_only.lower() == 'true':
             queryset = queryset.filter(payment_status='completed')
 
-        # Filter failed payments
         failed_only = self.request.query_params.get('failed_only')
         if failed_only and failed_only.lower() == 'true':
             queryset = queryset.filter(payment_status__in=['failed', 'cancelled'])
 
-        # Filter pending payments
         pending_only = self.request.query_params.get('pending_only')
         if pending_only and pending_only.lower() == 'true':
             queryset = queryset.filter(payment_status__in=['pending', 'processing'])
 
-        # Filter refunded payments
         refunded_only = self.request.query_params.get('refunded_only')
         if refunded_only and refunded_only.lower() == 'true':
             queryset = queryset.filter(
                 Q(payment_status='refunded') | Q(refund_amount__gt=0)
             )
 
-        # Search functionality
         search = self.request.query_params.get('search')
         if search:
             queryset = queryset.filter(
@@ -169,13 +164,10 @@ class CustomerPaymentViewSet(viewsets.ModelViewSet):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def perform_create(self, serializer):
-        """Create customer payment"""
         serializer.save(created_by=self.request.user)
 
     def perform_update(self, serializer):
-        """Update customer payment"""
         serializer.save(updated_by=self.request.user)
 
     def perform_destroy(self, instance):
-        """Soft delete the customer payment"""
         instance.delete(user=self.request.user)

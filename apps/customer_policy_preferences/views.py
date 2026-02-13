@@ -10,13 +10,9 @@ from .serializers import (
 )
 
 class CustomerPolicyPreferenceViewSet(viewsets.ModelViewSet):
-    """
-    ViewSet for Customer Policy Preferences with store and list functionality.
-    """
     queryset = CustomerPolicyPreference.objects.filter(is_deleted=False)
 
     def get_serializer_class(self):
-        """Return appropriate serializer based on action"""
         if self.action == 'store':
             return CustomerPolicyPreferenceCreateSerializer
         elif self.action == 'list':
@@ -24,45 +20,36 @@ class CustomerPolicyPreferenceViewSet(viewsets.ModelViewSet):
         return CustomerPolicyPreferenceSerializer
 
     def get_queryset(self):
-        """Get filtered queryset based on query parameters"""
         queryset = CustomerPolicyPreference.objects.filter(is_deleted=False)
 
-        # Filter by customer
         customer_id = self.request.query_params.get('customer_id')
         if customer_id:
             queryset = queryset.filter(customer_id=customer_id)
 
-        # Filter by renewal case
         renewal_case_id = self.request.query_params.get('renewal_case_id')
         if renewal_case_id:
             queryset = queryset.filter(renewal_cases_id=renewal_case_id)
 
-        # Filter by coverage type
         coverage_type = self.request.query_params.get('coverage_type')
         if coverage_type:
             queryset = queryset.filter(coverage_type=coverage_type)
 
-        # Filter by payment mode
         payment_mode = self.request.query_params.get('payment_mode')
         if payment_mode:
             queryset = queryset.filter(payment_mode=payment_mode)
 
-        # Filter by preferred insurer
         preferred_insurer = self.request.query_params.get('preferred_insurer')
         if preferred_insurer:
             queryset = queryset.filter(preferred_insurer__icontains=preferred_insurer)
 
-        # Filter by auto renewal preference
         auto_renewal = self.request.query_params.get('auto_renewal')
         if auto_renewal is not None:
             queryset = queryset.filter(auto_renewal=auto_renewal.lower() == 'true')
 
-        # Filter by communication preference
         communication_preference = self.request.query_params.get('communication_preference')
         if communication_preference:
             queryset = queryset.filter(communication_preference=communication_preference)
 
-        # Search by customer name, code, or insurer
         search = self.request.query_params.get('search')
         if search:
             queryset = queryset.filter(
@@ -105,10 +92,8 @@ class CustomerPolicyPreferenceViewSet(viewsets.ModelViewSet):
 
     def list(self, request):
         try:
-            # Get filtered queryset
             preferences = self.get_queryset()
 
-            # Serialize the data
             serializer = CustomerPolicyPreferenceListSerializer(preferences, many=True)
 
             return Response({

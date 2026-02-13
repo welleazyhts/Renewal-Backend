@@ -60,7 +60,6 @@ class ChannelViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'])
     def activate(self, request, pk=None):
-        """Activate a channel"""
         channel = self.get_object()
         channel.status = 'active'
         channel.updated_by = request.user
@@ -71,7 +70,6 @@ class ChannelViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'])
     def deactivate(self, request, pk=None):
-        """Deactivate a channel"""
         channel = self.get_object()
         channel.status = 'inactive'
         channel.updated_by = request.user
@@ -82,7 +80,6 @@ class ChannelViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def statistics(self, request):
-        """Get channel statistics"""
         queryset = self.get_queryset()
         
         stats = {

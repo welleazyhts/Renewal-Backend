@@ -35,7 +35,6 @@ class CampaignFilter(django_filters.FilterSet):
         fields = ['status', 'campaign_type']
 
     def filter_by_channel(self, queryset, name, value):
-        """Filters by enabled channel (email, sms, whatsapp)."""
         if value == 'email':
             return queryset.filter(enable_email=True)
         elif value == 'sms':

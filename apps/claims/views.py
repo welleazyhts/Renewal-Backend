@@ -48,18 +48,15 @@ class ClaimViewSet(viewsets.ModelViewSet):
         return ClaimSerializer
     
     def perform_create(self, serializer):
-        """Set created_by and updated_by on create"""
         serializer.save(
             created_by=self.request.user,
             updated_by=self.request.user
         )
     
     def perform_update(self, serializer):
-        """Set updated_by on update"""
         serializer.save(updated_by=self.request.user)
     
     def retrieve(self, request, *args, **kwargs):
-        """Override retrieve to return formatted response"""
         try:
             instance = self.get_object()
             serializer = ClaimSerializer(instance, context={'request': request})
@@ -82,7 +79,6 @@ class ClaimViewSet(viewsets.ModelViewSet):
             )
     
     def list(self, request, *args, **kwargs):
-        """Override list to return formatted response"""
         try:
             queryset = self.filter_queryset(self.get_queryset())
             page = self.paginate_queryset(queryset)
@@ -115,7 +111,6 @@ class ClaimViewSet(viewsets.ModelViewSet):
             )
     
     def create(self, request, *args, **kwargs):
-        """Override create to return formatted response"""
         serializer = self.get_serializer(data=request.data)
         
         if not serializer.is_valid():
@@ -201,7 +196,6 @@ class ClaimViewSet(viewsets.ModelViewSet):
             )
     
     def destroy(self, request, *args, **kwargs):
-        """Override destroy to soft delete and return formatted response"""
         try:
             instance = self.get_object()
             instance.is_deleted = True

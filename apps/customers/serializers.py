@@ -5,20 +5,15 @@ from .models import Customer
 from apps.channels.serializers import ChannelSerializer
 
 User = get_user_model()
-
-
 class AgentSerializer(serializers.ModelSerializer):
-    """Serializer for agent information"""
     full_name = serializers.CharField(source='get_full_name', read_only=True)
     role_name = serializers.CharField(source='role.name', read_only=True)
-
     class Meta:
         model = User
         fields = ['id', 'email', 'first_name', 'last_name', 'full_name', 'role_name', 'department', 'status']
 
 
 class CustomerSerializer(serializers.ModelSerializer):
-    """Enhanced Customer serializer with agent information"""
     assigned_agent_details = AgentSerializer(source='assigned_agent', read_only=True)
     full_name = serializers.CharField(source='get_full_name', read_only=True)
     channels = ChannelSerializer(many=True, read_only=True)
@@ -28,7 +23,6 @@ class CustomerSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def to_representation(self, instance):
-        """Customize the representation to include additional computed fields"""
         data = super().to_representation(instance)
 
         data['full_name'] = instance.full_name
@@ -47,7 +41,6 @@ class CustomerSerializer(serializers.ModelSerializer):
 
 
 class CustomerListSerializer(serializers.ModelSerializer):
-    """Simplified serializer for customer lists"""
     assigned_agent_name = serializers.CharField(source='assigned_agent.get_full_name', read_only=True)
     full_name = serializers.CharField(source='get_full_name', read_only=True)
 
@@ -61,11 +54,9 @@ class CustomerListSerializer(serializers.ModelSerializer):
         ]
 
 class AgentAssignmentSerializer(serializers.Serializer):
-    """Serializer for agent assignment requests"""
     agent_id = serializers.IntegerField()
 
     def validate_agent_id(self, value):
-        """Validate that the agent exists and is active"""
         try:
             agent = User.objects.get(id=value, status='active', is_active=True)
             return value
@@ -74,7 +65,6 @@ class AgentAssignmentSerializer(serializers.Serializer):
 
 
 class BulkAgentAssignmentSerializer(serializers.Serializer):
-    """Serializer for bulk agent assignment requests"""
     assignments = serializers.ListField(
         child=serializers.DictField(
             child=serializers.IntegerField()
@@ -83,7 +73,6 @@ class BulkAgentAssignmentSerializer(serializers.Serializer):
     )
 
     def validate_assignments(self, value):
-        """Validate assignment data structure"""
         for assignment in value:
             if 'customer_id' not in assignment or 'agent_id' not in assignment:
                 raise serializers.ValidationError(

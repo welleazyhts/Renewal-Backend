@@ -6,7 +6,6 @@ from .models import (
     EmailSLA, EmailTemplateVariable, EmailIntegrationAnalytics
 )
 
-
 @admin.register(EmailWebhook)
 class EmailWebhookAdmin(admin.ModelAdmin):
     list_display = [
@@ -42,7 +41,6 @@ class EmailWebhookAdmin(admin.ModelAdmin):
     actions = ['process_webhooks', 'mark_as_processed']
     
     def process_webhooks(self, request, queryset):
-        """Process selected webhooks"""
         count = 0
         for webhook in queryset.filter(status='pending'):
             webhook.status = 'processed'
@@ -53,7 +51,6 @@ class EmailWebhookAdmin(admin.ModelAdmin):
     process_webhooks.short_description = "Process selected webhooks"
     
     def mark_as_processed(self, request, queryset):
-        """Mark selected webhooks as processed"""
         count = queryset.update(status='processed')
         self.message_user(request, f"{count} webhooks marked as processed.")
     mark_as_processed.short_description = "Mark as processed"
@@ -96,19 +93,16 @@ class EmailAutomationAdmin(admin.ModelAdmin):
     )
     
     def get_queryset(self, request):
-        """Filter out soft-deleted automations"""
         return super().get_queryset(request).filter(is_deleted=False)
     
     actions = ['activate_automations', 'deactivate_automations']
     
     def activate_automations(self, request, queryset):
-        """Activate selected automations"""
         count = queryset.update(status='active', is_active=True)
         self.message_user(request, f"{count} automations activated.")
     activate_automations.short_description = "Activate selected automations"
     
     def deactivate_automations(self, request, queryset):
-        """Deactivate selected automations"""
         count = queryset.update(status='inactive', is_active=False)
         self.message_user(request, f"{count} automations deactivated.")
     deactivate_automations.short_description = "Deactivate selected automations"
@@ -126,12 +120,10 @@ class EmailAutomationLogAdmin(admin.ModelAdmin):
     ]
     
     def automation_name(self, obj):
-        """Display automation name"""
         return obj.automation.name
     automation_name.short_description = 'Automation'
     
     def get_queryset(self, request):
-        """Optimize queryset"""
         return super().get_queryset(request).select_related('automation', 'executed_by')
 
 @admin.register(EmailIntegration)
@@ -171,13 +163,11 @@ class EmailIntegrationAdmin(admin.ModelAdmin):
     )
     
     def get_queryset(self, request):
-        """Filter out soft-deleted integrations"""
         return super().get_queryset(request).filter(is_deleted=False)
     
     actions = ['sync_integrations', 'activate_integrations', 'deactivate_integrations']
     
     def sync_integrations(self, request, queryset):
-        """Sync selected integrations"""
         count = 0
         for integration in queryset.filter(sync_enabled=True):
             integration.last_sync = timezone.now()
@@ -188,13 +178,11 @@ class EmailIntegrationAdmin(admin.ModelAdmin):
     sync_integrations.short_description = "Sync selected integrations"
     
     def activate_integrations(self, request, queryset):
-        """Activate selected integrations"""
         count = queryset.update(status='active')
         self.message_user(request, f"{count} integrations activated.")
     activate_integrations.short_description = "Activate selected integrations"
     
     def deactivate_integrations(self, request, queryset):
-        """Deactivate selected integrations"""
         count = queryset.update(status='inactive')
         self.message_user(request, f"{count} integrations deactivated.")
     deactivate_integrations.short_description = "Deactivate selected integrations"
@@ -239,19 +227,16 @@ class EmailSLAAdmin(admin.ModelAdmin):
     )
     
     def get_queryset(self, request):
-        """Filter out soft-deleted SLAs"""
         return super().get_queryset(request).filter(is_deleted=False)
     
     actions = ['activate_slas', 'deactivate_slas']
     
     def activate_slas(self, request, queryset):
-        """Activate selected SLAs"""
         count = queryset.update(is_active=True)
         self.message_user(request, f"{count} SLAs activated.")
     activate_slas.short_description = "Activate selected SLAs"
     
     def deactivate_slas(self, request, queryset):
-        """Deactivate selected SLAs"""
         count = queryset.update(is_active=False)
         self.message_user(request, f"{count} SLAs deactivated.")
     deactivate_slas.short_description = "Deactivate selected SLAs"
@@ -295,19 +280,16 @@ class EmailTemplateVariableAdmin(admin.ModelAdmin):
     )
     
     def get_queryset(self, request):
-        """Filter out soft-deleted template variables"""
         return super().get_queryset(request).filter(is_deleted=False)
     
     actions = ['activate_variables', 'deactivate_variables']
     
     def activate_variables(self, request, queryset):
-        """Activate selected template variables"""
         count = queryset.update(is_active=True)
         self.message_user(request, f"{count} template variables activated.")
     activate_variables.short_description = "Activate selected variables"
     
     def deactivate_variables(self, request, queryset):
-        """Deactivate selected template variables"""
         count = queryset.update(is_active=False)
         self.message_user(request, f"{count} template variables deactivated.")
     deactivate_variables.short_description = "Deactivate selected variables"
@@ -350,5 +332,4 @@ class EmailIntegrationAnalyticsAdmin(admin.ModelAdmin):
     )
     
     def get_queryset(self, request):
-        """Optimize queryset"""
         return super().get_queryset(request).order_by('-date')

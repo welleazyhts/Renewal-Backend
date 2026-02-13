@@ -1,4 +1,3 @@
-# views.py
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -9,14 +8,12 @@ from .models import Customer
 from .serializers import CustomerSerializer
 
 User = get_user_model()
-
 class CustomerViewSet(viewsets.ModelViewSet):
     queryset = Customer.objects.select_related('assigned_agent', 'segment').all()
     serializer_class = CustomerSerializer
 
     @action(detail=False, methods=['post'])
     def update_policy_counts(self, request):
-        """Update policy counts for all customers"""
         try:
             customers = Customer.objects.all()
             updated_count = 0
@@ -38,7 +35,6 @@ class CustomerViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def update_policy_count(self, request, pk=None):
-        """Update policy count for a specific customer"""
         try:
             customer = self.get_object()
             old_count = customer.total_policies
@@ -63,13 +59,11 @@ class CustomerViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def profile_summary(self, request):
-        """Get summary of customer profiles"""
         try:
             total_customers = Customer.objects.count()
             hni_customers = Customer.objects.filter(profile='HNI').count()
             normal_customers = Customer.objects.filter(profile='Normal').count()
 
-            # Get some examples
             hni_examples = Customer.objects.filter(profile='HNI')[:5]
             normal_examples = Customer.objects.filter(profile='Normal')[:5]
 
@@ -112,7 +106,6 @@ class CustomerViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def assign_agent(self, request, pk=None):
-        """Assign an agent to a customer"""
         customer = self.get_object()
         agent_id = request.data.get('agent_id')
 
@@ -124,7 +117,6 @@ class CustomerViewSet(viewsets.ModelViewSet):
         try:
             agent = User.objects.get(id=agent_id, status='active')
 
-            # Check if agent has appropriate role (optional)
             if agent.role and agent.role.name not in ['Agent', 'Manager', 'Admin']:
                 return Response({
                     'error': 'Selected user is not authorized to be an agent'
@@ -154,7 +146,6 @@ class CustomerViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def unassign_agent(self, request, pk=None):
-        """Remove agent assignment from a customer"""
         customer = self.get_object()
 
         if not customer.assigned_agent:
@@ -175,7 +166,6 @@ class CustomerViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def available_agents(self, request):
-        """Get list of available agents for assignment"""
         agents = User.objects.filter(
             status='active',
             is_active=True
@@ -208,13 +198,11 @@ class CustomerViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def unassigned_customers(self, request):
-        """Get customers without assigned agents"""
         unassigned = Customer.objects.filter(
             assigned_agent__isnull=True,
             status='active'
         ).select_related('segment')
 
-        # Optional filtering
         priority = request.query_params.get('priority')
         if priority:
             unassigned = unassigned.filter(priority=priority)
@@ -245,7 +233,6 @@ class CustomerViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def agent_workload(self, request):
-        """Get agent workload statistics"""
         agents_workload = User.objects.filter(
             status='active',
             assigned_customers__isnull=False
@@ -276,7 +263,6 @@ class CustomerViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'])
     def bulk_assign_agents(self, request):
-        """Bulk assign agents to multiple customers"""
         assignments = request.data.get('assignments', [])
 
         if not assignments:
@@ -322,9 +308,7 @@ class CustomerViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'])
     def auto_assign_agents(self, request):
-        """Automatically assign agents to unassigned customers using round-robin distribution"""
         try:
-            # Get available agents (active users)
             available_agents = User.objects.filter(
                 status='active',
                 is_active=True
@@ -337,7 +321,6 @@ class CustomerViewSet(viewsets.ModelViewSet):
                     'error': 'No active agents available for assignment'
                 }, status=status.HTTP_400_BAD_REQUEST)
 
-            # Get unassigned customers
             unassigned_customers = Customer.objects.filter(
                 assigned_agent__isnull=True
             ).order_by('created_at')
@@ -348,7 +331,6 @@ class CustomerViewSet(viewsets.ModelViewSet):
                     'assigned_count': 0
                 }, status=status.HTTP_200_OK)
 
-            # Auto-assign using round-robin
             successful_assignments = []
             failed_assignments = []
             agent_index = 0
@@ -356,7 +338,6 @@ class CustomerViewSet(viewsets.ModelViewSet):
             with transaction.atomic():
                 for customer in unassigned_customers:
                     try:
-                        # Get the next agent in round-robin fashion
                         agent = available_agents[agent_index % available_agents.count()]
 
                         customer.assigned_agent = agent
@@ -399,9 +380,7 @@ class CustomerViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'])
     def auto_assign_unassigned_customers(self, request):
-        """Automatically assign agents to all unassigned customers"""
         try:
-            # Get available agents
             available_agents = User.objects.filter(
                 status='active',
                 is_active=True
@@ -414,7 +393,6 @@ class CustomerViewSet(viewsets.ModelViewSet):
                     'error': 'No active agents available for assignment'
                 }, status=status.HTTP_400_BAD_REQUEST)
 
-            # Get unassigned customers
             unassigned_customers = Customer.objects.filter(
                 assigned_agent__isnull=True
             ).order_by('created_at')
@@ -424,8 +402,6 @@ class CustomerViewSet(viewsets.ModelViewSet):
                     'message': 'No unassigned customers found',
                     'assigned_count': 0
                 }, status=status.HTTP_200_OK)
-
-            # Auto-assign using round-robin
             successful_assignments = []
             failed_assignments = []
             agent_index = 0

@@ -4,9 +4,7 @@ from apps.core.models import BaseModel
 from apps.customers.models import Customer
 
 User = get_user_model()
-class CustomerInsight(BaseModel):
-    """Main customer insights aggregation - simplified single table approach"""
-    
+class CustomerInsight(BaseModel):    
     customer = models.OneToOneField(
         Customer,
         on_delete=models.CASCADE,
@@ -64,7 +62,6 @@ class CustomerInsight(BaseModel):
     
     @property
     def is_expired(self):
-        """Check if cached insights are expired"""
         if not self.is_cached or not self.cache_expires_at:
             return True
         from django.utils import timezone

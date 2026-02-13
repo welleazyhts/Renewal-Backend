@@ -24,7 +24,6 @@ class CustomerInstallmentViewSet(viewsets.ModelViewSet):
     ordering = ['-due_date', '-created_at']
 
     def get_serializer_class(self):
-        """Return appropriate serializer class based on action"""
         if self.action == 'create':
             return CustomerInstallmentCreateSerializer
         elif self.action in ['update', 'partial_update']:
@@ -32,7 +31,6 @@ class CustomerInstallmentViewSet(viewsets.ModelViewSet):
         return CustomerInstallmentSerializer
 
     def get_queryset(self):
-        """Filter queryset based on query parameters"""
         queryset = super().get_queryset()
         
         customer_id = self.request.query_params.get('customer')
@@ -83,21 +81,18 @@ class CustomerInstallmentViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def overdue(self, request):
-        """Get all overdue installments"""
         overdue_installments = self.get_queryset().filter(status='overdue')
         serializer = self.get_serializer(overdue_installments, many=True)
         return Response(serializer.data)
 
     @action(detail=False, methods=['get'])
     def pending(self, request):
-        """Get all pending installments"""
         pending_installments = self.get_queryset().filter(status='pending')
         serializer = self.get_serializer(pending_installments, many=True)
         return Response(serializer.data)
 
     @action(detail=False, methods=['get'])
     def by_customer(self, request):
-        """Get installments by customer ID"""
         customer_id = request.query_params.get('customer')
         if not customer_id:
             return Response(
@@ -111,7 +106,6 @@ class CustomerInstallmentViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def by_case(self, request):
-        """Get installments by renewal case ID"""
         case_id = request.query_params.get('renewal_case')
         if not case_id:
             return Response(
@@ -125,7 +119,6 @@ class CustomerInstallmentViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def outstanding_summary(self, request):
-        """Get outstanding amounts summary for a customer or case"""
         customer_id = request.query_params.get('customer')
         case_id = request.query_params.get('renewal_case')
         
@@ -136,7 +129,6 @@ class CustomerInstallmentViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def outstanding_installments(self, request):
-        """Get detailed outstanding installments list"""
         customer_id = request.query_params.get('customer')
         case_id = request.query_params.get('renewal_case')
         
@@ -151,7 +143,6 @@ class CustomerInstallmentViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def by_case_outstanding(self, request):
-        """Get outstanding installments for a specific case (like CASE-001)"""
         case_number = request.query_params.get('case_number')
         if not case_number:
             return Response(
@@ -190,7 +181,6 @@ class CustomerInstallmentViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def overdue_installments(self, request):
-        """Get only overdue installments (for urgent attention)"""
         customer_id = request.query_params.get('customer')
         case_id = request.query_params.get('renewal_case')
         
@@ -205,7 +195,6 @@ class CustomerInstallmentViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'])
     def update_overdue_status(self, request):
-        """Update status of pending installments that are now overdue"""
         updated_count = 0
         
         pending_installments = CustomerInstallment.objects.filter(status='pending')
@@ -223,7 +212,6 @@ class CustomerInstallmentViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'])
     def create_installments_for_policy(self, request):
-        """Manually create installments for a policy"""
         policy_id = request.data.get('policy_id')
         renewal_case_id = request.data.get('renewal_case_id')
         
@@ -269,7 +257,6 @@ class CustomerInstallmentViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'])
     def link_payment_to_installment(self, request):
-        """Manually link a payment to an installment"""
         payment_id = request.data.get('payment_id')
         
         if not payment_id:

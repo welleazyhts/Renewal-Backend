@@ -33,7 +33,6 @@ class SoftDeleteModel(models.Model):
         abstract = True
 
     def delete(self, using=None, keep_parents=False, user=None):
-        """Soft delete the object"""
         self.is_deleted = True
         self.deleted_at = timezone.now()
         if user:
@@ -41,11 +40,9 @@ class SoftDeleteModel(models.Model):
         self.save(using=using)
 
     def hard_delete(self, using=None, keep_parents=False):
-        """Permanently delete the object"""
         super().delete(using=using, keep_parents=keep_parents)
 
     def restore(self):
-        """Restore a soft-deleted object"""
         self.is_deleted = False
         self.deleted_at = None
         self.deleted_by = None

@@ -12,9 +12,6 @@ from apps.email_inbox.services import EmailInboxService
 
 class EmailSyncService:
     def sync_account(self, account_id):
-        """
-        Connects to a specific account and fetches new emails.
-        """
         account = EmailAccount.objects.get(id=account_id)
         credential = normalize_and_get_credential(account,decrypt=True)
         
@@ -41,7 +38,6 @@ class EmailSyncService:
             synced_count = 0
             
             for e_id in email_ids:
-                # Fetch the email body (RFC822)
                 _, msg_data = mail.fetch(e_id, "(RFC822)")
                 
                 for response_part in msg_data:
@@ -52,7 +48,6 @@ class EmailSyncService:
             
             mail.logout()
             
-            # Update account status
             account.last_sync_at = timezone.now()
             account.last_sync_log = f"Successfully synced {synced_count} messages."
             account.connection_status = True
@@ -67,15 +62,10 @@ class EmailSyncService:
             return {"success": False, "error": str(e)}
 
     def _process_and_save_email(self, account, msg):
-        """
-        Parses raw email bytes and saves to DB.
-        """
-        # 1. Extract Headers
         subject = self._decode_str(msg["Subject"])
         sender = self._decode_str(msg.get("From"))
         from_name, from_email = email.utils.parseaddr(sender)
 
-        # 2. Extract Body
         body_text = ""
         body_html = ""
         if msg.is_multipart():
@@ -119,16 +109,12 @@ class EmailSyncService:
                 self._send_webhook_notification(email_obj, account.user)
 
     def _send_webhook_notification(self, email_obj, user):
-        """
-        Checks settings and sends a POST request to the external URL if enabled.
-        """
         try:
             settings = EmailModuleSettings.objects.filter(user=user).first()
             
             if not settings or not settings.enable_webhook_notifications or not settings.webhook_url:
                 return 
 
-            # 3. Prepare Payload
             payload = {
                 "event": "new_email_received",
                 "account_name": email_obj.email_account.account_name,
@@ -156,7 +142,6 @@ class EmailSyncService:
             print(f"❌ Webhook Error: {str(e)}")
 
     def _decode_str(self, header_val):
-        """Helper to decode MIME headers (e.g., =?utf-8?Q?...)"""
         if not header_val: return ""
         decoded_list = decode_header(header_val)
         result = ""

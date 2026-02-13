@@ -6,9 +6,6 @@ from .models import ClosedCaseChatbot, ClosedCaseChatbotMessage, ClosedCaseChatb
 class ClosedCaseChatbotService:
     @staticmethod
     def create_chatbot_session(case_data):
-        """
-        Create a new chatbot session for a closed case
-        """
         session_id = f"chatbot_{uuid.uuid4().hex[:12]}"
         
         chatbot_data = {
@@ -212,23 +209,14 @@ class ClosedCaseChatbotAnalyticsService:
 class ClosedCaseChatbotMessageService:
     @staticmethod
     def get_recent_messages(chatbot_session, limit=10):
-        """
-        Get recent messages for a chatbot session
-        """
         return chatbot_session.messages.all().order_by('-timestamp')[:limit]
     
     @staticmethod
     def get_messages_by_type(chatbot_session, message_type):
-        """
-        Get messages of a specific type for a chatbot session
-        """
         return chatbot_session.messages.filter(message_type=message_type)
     
     @staticmethod
     def update_message_feedback(message_id, is_helpful):
-        """
-        Update feedback for a specific message
-        """
         try:
             message = ClosedCaseChatbotMessage.objects.get(id=message_id)
             message.is_helpful = is_helpful
@@ -239,14 +227,8 @@ class ClosedCaseChatbotMessageService:
     
     @staticmethod
     def get_helpful_messages_count(chatbot_session):
-        """
-        Get count of helpful messages for a chatbot session
-        """
         return chatbot_session.messages.filter(is_helpful=True).count()
     
     @staticmethod
     def get_unhelpful_messages_count(chatbot_session):
-        """
-        Get count of unhelpful messages for a chatbot session
-        """
         return chatbot_session.messages.filter(is_helpful=False).count()

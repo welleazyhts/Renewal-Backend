@@ -13,8 +13,6 @@ import boto3
 from botocore.exceptions import ClientError
 import ssl
 import urllib3
-
-# Disable SSL verification globally for SendGrid
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -26,10 +24,7 @@ from apps.billing.services import log_communication
 
 logger = logging.getLogger(__name__)
 
-
-class EmailProviderService:
-    """Service for managing email providers and sending emails"""
-    
+class EmailProviderService:    
     def __init__(self,config: EmailProviderConfig = None):
         self.config = config
         self.encryption_key = getattr(settings, 'EMAIL_PROVIDER_ENCRYPTION_KEY', None)
@@ -41,7 +36,6 @@ class EmailProviderService:
                 logger.error(f"Failed to initialize encryption: {e}")
     
     def _encrypt_credential(self, value: str) -> str:
-        """Encrypt a credential value"""
         if not self._fernet or not value:
             return value
         try:
@@ -51,7 +45,6 @@ class EmailProviderService:
             return value
     
     def _decrypt_credential(self, value: str) -> str:
-        """Decrypt a credential value"""
         if not self._fernet or not value:
             return value
         try:
@@ -61,14 +54,12 @@ class EmailProviderService:
             return value
     
     def get_active_providers(self) -> List[EmailProviderConfig]:
-        """Get all active email providers ordered by priority"""
         return EmailProviderConfig.objects.filter(
             is_active=True,
             is_deleted=False
         ).order_by('priority', 'name')
     
     def get_healthy_providers(self) -> List[EmailProviderConfig]:
-        """Get all healthy and active email providers"""
         return EmailProviderConfig.objects.filter(
             is_active=True,
             is_deleted=False,
@@ -76,8 +67,6 @@ class EmailProviderService:
         ).order_by('priority', 'name')
     
     def get_available_provider(self) -> Optional[EmailProviderConfig]:
-        """Get the first available provider that can send emails"""
-        # First try healthy providers
         providers = self.get_healthy_providers()
         
         for provider in providers:
@@ -91,7 +80,6 @@ class EmailProviderService:
         ).order_by('priority', 'name')
         
         for provider in active_providers:
-            # For unknown health status, check basic requirements
             if (provider.api_key and 
                 provider.provider_type == 'sendgrid' and 
                 provider.from_email):
@@ -119,7 +107,6 @@ class EmailProviderService:
                 if opt_out_emails:
                     logger.info(f"Blocking emails for users with notifications disabled: {opt_out_emails}")
                     
-                    # Filter the lists
                     to_emails = [e for e in to_emails if e not in opt_out_emails]
                     if cc_emails:
                         cc_emails = [e for e in cc_emails if e not in opt_out_emails]
@@ -169,10 +156,8 @@ class EmailProviderService:
             
             response_time = time.time() - start_time
             
-            # Log usage
             self._log_usage(provider, len(to_emails), result['success'], response_time)
             
-            # Update provider usage
             if result['success']:
                 provider.increment_usage(len(to_emails))
             
@@ -196,7 +181,6 @@ class EmailProviderService:
             logger.error(f"Error sending email via {provider.name}: {str(e)}")
             response_time = time.time() - start_time
             
-            # Log failed usage
             self._log_usage(provider, len(to_emails), False, response_time)
             
             log_communication(
@@ -221,7 +205,6 @@ class EmailProviderService:
                           cc_emails: List[str], bcc_emails: List[str],
                           attachments: List[Tuple[str, str, str]],
                           custom_args: Dict[str, str] = None) -> Dict[str, Any]:
-        """Send email via SendGrid"""
         try:
             api_key = self._decrypt_credential(provider.api_key)
             if not api_key:
@@ -229,11 +212,9 @@ class EmailProviderService:
             
             sg = SendGridAPIClient(api_key=api_key)
             
-            # Prepare email
             from_email_addr = from_email or provider.from_email
             from_name_str = from_name or provider.from_name or ""
             
-            # Debug logging
             logger.info(f"SendGrid sending email from: {from_email_addr} with name: {from_name_str}")
             logger.info(f"SendGrid sending to: {to_emails}")
             logger.info(f"SendGrid subject: {subject}")
@@ -269,12 +250,10 @@ class EmailProviderService:
             tracking_settings.open_tracking = OpenTracking(enable=True)
             mail.tracking_settings = tracking_settings
             
-            # Add attachments
             if attachments:
                 for filename, content, mimetype in attachments:
                     mail.add_attachment(content, mimetype, filename)
             
-            # Send email
             response = sg.send(mail)
             
             return {
@@ -287,7 +266,6 @@ class EmailProviderService:
             error_msg = str(e)
             logger.error(f"SendGrid error: {error_msg}")
             
-            # Try to get more detailed error information
             if hasattr(e, 'body'):
                 try:
                     import json
@@ -330,7 +308,6 @@ For more help, visit: https://sendgrid.com/docs/for-developers/sending-email/sen
                          from_email: str, from_name: str, reply_to: str,
                          cc_emails: List[str], bcc_emails: List[str],
                          attachments: List[Tuple[str, str, str]]) -> Dict[str, Any]:
-        """Send email via AWS SES"""
         try:
             access_key = self._decrypt_credential(provider.access_key_id)
             secret_key = self._decrypt_credential(provider.secret_access_key)
@@ -340,7 +317,6 @@ For more help, visit: https://sendgrid.com/docs/for-developers/sending-email/sen
             
             logger.info(f"AWS SES: Sending email via provider '{provider.name}' to {len(to_emails)} recipient(s)")
             
-            # Initialize SES client
             ses_client = boto3.client(
                 'ses',
                 aws_access_key_id=access_key,
@@ -348,11 +324,9 @@ For more help, visit: https://sendgrid.com/docs/for-developers/sending-email/sen
                 region_name=provider.aws_region or getattr(settings, 'AWS_SES_REGION', 'us-east-1')
             )
             
-            # Prepare email
             from_email_addr = from_email or provider.from_email
             from_name_str = from_name or provider.from_name or ""
             
-            # Format sender with name if provided
             if from_name_str:
                 sender = f'"{from_name_str}" <{from_email_addr}>'
             else:
@@ -376,7 +350,6 @@ For more help, visit: https://sendgrid.com/docs/for-developers/sending-email/sen
             if html_content:
                 message['Body']['Html'] = {'Data': html_content, 'Charset': 'UTF-8'}
             
-            # Send email
             response = ses_client.send_email(
                 Source=sender,
                 Destination=destination,
@@ -397,7 +370,6 @@ For more help, visit: https://sendgrid.com/docs/for-developers/sending-email/sen
             error_message = e.response['Error']['Message']
             logger.error(f"AWS SES ClientError: {error_code} - {error_message}")
             
-            # Handle specific AWS SES errors
             if error_code == 'MessageRejected':
                 helpful_error = f"""
 AWS SES Error: Email was rejected by Amazon SES.
@@ -439,7 +411,6 @@ Provider: {provider.name}
                       from_email: str, from_name: str, reply_to: str,
                       cc_emails: List[str], bcc_emails: List[str],
                       attachments: List[Tuple[str, str, str]]) -> Dict[str, Any]:
-        """Send email via SMTP (Thread-Safe Version)"""
         try:
             from django.core.mail import get_connection
             
@@ -448,7 +419,6 @@ Provider: {provider.name}
             
             logger.info(f"SMTP: Sending email via provider '{provider.name}' to {len(to_emails)} recipient(s)")
             
-            # Decrypt password
             smtp_password = self._decrypt_credential(provider.smtp_password)
             
             connection = get_connection(
@@ -484,7 +454,6 @@ Provider: {provider.name}
                 for filename, content, mimetype in attachments:
                     msg.attach(filename, content, mimetype)
             
-            # 3. Send (opens and closes the connection automatically)
             msg.send()
             
             message_id = f"smtp_{int(time.time())}"
@@ -503,7 +472,6 @@ Provider: {provider.name}
             }
     def _log_usage(self, provider: EmailProviderConfig, emails_sent: int, 
                    success: bool, response_time: float):
-        """Log email usage for a provider"""
         try:
             EmailProviderUsageLog.objects.create(
                 provider=provider,
@@ -516,7 +484,6 @@ Provider: {provider.name}
             logger.error(f"Failed to log usage: {e}")
     
     def test_provider(self, provider: EmailProviderConfig, test_email: str) -> Dict[str, Any]:
-        """Test email provider configuration"""
         try:
             result = self.send_email(
                 to_emails=[test_email],
@@ -527,7 +494,6 @@ Provider: {provider.name}
                 from_name=provider.from_name
             )
             
-            # Update health status
             provider.update_health_status(result['success'], result.get('error'))
             
             return result
@@ -542,7 +508,6 @@ Provider: {provider.name}
             }
     
     def check_provider_health(self, provider: EmailProviderConfig) -> bool:
-        """Check if a provider is healthy"""
         try:
             if provider.provider_type == 'sendgrid':
                 return self._check_sendgrid_health(provider)
@@ -559,13 +524,11 @@ Provider: {provider.name}
             return False
     
     def _check_sendgrid_health(self, provider: EmailProviderConfig) -> bool:
-        """Check SendGrid health"""
         try:
             api_key = self._decrypt_credential(provider.api_key)
             if not api_key:
                 return False
             
-            # Test API key validity
             sg = SendGridAPIClient(api_key=api_key)
             response = sg.client.user.get()
             is_healthy = response.status_code == 200
@@ -578,7 +541,6 @@ Provider: {provider.name}
             return False
     
     def _check_aws_ses_health(self, provider: EmailProviderConfig) -> bool:
-        """Check AWS SES health"""
         try:
             access_key = self._decrypt_credential(provider.access_key_id)
             secret_key = self._decrypt_credential(provider.secret_access_key)
@@ -587,7 +549,6 @@ Provider: {provider.name}
                 logger.warning(f"AWS SES health check failed for {provider.name}: Missing credentials")
                 return False
             
-            # Test credentials
             ses_client = boto3.client(
                 'ses',
                 aws_access_key_id=access_key,
@@ -595,7 +556,6 @@ Provider: {provider.name}
                 region_name=provider.aws_region or getattr(settings, 'AWS_SES_REGION', 'us-east-1')
             )
             
-            # Get sending quota
             response = ses_client.get_send_quota()
             
             if 'Max24HourSend' in response:
@@ -616,7 +576,6 @@ Provider: {provider.name}
             return False
     
     def _check_smtp_health(self, provider: EmailProviderConfig) -> bool:
-        """Check SMTP health"""
         try:
             import smtplib
             
@@ -626,7 +585,6 @@ Provider: {provider.name}
             
             logger.info(f"SMTP: Testing connection to {provider.smtp_host}:{provider.smtp_port}")
             
-            # Test SMTP connection
             if provider.smtp_use_ssl:
                 server = smtplib.SMTP_SSL(provider.smtp_host, provider.smtp_port)
             else:

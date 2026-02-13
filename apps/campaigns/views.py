@@ -24,7 +24,6 @@ import urllib.parse
 logger = logging.getLogger(__name__)
 
 class CampaignViewSet(viewsets.ModelViewSet):
-    """ViewSet for managing Campaigns"""
     queryset = Campaign.objects.select_related('campaign_type', 'created_by', 'assigned_to')
     serializer_class = CampaignSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -332,7 +331,6 @@ class CampaignViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def send_emails(self, request, pk=None):
-        """Send campaign emails"""
         try:
             campaign = self.get_object()
 
@@ -361,7 +359,6 @@ class CampaignViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def get_all_campaign_stats(self, request):
-        """Get statistics for all campaigns"""
         try:
             campaigns = Campaign.objects.all().order_by('-created_at')
 
@@ -626,9 +623,6 @@ def get_all_campaigns(request):
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def update_campaign_status(request, campaign_id):
-    """
-    Update campaign status (active/paused only)
-    """
     try:
         campaign = Campaign.objects.get(id=campaign_id)
         
@@ -677,8 +671,6 @@ def update_campaign_status(request, campaign_id):
 
 @method_decorator(csrf_exempt, name='dispatch')
 class EmailTrackingView(View):
-    """Handle email tracking for opens and clicks"""
-
     def get(self, request):
         """Track email opens using tracking pixel"""
         pixel_data = base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==')
@@ -722,10 +714,7 @@ class EmailTrackingView(View):
 
 @method_decorator(csrf_exempt, name='dispatch')
 class EmailClickTrackingView(View):
-    """Handle email click tracking"""
-
     def get(self, request):
-        """Track email clicks and redirect to original URL"""
         try:
             tracking_id = request.GET.get('t')
             original_url = request.GET.get('url', 'http://localhost:8000')
@@ -768,7 +757,6 @@ class EmailClickTrackingView(View):
 @permission_classes([]) 
 @authentication_classes([]) 
 def test_tracking_pixel(request):
-    """Test endpoint to verify tracking pixel functionality"""
     try:
         tracking_id = request.GET.get('t')
         if not tracking_id:
@@ -806,7 +794,6 @@ def test_tracking_pixel(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_campaign_tracking_stats(request, campaign_id):
-    """Get tracking statistics for a specific campaign"""
     try:
         campaign = Campaign.objects.get(id=campaign_id)
 

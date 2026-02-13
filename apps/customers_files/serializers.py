@@ -2,10 +2,7 @@ from rest_framework import serializers
 from .models import CustomerFile
 from apps.customers.models import Customer
 
-
 class CustomerFileSerializer(serializers.ModelSerializer):
-    """Serializer for CustomerFile model"""
-
     uploaded_by_name = serializers.CharField(source='uploaded_by.username', read_only=True)
     updated_by_name = serializers.CharField(source='updated_by.username', read_only=True)
     file_size_display = serializers.CharField(source='get_file_size_display', read_only=True)
@@ -29,7 +26,6 @@ class CustomerFileSerializer(serializers.ModelSerializer):
         }
 
     def validate(self, data):
-        """Validate that either file is uploaded or required fields are provided"""
         uploaded_file = data.get('file')
 
         if not uploaded_file:
@@ -43,7 +39,6 @@ class CustomerFileSerializer(serializers.ModelSerializer):
         return data
 
     def validate_customer_id(self, value):
-        """Validate that the customer exists"""
         from apps.customers.models import Customer
         try:
             Customer.objects.get(id=value)
@@ -52,13 +47,11 @@ class CustomerFileSerializer(serializers.ModelSerializer):
         return value
 
     def validate_file_name(self, value):
-        """Validate file name if provided"""
         if value and not value.strip():
             raise serializers.ValidationError("File name cannot be empty.")
         return value.strip() if value else value
 
     def create(self, validated_data):
-        """Custom create method to handle file upload and auto-detection"""
         import os
         import mimetypes
         import tempfile
@@ -141,7 +134,6 @@ class CustomerFileSerializer(serializers.ModelSerializer):
 
 
 class CustomerFileListSerializer(serializers.ModelSerializer):
-    """Simplified serializer for listing customer files"""
 
     file_size_display = serializers.CharField(source='get_file_size_display', read_only=True)
     customer_name = serializers.CharField(read_only=True)

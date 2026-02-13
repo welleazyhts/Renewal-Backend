@@ -2,8 +2,6 @@ from openai import OpenAI
 from django.conf import settings
 import json
 
-
-# Safe initialization of OpenAI client
 client = None
 if getattr(settings, "OPENAI_API_KEY", None):
     try:
@@ -17,11 +15,9 @@ else:
 
 def analyze_email_sentiment_and_intent(text: str):
     try:
-        # If no text, return neutral response
         if not text:
             return {"sentiment": "neutral (50%)", "intent": "unknown"}
 
-        # If OpenAI client is not available
         if client is None:
             return {"sentiment": "neutral (50%)", "intent": "unknown"}
 

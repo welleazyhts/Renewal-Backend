@@ -8,9 +8,7 @@ from .models import EmailManagerInbox
 from django.utils.html import strip_tags
 from .models import EmailReply, StartedReplyMail, EmailManagerForwardMail
 
-
 class EmailManagerSerializer(serializers.ModelSerializer):
-    
     class Meta:
         model = EmailManager
         fields = [
@@ -92,10 +90,7 @@ class EmailManagerCreateSerializer(serializers.ModelSerializer):
 
         return instance
 
-
-
 class EmailManagerUpdateSerializer(serializers.ModelSerializer):
-    
     class Meta:
         model = EmailManager
         fields = [

@@ -1,15 +1,9 @@
-"""
-Management command to set up initial data for the system.
-"""
-
 from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
 from apps.users.models import Role
 from apps.core.models import SystemConfiguration
 
 User = get_user_model()
-
-
 class Command(BaseCommand):
     help = 'Set up initial data for the Intelipro Insurance Policy Renewal System'
 
@@ -32,13 +26,10 @@ class Command(BaseCommand):
             self.style.SUCCESS('Setting up initial data for Intelipro Insurance System...')
         )
 
-        # Create roles
         self.create_roles()
         
-        # Create admin user
         self.create_admin_user(options['admin_email'], options['admin_password'])
         
-        # Create system configurations
         self.create_system_configurations()
         
         self.stdout.write(
@@ -46,7 +37,6 @@ class Command(BaseCommand):
         )
 
     def create_roles(self):
-        """Create default user roles"""
         roles_data = [
             {
                 'name': 'super_admin',
@@ -168,7 +158,6 @@ class Command(BaseCommand):
                 self.stdout.write(f"Role already exists: {role.display_name}")
 
     def create_admin_user(self, email, password):
-        """Create admin user"""
         try:
             admin_role = Role.objects.get(name='super_admin')
             
@@ -198,9 +187,7 @@ class Command(BaseCommand):
             )
 
     def create_system_configurations(self):
-        """Create default system configurations"""
         configs = [
-            # Email settings
             {
                 'category': 'email',
                 'key': 'smtp_host',
@@ -220,11 +207,10 @@ class Command(BaseCommand):
                 'description': 'Use TLS for email encryption'
             },
             
-            # File upload settings
             {
                 'category': 'uploads',
                 'key': 'max_file_size',
-                'value': 10485760,  # 10MB
+                'value': 10485760, 
                 'description': 'Maximum file upload size in bytes'
             },
             {
@@ -234,11 +220,10 @@ class Command(BaseCommand):
                 'description': 'Allowed file extensions for uploads'
             },
             
-            # Security settings
             {
                 'category': 'security',
                 'key': 'session_timeout',
-                'value': 3600,  # 1 hour
+                'value': 3600,
                 'description': 'Session timeout in seconds'
             },
             {
@@ -250,11 +235,10 @@ class Command(BaseCommand):
             {
                 'category': 'security',
                 'key': 'account_lock_duration',
-                'value': 1800,  # 30 minutes
+                'value': 1800,
                 'description': 'Account lock duration in seconds'
             },
             
-            # Business settings
             {
                 'category': 'business',
                 'key': 'company_name',
@@ -280,7 +264,6 @@ class Command(BaseCommand):
                 'description': 'Support phone number'
             },
             
-            # Notification settings
             {
                 'category': 'notifications',
                 'key': 'renewal_reminder_days',

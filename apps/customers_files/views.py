@@ -11,10 +11,7 @@ from .serializers import (
 )
 from apps.core.pagination import StandardResultsSetPagination
 
-
 class CustomerFileViewSet(viewsets.ModelViewSet):
-    """ViewSet for managing customer files"""
-
     queryset = CustomerFile.objects.select_related(
         'uploaded_by', 'updated_by', 'customer'
     ).filter(is_active=True)
@@ -23,44 +20,36 @@ class CustomerFileViewSet(viewsets.ModelViewSet):
     pagination_class = StandardResultsSetPagination
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
 
-    # Filter fields
     filterset_fields = [
         'customer', 'file_type', 'uploaded_by', 'is_active'
     ]
 
-    # Search fields
     search_fields = [
         'file_name', 'file_type'
     ]
     
-    # Ordering fields
     ordering_fields = [
         'uploaded_at', 'updated_at', 'file_name', 'file_size'
     ]
     ordering = ['-uploaded_at']
     
     def get_serializer_class(self):
-        """Return appropriate serializer based on action"""
         if self.action == 'list':
             return CustomerFileListSerializer
         return CustomerFileSerializer
     
     def perform_create(self, serializer):
-        """Set uploaded_by when creating a new customer file"""
         serializer.save(uploaded_by=self.request.user)
     
     def perform_update(self, serializer):
-        """Set updated_by when updating a customer file"""
         serializer.save(updated_by=self.request.user)
 
     def perform_destroy(self, instance):
-        """Perform a soft delete by deactivating the file."""
         instance.is_active = False
         instance.updated_by = self.request.user
         instance.save()
     
     def create(self, request, *args, **kwargs):
-        """Create a new customer file"""
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
@@ -72,7 +61,6 @@ class CustomerFileViewSet(viewsets.ModelViewSet):
         }, status=status.HTTP_201_CREATED)
     
     def list(self, request, *args, **kwargs):
-        """List all customer files with filtering and pagination"""
         queryset = self.filter_queryset(self.get_queryset())
         page = self.paginate_queryset(queryset)
         
@@ -93,7 +81,6 @@ class CustomerFileViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def by_customer(self, request):
-        """Get all files for a specific customer"""
         customer_id = request.query_params.get('customer_id')
 
         if not customer_id:
@@ -105,7 +92,6 @@ class CustomerFileViewSet(viewsets.ModelViewSet):
         files = self.get_queryset().filter(customer=customer_id)
         serializer = CustomerFileListSerializer(files, many=True)
 
-        # Calculate statistics
         stats = files.aggregate(
             total_files=Count('id'),
             total_size=Sum('file_size')
@@ -120,7 +106,6 @@ class CustomerFileViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['patch'])
     def deactivate(self, request, pk=None):
-        """Deactivate a customer file"""
         file_instance = self.get_object()
         file_instance.is_active = False
         file_instance.updated_by = request.user
@@ -133,7 +118,6 @@ class CustomerFileViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['patch'])
     def activate(self, request, pk=None):
-        """Activate a customer file"""
         file_instance = self.get_object()
         file_instance.is_active = True
         file_instance.updated_by = request.user

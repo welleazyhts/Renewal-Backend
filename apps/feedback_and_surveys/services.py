@@ -10,9 +10,6 @@ class DistributionService:
         self.audience = survey.audience
 
     def launch_campaign(self, channels=['email']):
-        """
-        Main entry point. Loops through the audience and sends via selected channels.
-        """
         if not self.audience:
             return {"error": "No audience assigned to this survey."}
 
@@ -22,7 +19,6 @@ class DistributionService:
         for contact in contacts:
             unique_link = f"{settings.SITE_URL}/feedback/public/{self.survey.id}/?c={contact.id}"
             
-            # 2. Send based on selected channels
             if 'email' in channels and contact.email:
                 self._send_email(contact, unique_link)
                 sent_count += 1
@@ -65,7 +61,6 @@ class DistributionService:
         print(f"[SMS Sent] To: {contact.phone} | Link: {link}")
 
     def _send_whatsapp(self, contact, link):
-        # WhatsApp usually requires templates
         print(f"[WhatsApp Sent] To: {contact.phone} | Link: {link}")
 
     def send_transactional(self, customer, channels=['email']):

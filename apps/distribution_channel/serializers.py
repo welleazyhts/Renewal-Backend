@@ -4,7 +4,6 @@ from apps.channels.models import Channel
 from django.db.models import Sum
 from apps.renewals.models import RenewalCase
 class DistributionChannelSerializer(serializers.ModelSerializer):
-    """Full serializer for DistributionChannel model with all fields"""
     current_policies = serializers.IntegerField(read_only=True)
     renewal_rate = serializers.FloatField(read_only=True)
     revenue = serializers.CharField(read_only=True)
@@ -51,26 +50,22 @@ class DistributionChannelSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at', 'created_by', 'updated_by', 'is_active']
     
     def validate_name(self, value):
-        """Validate channel name is not empty"""
         if not value or not value.strip():
             raise serializers.ValidationError("Distribution channel name cannot be empty.")
         return value.strip()
     
     def validate_commission_rate(self, value):
-        """Validate commission rate is between 0 and 100"""
         if value is not None:
             if value < 0 or value > 100:
                 raise serializers.ValidationError("Commission rate must be between 0 and 100.")
         return value
     
     def validate_target_revenue(self, value):
-        """Validate target revenue is not negative"""
         if value is not None and value < 0:
             raise serializers.ValidationError("Target revenue cannot be negative.")
         return value
     
     def validate_channel_type(self, value):
-        """Validate channel type is valid"""
         valid_types = [choice[0] for choice in DistributionChannel.CHANNEL_TYPE_CHOICES]
         if value not in valid_types:
             raise serializers.ValidationError(
@@ -79,7 +74,6 @@ class DistributionChannelSerializer(serializers.ModelSerializer):
         return value
     
     def validate_status(self, value):
-        """Validate status is valid"""
         valid_statuses = [choice[0] for choice in DistributionChannel.STATUS_CHOICES]
         if value not in valid_statuses:
             raise serializers.ValidationError(
@@ -112,9 +106,7 @@ class DistributionChannelSerializer(serializers.ModelSerializer):
         return data
 
 
-class DistributionChannelListSerializer(serializers.ModelSerializer):
-    """Simplified serializer for listing distribution channels"""
-    
+class DistributionChannelListSerializer(serializers.ModelSerializer):    
     channel_name = serializers.CharField(source='channel.name', read_only=True)
     is_active = serializers.BooleanField(read_only=True)
 
@@ -168,9 +160,7 @@ class DistributionChannelListSerializer(serializers.ModelSerializer):
         return data    
 
 
-class DistributionChannelCreateSerializer(serializers.ModelSerializer):
-    """Serializer for creating distribution channels"""
-    
+class DistributionChannelCreateSerializer(serializers.ModelSerializer):    
     channel_id = serializers.PrimaryKeyRelatedField(
         queryset=Channel.objects.filter(is_deleted=False),
         source='channel',
@@ -197,20 +187,17 @@ class DistributionChannelCreateSerializer(serializers.ModelSerializer):
         ]
     
     def validate_name(self, value):
-        """Validate channel name is not empty"""
         if not value or not value.strip():
             raise serializers.ValidationError("Distribution channel name cannot be empty.")
         return value.strip()
     
     def validate_commission_rate(self, value):
-        """Validate commission rate is between 0 and 100"""
         if value is not None:
             if value < 0 or value > 100:
                 raise serializers.ValidationError("Commission rate must be between 0 and 100.")
         return value
     
     def validate_target_revenue(self, value):
-        """Validate target revenue is not negative"""
         if value is not None and value < 0:
             raise serializers.ValidationError("Target revenue cannot be negative.")
         return value

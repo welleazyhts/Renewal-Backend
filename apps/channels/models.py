@@ -115,22 +115,18 @@ class Channel(BaseModel):
     
     @property
     def is_active(self):
-        """Check if channel is currently active"""
         return self.status == 'active'
     
     @property
     def utilization_percentage(self):
-        """Calculate utilization percentage if max_capacity is set"""
         if self.max_capacity and self.max_capacity > 0:
             return None
         return None
     
     def get_manager_name(self):
-        """Get manager name"""
         return self.manager_name if self.manager_name else "No Manager Assigned"
     
     def get_target_audience_name(self):
-        """Get target audience name"""
         if self.target_audience:
             return self.target_audience.name
         return "No Target Audience"

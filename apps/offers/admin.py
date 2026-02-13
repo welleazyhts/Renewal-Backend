@@ -1,11 +1,7 @@
 from django.contrib import admin
 from .models import Offer
-
-
 @admin.register(Offer)
-class OfferAdmin(admin.ModelAdmin):
-    """Admin configuration for Offer model"""
-    
+class OfferAdmin(admin.ModelAdmin):    
     list_display = [
         'title', 'offer_type', 'amount', 'discount', 'currency',
         'is_active', 'display_order', 'created_at'
@@ -45,7 +41,6 @@ class OfferAdmin(admin.ModelAdmin):
     readonly_fields = ['created_at', 'updated_at', 'created_by', 'updated_by']
     
     def save_model(self, request, obj, form, change):
-        """Set created_by and updated_by fields"""
         if not change:  
             obj.created_by = request.user
         obj.updated_by = request.user

@@ -49,7 +49,6 @@ class CaseDetailView(generics.RetrieveUpdateDestroyAPIView):
     lookup_field = 'case_number'
     
     def get_queryset(self):
-        """Filter cases based on user permissions."""
         queryset = Case.objects.filter(is_deleted=False)
         
         if not self.request.user.is_staff:
@@ -58,7 +57,6 @@ class CaseDetailView(generics.RetrieveUpdateDestroyAPIView):
         return queryset
     
     def perform_destroy(self, instance):
-        """Soft delete the case."""
         instance.delete(user=self.request.user)
 class CaseHistoryListView(generics.ListAPIView):
     serializer_class = CaseHistorySerializer
@@ -69,7 +67,6 @@ class CaseHistoryListView(generics.ListAPIView):
     ordering = ['-created_at']
     
     def get_queryset(self):
-        """Get history entries for the specified case."""
         case_id = self.kwargs['case_number']
         case = get_object_or_404(Case, case_number=case_id, is_deleted=False)
         
@@ -92,7 +89,6 @@ class CaseCommentListView(generics.ListCreateAPIView):
         return CaseCommentCreateSerializer
     
     def get_queryset(self):
-        """Get comments for the specified case using CaseLog."""
         case_id = self.kwargs['case_number']
         case = get_object_or_404(Case, case_number=case_id, is_deleted=False)
         
@@ -103,7 +99,6 @@ class CaseCommentListView(generics.ListCreateAPIView):
         return CaseLog.objects.filter(renewal_case=case, is_deleted=False).exclude(comment='').exclude(comment__isnull=True)
     
     def perform_create(self, serializer):
-        """Create a new comment for the specified case using CaseLog."""
         case_id = self.kwargs['case_number']
         case = get_object_or_404(Case, case_number=case_id, is_deleted=False)
         
@@ -118,7 +113,6 @@ class CaseCommentDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [permissions.IsAuthenticated]
     
     def get_queryset(self):
-        """Get comments for the specified case using CaseLog."""
         case_id = self.kwargs['case_number']
         case = get_object_or_404(Case, case_number=case_id, is_deleted=False)
         
@@ -130,7 +124,6 @@ class CaseCommentDetailView(generics.RetrieveUpdateDestroyAPIView):
         return CaseLog.objects.filter(renewal_case=case, is_deleted=False).exclude(comment='').exclude(comment__isnull=True)
     
     def perform_update(self, serializer):
-        """Update comment and create history entry."""
         comment = serializer.save()
         
         CaseHistory.objects.create(
@@ -156,7 +149,6 @@ class CaseStatusUpdateView(generics.UpdateAPIView):
     lookup_field = 'case_number'
     
     def get_queryset(self):
-        """Filter cases based on user permissions."""
         queryset = Case.objects.filter(is_deleted=False)
         
         if not self.request.user.is_staff:
@@ -169,7 +161,6 @@ class UpdateCaseStatusView(generics.UpdateAPIView):
     lookup_field = 'case_number'
     
     def get_queryset(self):
-        """Filter cases based on user permissions."""
         queryset = Case.objects.filter(is_deleted=False)
         
         if not self.request.user.is_staff:
@@ -178,7 +169,6 @@ class UpdateCaseStatusView(generics.UpdateAPIView):
         return queryset
     
     def update(self, request, *args, **kwargs):
-        """Handle PUT/PATCH request to update case status and related fields."""
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
         if not (request.user.is_staff or 
@@ -207,7 +197,6 @@ class CaseAssignmentView(generics.UpdateAPIView):
     lookup_field = 'case_number'
     
     def get_queryset(self):
-        """Only staff can assign cases."""
         if not self.request.user.is_staff:
             return Case.objects.none()
         return Case.objects.filter(is_deleted=False)
@@ -217,7 +206,6 @@ class CaseCloseView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     
     def post(self, request, case_id):
-        """Close the case."""
         case = get_object_or_404(Case, case_number=case_id, is_deleted=False)
         
         if not (request.user.is_staff or 

@@ -25,7 +25,6 @@ def send_user_notification(user, notification_type, message, subject=None):
     if settings.email_notifications and user.email:
         try:
             email_service = EmailProviderService()
-            # Use a default subject if none provided
             final_subject = subject or f"Notification: {notification_type.replace('_', ' ').title()}"
             
             email_service.send_email(

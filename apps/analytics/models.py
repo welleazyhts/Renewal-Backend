@@ -10,7 +10,6 @@ import json
 User = get_user_model()
 
 class Dashboard(BaseModel):
-    """Custom dashboards for different user roles"""
     DASHBOARD_TYPE_CHOICES = [
         ('executive', 'Executive Dashboard'),
         ('sales', 'Sales Dashboard'),
@@ -46,7 +45,6 @@ class Dashboard(BaseModel):
     def __str__(self):
         return f"{self.name} ({self.dashboard_type})"
 class Widget(BaseModel):
-    """Dashboard widgets"""
     WIDGET_TYPE_CHOICES = [
         ('metric', 'Single Metric'),
         ('chart', 'Chart'),
@@ -110,7 +108,6 @@ class Widget(BaseModel):
         return f"{self.name} ({self.widget_type})"
 
 class DashboardWidget(BaseModel):
-    """Relationship between dashboards and widgets"""
     dashboard = models.ForeignKey(Dashboard, on_delete=models.CASCADE, related_name='dashboard_widgets')
     widget = models.ForeignKey(Widget, on_delete=models.CASCADE, related_name='widget_dashboards')
     
@@ -134,7 +131,6 @@ class DashboardWidget(BaseModel):
         return f"{self.dashboard.name} - {self.widget.name}"
 
 class KPI(BaseModel):
-    """Key Performance Indicators"""
     KPI_TYPE_CHOICES = [
         ('revenue', 'Revenue'),
         ('growth', 'Growth Rate'),
@@ -184,7 +180,6 @@ class KPI(BaseModel):
         return self.name
 
 class KPIValue(BaseModel):
-    """Historical KPI values"""
     kpi = models.ForeignKey(KPI, on_delete=models.CASCADE, related_name='values')
     date = models.DateField()
     value = models.FloatField()
@@ -211,7 +206,6 @@ class KPIValue(BaseModel):
         return f"{self.kpi.name} - {self.date}: {self.value}"
 
 class Report(BaseModel):
-    """Generated reports"""
     REPORT_TYPE_CHOICES = [
         ('policy', 'Policy Report'),
         ('customer', 'Customer Report'),
@@ -269,7 +263,6 @@ class Report(BaseModel):
     def __str__(self):
         return f"{self.name} ({self.report_type})"
 class ReportExecution(BaseModel):
-    """Report execution history"""
     STATUS_CHOICES = [
         ('queued', 'Queued'),
         ('running', 'Running'),
@@ -309,7 +302,6 @@ class ReportExecution(BaseModel):
     def __str__(self):
         return f"{self.report.name} - {self.status} - {self.created_at}"
 class AnalyticsEvent(BaseModel):
-    """Analytics events for tracking user behavior"""
     EVENT_TYPE_CHOICES = [
         ('page_view', 'Page View'),
         ('button_click', 'Button Click'),
@@ -355,7 +347,6 @@ class AnalyticsEvent(BaseModel):
         return f"{self.event_type} - {self.event_name} - {self.timestamp}"
 
 class AlertRule(BaseModel):
-    """Alert rules for automated notifications"""
     CONDITION_TYPE_CHOICES = [
         ('threshold', 'Threshold'),
         ('change', 'Change Detection'),
@@ -374,24 +365,19 @@ class AlertRule(BaseModel):
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True)
     
-    # Data source
     kpi = models.ForeignKey(KPI, on_delete=models.CASCADE, null=True, blank=True, related_name='alert_rules')
     widget = models.ForeignKey(Widget, on_delete=models.CASCADE, null=True, blank=True, related_name='alert_rules')
     custom_query = models.TextField(blank=True)
     
-    # Condition
     condition_type = models.CharField(max_length=20, choices=CONDITION_TYPE_CHOICES)
     condition_config = models.JSONField(default=dict)
     
-    # Notification settings
     notification_types = models.JSONField(default=list)
     recipients = models.JSONField(default=list)
     
-    # Alert frequency
     check_frequency = models.PositiveIntegerField(default=300, help_text="Check frequency in seconds")
     cooldown_period = models.PositiveIntegerField(default=3600, help_text="Cooldown period in seconds")
     
-    # Status
     is_active = models.BooleanField(default=True)
     last_checked = models.DateTimeField(null=True, blank=True)
     last_triggered = models.DateTimeField(null=True, blank=True)
@@ -407,7 +393,6 @@ class AlertRule(BaseModel):
         return self.name
 
 class Alert(BaseModel):
-    """Generated alerts"""
     SEVERITY_CHOICES = [
         ('low', 'Low'),
         ('medium', 'Medium'),
@@ -428,19 +413,16 @@ class Alert(BaseModel):
     severity = models.CharField(max_length=20, choices=SEVERITY_CHOICES)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
     
-    # Alert data
     trigger_value = models.FloatField(null=True, blank=True)
     threshold_value = models.FloatField(null=True, blank=True)
     alert_data = models.JSONField(default=dict, blank=True)
     
-    # Response tracking
     acknowledged_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='acknowledged_alerts')
     acknowledged_at = models.DateTimeField(null=True, blank=True)
     resolved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='resolved_alerts')
     resolved_at = models.DateTimeField(null=True, blank=True)
     resolution_notes = models.TextField(blank=True)
     
-    # Notification tracking
     notifications_sent = models.JSONField(default=list, blank=True)
     
     class Meta:
@@ -455,7 +437,6 @@ class Alert(BaseModel):
         return f"{self.title} ({self.severity}) - {self.status}"
 
 class DataExport(BaseModel):
-    """Data export requests"""
     EXPORT_TYPE_CHOICES = [
         ('policies', 'Policies'),
         ('customers', 'Customers'),
@@ -487,25 +468,20 @@ class DataExport(BaseModel):
     export_format = models.CharField(max_length=10, choices=EXPORT_FORMAT_CHOICES)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='queued')
     
-    # Export configuration
     filters = models.JSONField(default=dict, blank=True)
     columns = models.JSONField(default=list, blank=True)
     custom_query = models.TextField(blank=True)
     
-    # Processing
     started_at = models.DateTimeField(null=True, blank=True)
     completed_at = models.DateTimeField(null=True, blank=True)
     processing_duration = models.PositiveIntegerField(null=True, blank=True, help_text="Duration in seconds")
     
-    # Results
     exported_file = models.FileField(upload_to='exports/', null=True, blank=True)
     file_size = models.PositiveIntegerField(null=True, blank=True)
     record_count = models.PositiveIntegerField(null=True, blank=True)
     
-    # Expiry
     expires_at = models.DateTimeField(null=True, blank=True)
     
-    # Error handling
     error_message = models.TextField(blank=True)
     
     requested_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='data_exports')

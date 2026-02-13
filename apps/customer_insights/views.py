@@ -18,15 +18,12 @@ from .serializers import (
 from .services import CustomerInsightsService
 
 
-class CustomerInsightsViewSet(viewsets.ModelViewSet):
-    """ViewSet for customer insights operations - simplified"""
-    
+class CustomerInsightsViewSet(viewsets.ModelViewSet):    
     queryset = CustomerInsight.objects.all()
     serializer_class = CustomerInsightSerializer
     permission_classes = [permissions.IsAuthenticated]
     
     def get_queryset(self):
-        """Filter queryset based on user permissions"""
         queryset = super().get_queryset()
         
         customer_id = self.request.query_params.get('customer_id')
@@ -37,7 +34,6 @@ class CustomerInsightsViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'], url_path='customer/(?P<case_number>[^/.]+)')
     def get_customer_insights(self, request, case_number=None):
-        """Get comprehensive insights for a specific customer - MAIN ENDPOINT"""
         try:
             force_recalculate = request.query_params.get('force_recalculate', 'false').lower() == 'true'
             
@@ -93,7 +89,6 @@ class CustomerInsightsViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['post'], url_path='customer/(?P<case_number>[^/.]+)/recalculate')
     def recalculate_insights(self, request, case_number=None):
-        """Recalculate insights for a specific customer"""
         try:
             serializer = CustomerInsightsRecalculateSerializer(data=request.data)
             if not serializer.is_valid():
@@ -141,7 +136,6 @@ class CustomerInsightsViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['post'], url_path='bulk-update')
     def bulk_update_insights(self, request):
-        """Bulk update insights for multiple customers"""
         serializer = CustomerInsightsBulkUpdateSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -175,7 +169,6 @@ class CustomerInsightsViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'], url_path='dashboard')
     def get_insights_dashboard(self, request):
-        """Get insights dashboard data"""
         try:
             total_customers = Customer.objects.filter(is_deleted=False).count()
             
@@ -264,7 +257,6 @@ class CustomerInsightsViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'], url_path='summary')
     def get_insights_summary(self, request):
-        """Get filtered insights summary"""
         filter_serializer = CustomerInsightsFilterSerializer(data=request.query_params)
         if not filter_serializer.is_valid():
             return Response(filter_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -347,7 +339,6 @@ class CustomerInsightsViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'], url_path='customer/(?P<case_number>[^/.]+)/payment-schedule')
     def get_payment_schedule(self, request, case_number=None):
-        """Get payment schedule for a specific customer using case number"""
         try:
             try:
                 from apps.renewals.models import RenewalCase
@@ -382,7 +373,6 @@ class CustomerInsightsViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'], url_path='customer/(?P<case_number>[^/.]+)/communication-history')
     def get_communication_history_detail(self, request, case_number=None):
-        """Get detailed communication history for a specific customer using Case Number"""
         try:
             from apps.renewals.models import RenewalCase
             renewal_case = RenewalCase.objects.select_related('customer').get(case_number=case_number)
@@ -401,7 +391,6 @@ class CustomerInsightsViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], url_path='customer/(?P<case_number>[^/.]+)/claims-history')
     def get_claims_history_detail(self, request, case_number=None):
-        """Get detailed claims history for a specific customer using Case Number"""
         try:
             from apps.renewals.models import RenewalCase
             renewal_case = RenewalCase.objects.select_related('customer').get(case_number=case_number)

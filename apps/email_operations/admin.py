@@ -43,13 +43,11 @@ class EmailMessageAdmin(admin.ModelAdmin):
     )
     
     def get_queryset(self, request):
-        """Filter out soft-deleted messages"""
         return super().get_queryset(request).filter(is_deleted=False)
     
     actions = ['resend_emails', 'cancel_emails']
     
     def resend_emails(self, request, queryset):
-        """Resend selected emails"""
         count = 0
         for email in queryset.filter(status__in=['failed', 'bounced']):
             email.status = 'pending'
@@ -62,7 +60,6 @@ class EmailMessageAdmin(admin.ModelAdmin):
     resend_emails.short_description = "Resend selected emails"
     
     def cancel_emails(self, request, queryset):
-        """Cancel selected emails"""
         count = queryset.filter(status__in=['pending', 'sending']).update(status='cancelled')
         self.message_user(request, f"{count} emails cancelled.")
     cancel_emails.short_description = "Cancel selected emails"
@@ -82,12 +79,10 @@ class EmailQueueAdmin(admin.ModelAdmin):
     ]
     
     def email_message_subject(self, obj):
-        """Display email message subject"""
         return obj.email_message.subject
     email_message_subject.short_description = 'Subject'
     
     def get_queryset(self, request):
-        """Optimize queryset"""
         return super().get_queryset(request).select_related('email_message')
 
 
@@ -102,12 +97,10 @@ class EmailTrackingAdmin(admin.ModelAdmin):
     readonly_fields = ['id', 'event_time']
     
     def email_message_subject(self, obj):
-        """Display email message subject"""
         return obj.email_message.subject
     email_message_subject.short_description = 'Subject'
     
     def get_queryset(self, request):
-        """Optimize queryset"""
         return super().get_queryset(request).select_related('email_message')
 
 
@@ -122,14 +115,11 @@ class EmailDeliveryReportAdmin(admin.ModelAdmin):
     readonly_fields = ['id', 'reported_at']
     
     def email_message_subject(self, obj):
-        """Display email message subject"""
         return obj.email_message.subject
     email_message_subject.short_description = 'Subject'
     
     def get_queryset(self, request):
-        """Optimize queryset"""
         return super().get_queryset(request).select_related('email_message')
-
 
 @admin.register(EmailAnalytics)
 class EmailAnalyticsAdmin(admin.ModelAdmin):
@@ -145,5 +135,4 @@ class EmailAnalyticsAdmin(admin.ModelAdmin):
     ]
     
     def get_queryset(self, request):
-        """Optimize queryset"""
         return super().get_queryset(request).order_by('-date')

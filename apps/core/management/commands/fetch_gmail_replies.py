@@ -27,17 +27,14 @@ class Command(BaseCommand):
             )
             return
         
-        # Use the new SendGrid account email if not provided
         if not email_address:
             email_address = 'sahinyasin2000@gmail.com'
 
         try:
-            # Connect to Gmail IMAP
             mail = imaplib.IMAP4_SSL('imap.gmail.com')
             mail.login(email_address, password)
             mail.select('inbox')
 
-            # Search for unread emails
             status, messages = mail.search(None, 'UNSEEN')
             
             if status != 'OK':
@@ -49,25 +46,21 @@ class Command(BaseCommand):
             email_ids = messages[0].split()
             fetched_count = 0
 
-            for email_id in email_ids[-limit:]:  # Get latest emails
+            for email_id in email_ids[-limit:]: 
                 try:
-                    # Fetch email
                     status, msg_data = mail.fetch(email_id, '(RFC822)')
                     
                     if status != 'OK':
                         continue
 
-                    # Parse email
                     email_body = msg_data[0][1]
                     email_message = email.message_from_bytes(email_body)
 
-                    # Extract email details
                     from_email = email_message.get('From', '')
                     to_email = email_message.get('To', '')
                     subject = email_message.get('Subject', '')
                     date = email_message.get('Date', '')
 
-                    # Get email content
                     text_content = ''
                     html_content = ''
 
@@ -87,9 +80,7 @@ class Command(BaseCommand):
                         elif content_type == 'text/html':
                             html_content = email_message.get_payload(decode=True).decode('utf-8', errors='ignore')
 
-                    # Check if this is a reply to our emails
                     if 'replies@13.233.6.207' in to_email or 'banuyasin401@gmail.com' in to_email:
-                        # Check if we already have this email
                         existing_email = EmailInboxMessage.objects.filter(
                             from_email=from_email,
                             subject=subject,
@@ -97,7 +88,6 @@ class Command(BaseCommand):
                         ).first()
 
                         if not existing_email:
-                            # Store the email
                             inbox_service = EmailInboxService()
                             result = inbox_service.receive_email(
                                 from_email=from_email,

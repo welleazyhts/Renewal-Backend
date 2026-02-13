@@ -8,7 +8,6 @@ from apps.uploads.models import FileUpload as UploadsFileUpload
 from django.contrib.auth import get_user_model
 User = get_user_model()
 class ClosedCasesListSerializer(serializers.ModelSerializer):
-    """Serializer for closed cases list view"""
     customer_name = serializers.SerializerMethodField()
     customer_profile = serializers.SerializerMethodField()
     customer_mobile = serializers.SerializerMethodField()
@@ -154,7 +153,6 @@ class ClosedCasesListSerializer(serializers.ModelSerializer):
         return obj.policy.renewal_date if obj.policy else None
     
     def get_payment_date(self, obj):
-        """Get payment date from related customer_payment"""
         return obj.customer_payment.payment_date if obj.customer_payment else None
     
     def get_closed_date(self, obj):
@@ -167,7 +165,6 @@ class ClosedCasesListSerializer(serializers.ModelSerializer):
         return obj.last_contact_date if obj.last_contact_date else obj.updated_at
 
 class ClosedCasesDetailSerializer(serializers.ModelSerializer):
-    """Detailed serializer for individual closed case view"""
     
     customer_details = serializers.SerializerMethodField()
     policy_details = serializers.SerializerMethodField()
@@ -295,5 +292,4 @@ class ClosedCasesDetailSerializer(serializers.ModelSerializer):
             return None
     
     def get_payment_date(self, obj):
-        """Get payment date from related customer_payment"""
         return obj.customer_payment.payment_date if obj.customer_payment else None

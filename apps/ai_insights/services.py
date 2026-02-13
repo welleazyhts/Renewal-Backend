@@ -230,7 +230,6 @@ class AIService:
             }
     
     def _get_user_specific_data(self, user) -> Dict[str, Any]:
-        """Get user-specific policy and customer data"""
         try:
             from apps.customers.models import Customer
             
@@ -614,7 +613,6 @@ RESPONSE FORMAT:
         return context
 
     def _build_payment_analysis_context(self, payment_data: Dict[str, Any]) -> str:
-        """Build context for payment analysis"""
         if not payment_data:
             return ""
         
@@ -642,7 +640,6 @@ RESPONSE FORMAT:
         return context
 
     def _build_campaign_performance_context(self, campaign_data: Dict[str, Any]) -> str:
-        """Build context for campaign performance analysis"""
         if not campaign_data:
             return ""
         
@@ -743,7 +740,6 @@ RESPONSE FORMAT:
         return context
 
     def _build_customer_insights_context(self, customer_data: Dict[str, Any]) -> str:
-        """Build context for customer insights"""
         if not customer_data:
             return ""
         
@@ -766,7 +762,6 @@ RESPONSE FORMAT:
         return context
 
     def _build_process_optimization_context(self, process_data: Dict[str, Any]) -> str:
-        """Build context for process optimization"""
         if not process_data:
             return ""
         
@@ -789,7 +784,6 @@ RESPONSE FORMAT:
         return context
 
     def _build_predictive_insights_context(self, predictive_data: Dict[str, Any]) -> str:
-        """Build context for predictive insights"""
         if not predictive_data:
             return ""
         
@@ -922,7 +916,6 @@ RESPONSE FORMAT:
         return recommendations
 
     def _classify_query(self, user_message: str) -> str:
-        """Classify the type of query to determine what data to fetch"""
         message_lower = user_message.lower()
         
         if any(keyword in message_lower for keyword in ['churn', 'retention', 'losing customers', 'customer loss', 'reduce churn']):
@@ -953,7 +946,6 @@ RESPONSE FORMAT:
             return 'general'
 
     def _get_specialized_data(self, query_type: str, user_message: str) -> Dict[str, Any]:
-        """Fetch specialized data based on query type"""
         try:
             if query_type == 'customer_churn':
                 return self._get_churn_analysis_data()
@@ -976,7 +968,6 @@ RESPONSE FORMAT:
             return {}
 
     def _get_churn_analysis_data(self) -> Dict[str, Any]:
-        """Get comprehensive data for customer churn analysis"""
         try:
             from datetime import datetime, timedelta
             today = datetime.now().date()
@@ -1052,7 +1043,6 @@ RESPONSE FORMAT:
             return {'churn_analysis': {}}
 
     def _get_renewal_performance_data(self) -> Dict[str, Any]:
-        """Get comprehensive data for renewal performance analysis"""
         try:
             from datetime import datetime, timedelta
             today = datetime.now().date()
@@ -1105,7 +1095,6 @@ RESPONSE FORMAT:
             return {'renewal_performance': {}}
 
     def _get_payment_analysis_data(self) -> Dict[str, Any]:
-        """Get comprehensive data for payment analysis"""
         try:
             from datetime import datetime, timedelta
             today = datetime.now().date()
@@ -1160,7 +1149,6 @@ RESPONSE FORMAT:
             return {'payment_analysis': {}}
 
     def _get_campaign_performance_data(self) -> Dict[str, Any]:
-        """Get comprehensive data for campaign performance analysis"""
         try:
             from datetime import datetime, timedelta
             today = datetime.now().date()
@@ -1214,7 +1202,6 @@ RESPONSE FORMAT:
             return {'campaign_performance': {}}
 
     def _get_channel_effectiveness_data(self, thirty_days_ago, sixty_days_ago):
-        """Get comprehensive channel effectiveness data"""
         try:
             from apps.channels.models import Channel
             channel_renewal_performance = RenewalCase.objects.filter(
@@ -1255,7 +1242,6 @@ RESPONSE FORMAT:
             return {}
 
     def _get_communication_performance_data(self, thirty_days_ago):
-        """Get communication performance data"""
         try:
             from apps.customer_communication_preferences.models import CommunicationLog
             
@@ -1296,7 +1282,6 @@ RESPONSE FORMAT:
             return {}
 
     def _get_campaign_recipient_performance(self, thirty_days_ago):
-        """Get campaign recipient performance by channel"""
         try:
             from apps.campaigns.models import CampaignRecipient
             
@@ -1329,7 +1314,6 @@ RESPONSE FORMAT:
             return {}
 
     def _get_customer_insights_data(self) -> Dict[str, Any]:
-        """Get comprehensive data for customer insights"""
         try:
             customers = Customer.objects.filter(is_deleted=False)
             
@@ -1374,7 +1358,6 @@ RESPONSE FORMAT:
             return {'customer_insights': {}}
 
     def _get_process_optimization_data(self) -> Dict[str, Any]:
-        """Get comprehensive data for process optimization"""
         try:
             renewal_cases = RenewalCase.objects.filter(is_deleted=False)
             
@@ -1413,7 +1396,6 @@ RESPONSE FORMAT:
             return {'process_optimization': {}}
 
     def _get_predictive_insights_data(self) -> Dict[str, Any]:
-        """Get comprehensive data for predictive insights"""
         try:
             from datetime import datetime, timedelta
             today = datetime.now().date()
@@ -1462,7 +1444,6 @@ RESPONSE FORMAT:
 _ai_service_instance = None
 
 def get_ai_service():
-    """Get or create the AI service instance"""
     global _ai_service_instance
     if _ai_service_instance is None:
         _ai_service_instance = AIService()

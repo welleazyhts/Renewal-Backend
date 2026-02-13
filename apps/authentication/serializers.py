@@ -101,21 +101,17 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         return attrs
     
     def create(self, validated_data):
-        """Create new user"""
         password = validated_data.pop('password')
         user = User.objects.create_user(password=password, **validated_data)
         return user
 
 
-class PasswordChangeSerializer(serializers.Serializer):
-    """Serializer for password change"""
-    
+class PasswordChangeSerializer(serializers.Serializer):    
     current_password = serializers.CharField(write_only=True)
     new_password = serializers.CharField(write_only=True, validators=[validate_password])
     confirm_password = serializers.CharField(write_only=True)
     
     def validate(self, attrs):
-        """Validate password change data"""
         user = self.context['request'].user
         
         if not user.check_password(attrs['current_password']):
@@ -127,20 +123,16 @@ class PasswordChangeSerializer(serializers.Serializer):
         return attrs
     
     def save(self):
-        """Change user password"""
         user = self.context['request'].user
         user.set_password(self.validated_data['new_password'])
         user.password_changed_at = timezone.now()
         user.force_password_change = False
         user.save(update_fields=['password', 'password_changed_at', 'force_password_change'])
         return user
-class PasswordResetRequestSerializer(serializers.Serializer):
-    """Serializer for password reset request"""
-    
+class PasswordResetRequestSerializer(serializers.Serializer):    
     email = serializers.EmailField()
     
     def validate_email(self, value):
-        """Validate email exists"""
         try:
             User.objects.get(email=value, is_active=True)
         except User.DoesNotExist:
@@ -153,7 +145,6 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
     confirm_password = serializers.CharField(write_only=True)
     
     def validate(self, attrs):
-        """Validate password reset data"""
         if attrs['new_password'] != attrs['confirm_password']:
             raise serializers.ValidationError("Passwords don't match.")
         return attrs
@@ -176,7 +167,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'email', 'last_login', 'date_joined', 'created_at', 'updated_at']
     
     def get_permissions(self, obj):
-        """Get user permissions"""
         return obj.get_permissions()
 
 class LoginResponseSerializer(serializers.Serializer):    

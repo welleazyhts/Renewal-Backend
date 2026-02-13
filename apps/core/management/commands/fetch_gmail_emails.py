@@ -44,41 +44,35 @@ class Command(BaseCommand):
         self.stdout.write(f"Fetching emails from {email_address}...")
 
         try:
-            # Connect to Gmail
             mail = imaplib.IMAP4_SSL('imap.gmail.com')
             mail.login(email_address, password)
             mail.select(folder)
 
-            # Search for emails
             status, messages = mail.search(None, 'ALL')
             if status != 'OK':
                 self.stdout.write(self.style.ERROR('Failed to search emails'))
                 return
 
             email_ids = messages[0].split()
-            email_ids = email_ids[-limit:]  # Get the latest emails
+            email_ids = email_ids[-limit:] 
 
             inbox_service = EmailInboxService()
             processed_count = 0
 
             for email_id in email_ids:
                 try:
-                    # Fetch email
                     status, msg_data = mail.fetch(email_id, '(RFC822)')
                     if status != 'OK':
                         continue
 
-                    # Parse email
                     raw_email = msg_data[0][1]
                     email_message = email.message_from_bytes(raw_email)
 
-                    # Extract email data
                     from_email = email_message.get('From', '')
                     to_email = email_message.get('To', '')
                     subject = email_message.get('Subject', '')
                     date = email_message.get('Date', '')
 
-                    # Extract body
                     html_content = ''
                     text_content = ''
 
@@ -98,13 +92,11 @@ class Command(BaseCommand):
                         elif content_type == 'text/html':
                             html_content = email_message.get_payload(decode=True).decode('utf-8', errors='ignore')
 
-                    # Extract sender name
                     from_name = ''
                     if '<' in from_email and '>' in from_email:
                         from_name = from_email.split('<')[0].strip().strip('"')
                         from_email = from_email.split('<')[1].split('>')[0].strip()
 
-                    # Store email in database
                     result = inbox_service.receive_email(
                         from_email=from_email,
                         to_email=to_email,

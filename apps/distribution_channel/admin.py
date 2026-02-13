@@ -1,11 +1,8 @@
 from django.contrib import admin
 from .models import DistributionChannel
 
-
 @admin.register(DistributionChannel)
-class DistributionChannelAdmin(admin.ModelAdmin):
-    """Admin configuration for DistributionChannel model"""
-    
+class DistributionChannelAdmin(admin.ModelAdmin):    
     list_display = [
         'name',
         'channel_type',
@@ -52,7 +49,6 @@ class DistributionChannelAdmin(admin.ModelAdmin):
     )
     
     def save_model(self, request, obj, form, change):
-        """Set created_by/updated_by when saving"""
         if not change:
             obj.created_by = request.user
         obj.updated_by = request.user

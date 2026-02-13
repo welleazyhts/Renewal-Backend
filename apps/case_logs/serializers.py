@@ -89,7 +89,6 @@ class CaseCommentCreateSerializer(serializers.ModelSerializer):
         ]
     
     def create(self, validated_data):
-        """Create a new comment using CaseLog"""
         validated_data.pop('comment_type', None)
         validated_data.pop('is_internal', None)
         validated_data.pop('is_important', None)

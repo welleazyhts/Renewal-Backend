@@ -1,10 +1,6 @@
 from rest_framework import serializers
 from .models import EmailProviderConfig, EmailProviderHealthLog, EmailProviderUsageLog, EmailProviderTestResult
-
-
-class EmailProviderConfigSerializer(serializers.ModelSerializer):
-    """Serializer for EmailProviderConfig"""
-    
+class EmailProviderConfigSerializer(serializers.ModelSerializer):    
     provider_type_display = serializers.CharField(source='get_provider_type_display', read_only=True)
     priority_display = serializers.CharField(source='get_priority_display', read_only=True)
     health_status_display = serializers.CharField(source='get_health_status_display', read_only=True)
@@ -32,19 +28,15 @@ class EmailProviderConfigSerializer(serializers.ModelSerializer):
         ]
     
     def create(self, validated_data):
-        """Create a new email provider configuration"""
         validated_data['created_by'] = self.context['request'].user
         return super().create(validated_data)
     
     def update(self, instance, validated_data):
-        """Update an email provider configuration"""
         validated_data['updated_by'] = self.context['request'].user
         return super().update(instance, validated_data)
 
 
-class EmailProviderConfigCreateSerializer(serializers.ModelSerializer):
-    """Serializer for creating EmailProviderConfig (includes all fields)"""
-    
+class EmailProviderConfigCreateSerializer(serializers.ModelSerializer):    
     class Meta:
         model = EmailProviderConfig
         fields = [
@@ -56,9 +48,6 @@ class EmailProviderConfigCreateSerializer(serializers.ModelSerializer):
             'priority', 'is_default', 'is_active'
         ]
     def validate(self, data):
-        """
-        Ensure only one provider is marked as default.
-        """
         is_default = data.get('is_default', False)
         
         if is_default:
@@ -78,7 +67,6 @@ class EmailProviderConfigCreateSerializer(serializers.ModelSerializer):
         return data
     
     def create(self, validated_data):
-        """Create a new email provider configuration"""
         validated_data['created_by'] = self.context['request'].user
         
         if 'smtp_password' in validated_data and validated_data['smtp_password']:
@@ -94,9 +82,7 @@ class EmailProviderConfigCreateSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
 
-class EmailProviderConfigUpdateSerializer(serializers.ModelSerializer):
-    """Serializer for updating EmailProviderConfig"""
-    
+class EmailProviderConfigUpdateSerializer(serializers.ModelSerializer):    
     class Meta:
         model = EmailProviderConfig
         fields = [
@@ -105,9 +91,6 @@ class EmailProviderConfigUpdateSerializer(serializers.ModelSerializer):
             'priority', 'is_default', 'is_active'
         ]
     def validate(self, data):
-        """
-        [NEW] Ensures only one provider is marked as default when updating an existing one.
-        """
         is_default = data.get('is_default', self.instance.is_default) 
         
         if is_default:
@@ -126,14 +109,11 @@ class EmailProviderConfigUpdateSerializer(serializers.ModelSerializer):
         return data
     
     def update(self, instance, validated_data):
-        """Update an email provider configuration"""
         validated_data['updated_by'] = self.context['request'].user
         return super().update(instance, validated_data)
 
 
-class EmailProviderCredentialsSerializer(serializers.ModelSerializer):
-    """Serializer for updating email provider credentials"""
-    
+class EmailProviderCredentialsSerializer(serializers.ModelSerializer):    
     class Meta:
         model = EmailProviderConfig
         fields = [
@@ -143,16 +123,12 @@ class EmailProviderCredentialsSerializer(serializers.ModelSerializer):
         ]
     
     def update(self, instance, validated_data):
-        """Update email provider credentials"""
         validated_data['updated_by'] = self.context['request'].user
         return super().update(instance, validated_data)
 
 
-class EmailProviderHealthLogSerializer(serializers.ModelSerializer):
-    """Serializer for EmailProviderHealthLog"""
-    
+class EmailProviderHealthLogSerializer(serializers.ModelSerializer):    
     provider_name = serializers.CharField(source='provider.name', read_only=True)
-    
     class Meta:
         model = EmailProviderHealthLog
         fields = [
@@ -162,9 +138,7 @@ class EmailProviderHealthLogSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'checked_at', 'created_at', 'updated_at']
 
 
-class EmailProviderUsageLogSerializer(serializers.ModelSerializer):
-    """Serializer for EmailProviderUsageLog"""
-    
+class EmailProviderUsageLogSerializer(serializers.ModelSerializer):    
     provider_name = serializers.CharField(source='provider.name', read_only=True)
     success_rate = serializers.SerializerMethodField()
     average_response_time = serializers.SerializerMethodField()
@@ -179,21 +153,17 @@ class EmailProviderUsageLogSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'logged_at']
     
     def get_success_rate(self, obj):
-        """Calculate success rate percentage"""
         if obj.emails_sent == 0:
             return 0
         return round((obj.success_count / obj.emails_sent) * 100, 2)
     
     def get_average_response_time(self, obj):
-        """Calculate average response time"""
         if obj.success_count == 0:
             return 0
         return round(obj.total_response_time / obj.success_count, 3)
 
 
-class EmailProviderTestResultSerializer(serializers.ModelSerializer):
-    """Serializer for EmailProviderTestResult"""
-    
+class EmailProviderTestResultSerializer(serializers.ModelSerializer):    
     provider_name = serializers.CharField(source='provider.name', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     tested_by_name = serializers.CharField(source='tested_by.get_full_name', read_only=True)
@@ -207,22 +177,16 @@ class EmailProviderTestResultSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'tested_at']
 
-
-class EmailProviderTestSerializer(serializers.Serializer):
-    """Serializer for testing email provider configuration"""
-    
+class EmailProviderTestSerializer(serializers.Serializer):    
     test_email = serializers.EmailField()
     
     def validate_test_email(self, value):
-        """Validate test email address"""
         if not value:
             raise serializers.ValidationError("Test email is required")
         return value
 
 
-class EmailProviderStatsSerializer(serializers.Serializer):
-    """Serializer for email provider statistics"""
-    
+class EmailProviderStatsSerializer(serializers.Serializer):    
     provider_id = serializers.UUIDField()
     provider_name = serializers.CharField()
     provider_type = serializers.CharField()

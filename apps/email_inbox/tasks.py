@@ -7,16 +7,12 @@ from email.header import decode_header
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
-
 from django.conf import settings
 from django.utils import timezone
 from django.template import Template, Context
 from celery import shared_task
-
 from apps.email_settings.models import EmailAccount, EmailModuleSettings
 from apps.email_settings.utils import decrypt_credential
-
-# Imports from Inbox App
 from .models import BulkEmailCampaign, EmailInboxMessage, EmailFolder
 from .services import EmailInboxService
 from apps.email_provider.models import EmailProviderConfig
@@ -170,7 +166,6 @@ def process_imap_folder(mail, folder_name, is_incoming, account, service):
 
 @shared_task(name="apps.email_inbox.tasks.fetch_new_emails")
 def fetch_new_emails():
-    """Loops through ALL defined accounts and fetches emails."""
     accounts = EmailAccount.objects.filter(is_deleted=False, auto_sync_enabled=True)
     total_synced = 0
     service = EmailInboxService()
@@ -199,7 +194,6 @@ def fetch_new_emails():
 
 @shared_task(name="apps.email_inbox.tasks.send_campaign_emails")
 def send_campaign_emails(campaign_id):
-    """Sends emails for a campaign with Smart Configuration."""
     try:
         campaign = BulkEmailCampaign.objects.get(id=campaign_id)
         if campaign.status in ['processing', 'completed']: return "Already processed"
@@ -207,14 +201,12 @@ def send_campaign_emails(campaign_id):
         campaign.status = 'processing'
         campaign.save(update_fields=['status'])
         
-        # 1. Find Sender Account
         sender_account = EmailAccount.objects.filter(user=campaign.created_by, is_deleted=False).first()
         if not sender_account:
             campaign.status = 'failed'
             campaign.save()
             return "No sending account found."
 
-        # 2. Get Configuration (Smart Logic)
         try:
             smtp_config = get_sending_configuration(sender_account)
         except Exception as e:
@@ -223,7 +215,6 @@ def send_campaign_emails(campaign_id):
             campaign.save()
             return f"Config failed: {e}"
 
-        # Settings
         module_settings = EmailModuleSettings.objects.filter(user=campaign.created_by).first()
         auto_gen_docs = module_settings.auto_generate_documents if module_settings else False
         attach_docs = module_settings.attach_to_emails if module_settings else False
@@ -236,18 +227,15 @@ def send_campaign_emails(campaign_id):
 
         for recipient in campaign.recipients_data:
             try:
-                # Data Mapping
                 if 'name' in recipient and 'customer_name' not in recipient:
                     recipient['customer_name'] = recipient['name']
                 if 'company_name' not in recipient:
                     recipient['company_name'] = "RenewIQ"
 
-                # Mail Merge
                 ctx = Context(recipient)
                 final_subject = Template(base_subject).render(ctx)
                 body_content = Template(base_body).render(ctx)
                 
-                # Attachments
                 attachments = []
                 if auto_gen_docs and attach_docs:
                     pdf_bytes = generate_pdf_from_html(body_content, recipient)
@@ -267,7 +255,6 @@ def send_campaign_emails(campaign_id):
                     created_by=campaign.created_by
                 )
 
-                # 2. Try to send
                 is_sent = send_email_with_config(smtp_config, recipient.get('email'), final_subject, body_content, attachments)
 
                 if is_sent:
@@ -292,7 +279,6 @@ def send_campaign_emails(campaign_id):
 
 @shared_task(name="apps.email_inbox.tasks.process_scheduled_campaigns")
 def process_scheduled_campaigns():
-    """Checks for campaigns that are scheduled for now or the past."""
     now = timezone.now()
     due_campaigns = BulkEmailCampaign.objects.filter(
         status='scheduled',

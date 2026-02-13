@@ -196,7 +196,6 @@ class Campaign(BaseModel):
         ])
 
     def get_campaign_metrics(self):
-        """Get comprehensive campaign metrics"""
         recipients = self.recipients.all()
         total_recipients = recipients.count()
 
@@ -226,34 +225,29 @@ class Campaign(BaseModel):
     
     @property
     def delivery_rate(self):
-        """Calculate delivery rate percentage"""
         if self.sent_count == 0:
             return 0
         return round((self.delivered_count / self.sent_count) * 100, 2)
     
     @property
     def open_rate(self):
-        """Calculate open rate percentage"""
         if self.delivered_count == 0:
             return 0
         return round((self.opened_count / self.delivered_count) * 100, 2)
     
     @property
     def click_rate(self):
-        """Calculate click rate percentage"""
         if self.opened_count == 0:
             return 0
         return round((self.clicked_count / self.opened_count) * 100, 2)
     
     @property
     def response_rate(self):
-        """Calculate response rate percentage"""
         if self.delivered_count == 0:
             return 0
         return round((self.total_responses / self.delivered_count) * 100, 2)
 
 class CampaignSegment(BaseModel):
-    """Customer segments for targeted campaigns"""
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
     criteria = models.JSONField(default=dict, help_text="Segmentation criteria in JSON format")
@@ -272,7 +266,6 @@ class CampaignSegment(BaseModel):
         return f"{self.name} ({self.customer_count} customers)"
 
 class CampaignRecipient(BaseModel):
-    """Individual recipients of a campaign with enhanced tracking"""
     DELIVERY_STATUS_CHOICES = [
         ('pending', 'Pending'),
         ('queued', 'Queued'),
@@ -374,7 +367,6 @@ class CampaignRecipient(BaseModel):
         return f"{self.campaign.name} - {self.customer.full_name}"
 
     def save(self, *args, **kwargs):
-        """Generate tracking ID if not exists"""
         if not self.tracking_id:
             import uuid
             import hashlib
@@ -448,7 +440,6 @@ class CampaignRecipient(BaseModel):
         self.save()
 
     def mark_failed(self, channel, error_message="", timestamp=None):
-        """Mark message as failed for specific channel"""
         from django.utils import timezone
         if timestamp is None:
             timestamp = timezone.now()
@@ -467,7 +458,6 @@ class CampaignRecipient(BaseModel):
         self.save()
 
 class CampaignTemplate(BaseModel):
-    """Reusable campaign templates"""
     TEMPLATE_TYPE_CHOICES = [
         ('email', 'Email Template'),
         ('whatsapp', 'WhatsApp Template'),
@@ -494,7 +484,6 @@ class CampaignTemplate(BaseModel):
     def __str__(self):
         return f"{self.name} ({self.template_type})"
 class CampaignSchedule(BaseModel):
-    """Scheduled campaign executions"""
     SCHEDULE_STATUS_CHOICES = [
         ('pending', 'Pending'),
         ('running', 'Running'),
@@ -560,7 +549,6 @@ class CampaignAnalytics(BaseModel):
         return f"Analytics - {self.campaign.name}"
 
 class CampaignFeedback(BaseModel):
-    """Customer feedback on campaigns"""
     FEEDBACK_TYPE_CHOICES = [
         ('positive', 'Positive'),
         ('negative', 'Negative'),
@@ -591,7 +579,6 @@ class CampaignFeedback(BaseModel):
         return f"Feedback - {self.campaign.name} from {self.customer.full_name}"
 
 class CampaignAutomation(BaseModel):
-    """Automated campaign triggers"""
     TRIGGER_TYPE_CHOICES = [
         ('policy_expiry', 'Policy Expiry'),
         ('payment_due', 'Payment Due'),
@@ -722,14 +709,12 @@ class CampaignScheduleInterval(BaseModel):
         return f"{self.campaign.name} - {self.get_channel_display()} (Interval {self.sequence_order})"
     
     def get_delay_description(self):
-        """Get human-readable delay description"""
         unit = self.delay_unit
         if self.delay_value == 1:
             unit = unit.rstrip('s') 
         return f"After {self.delay_value} {unit}"
     
     def calculate_scheduled_time(self, base_time=None):
-        """Calculate when this interval should be scheduled"""
         if base_time is None:
             base_time = timezone.now()
         
@@ -745,7 +730,6 @@ class CampaignScheduleInterval(BaseModel):
         return base_time
     
     def should_send(self, recipient):
-        """Check if this interval should be sent for a specific recipient"""
         if not self.is_active or self.is_sent:
             return False
         for condition in self.trigger_conditions:

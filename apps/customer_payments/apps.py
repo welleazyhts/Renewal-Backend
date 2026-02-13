@@ -6,5 +6,4 @@ class CustomerPaymentsConfig(AppConfig):
     name = 'apps.customer_payments'
     
     def ready(self):
-        """Import signals when the app is ready"""
         import apps.customer_payments.signals

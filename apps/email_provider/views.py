@@ -17,11 +17,7 @@ from .serializers import (
 )
 from .services import EmailProviderService
 from apps.billing.models import CommunicationLog
-
-
-class EmailProviderConfigViewSet(viewsets.ModelViewSet):
-    """ViewSet for managing email provider configurations"""
-    
+class EmailProviderConfigViewSet(viewsets.ModelViewSet):    
     queryset = EmailProviderConfig.objects.filter(is_deleted=False)
     permission_classes = [IsAuthenticated]
     
@@ -35,28 +31,22 @@ class EmailProviderConfigViewSet(viewsets.ModelViewSet):
         return EmailProviderConfigSerializer
     
     def get_queryset(self):
-        """Filter providers based on query parameters"""
         queryset = super().get_queryset()
         
-        # Ensure soft-deleted providers are excluded
         queryset = queryset.filter(is_deleted=False)
         
-        # Filter by provider type
         provider_type = self.request.query_params.get('provider_type')
         if provider_type:
             queryset = queryset.filter(provider_type=provider_type)
         
-        # Filter by health status
         health_status = self.request.query_params.get('health_status')
         if health_status:
             queryset = queryset.filter(health_status=health_status)
         
-        # Filter by active status
         is_active = self.request.query_params.get('is_active')
         if is_active is not None:
             queryset = queryset.filter(is_active=is_active.lower() == 'true')
         
-        # Filter by priority
         priority = self.request.query_params.get('priority')
         if priority:
             queryset = queryset.filter(priority=priority)
@@ -64,19 +54,15 @@ class EmailProviderConfigViewSet(viewsets.ModelViewSet):
         return queryset.order_by('priority', 'name')
     
     def perform_create(self, serializer):
-        """Set created_by when creating a new provider"""
         serializer.save(created_by=self.request.user)
     
     def perform_update(self, serializer):
-        """Set updated_by when updating a provider"""
         serializer.save(updated_by=self.request.user)
     
     def destroy(self, request, *args, **kwargs):
-        """Soft delete the provider and return success message"""
         instance = self.get_object()
         provider_name = instance.name
         
-        # Perform soft delete
         instance.soft_delete()
         instance.deleted_by = request.user
         instance.save(update_fields=['deleted_by'])
@@ -87,14 +73,12 @@ class EmailProviderConfigViewSet(viewsets.ModelViewSet):
         }, status=status.HTTP_200_OK)
     
     def perform_destroy(self, instance):
-        """Soft delete the provider"""
         instance.soft_delete()
         instance.deleted_by = self.request.user
         instance.save(update_fields=['deleted_by'])
     
     @action(detail=True, methods=['post'])
     def update_credentials(self, request, pk=None):
-        """Update provider credentials"""
         provider = self.get_object()
         serializer = self.get_serializer(provider, data=request.data, partial=True)
         
@@ -105,7 +89,6 @@ class EmailProviderConfigViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'])
     def test(self, request, pk=None):
-        """Test email provider configuration"""
         provider = self.get_object()
         serializer = EmailProviderTestSerializer(data=request.data)
         
@@ -115,10 +98,8 @@ class EmailProviderConfigViewSet(viewsets.ModelViewSet):
         test_email = serializer.validated_data['test_email']
         service = EmailProviderService()
         
-        # Test the provider
         result = service.test_provider(provider, test_email)
         
-        # Create test result record
         EmailProviderTestResult.objects.create(
             provider=provider,
             test_email=test_email,
@@ -132,7 +113,6 @@ class EmailProviderConfigViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'])
     def health_check(self, request, pk=None):
-        """Perform health check on provider"""
         provider = self.get_object()
         service = EmailProviderService()
         
@@ -148,7 +128,6 @@ class EmailProviderConfigViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'])
     def activate(self, request, pk=None):
-        """Activate a provider"""
         provider = self.get_object()
         provider.is_active = True
         provider.updated_by = request.user
@@ -158,7 +137,6 @@ class EmailProviderConfigViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'])
     def deactivate(self, request, pk=None):
-        """Deactivate a provider"""
         provider = self.get_object()
         provider.is_active = False
         provider.updated_by = request.user
@@ -168,7 +146,6 @@ class EmailProviderConfigViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'])
     def reset_usage(self, request, pk=None):
-        """Reset usage counters for a provider"""
         provider = self.get_object()
         reset_type = request.data.get('type', 'daily') 
         
@@ -186,17 +163,14 @@ class EmailProviderConfigViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def statistics(self, request):
-        """Get statistics for all providers"""
         providers = self.get_queryset()
         service = EmailProviderService()
         
         stats = []
         for provider in providers:
-            # Calculate usage percentages
             daily_usage_pct = (provider.emails_sent_today / provider.daily_limit * 100) if provider.daily_limit > 0 else 0
             monthly_usage_pct = (provider.emails_sent_this_month / provider.monthly_limit * 100) if provider.monthly_limit > 0 else 0
             
-            # Get recent usage logs for success rate and response time
             recent_logs = EmailProviderUsageLog.objects.filter(
                 provider=provider,
                 logged_at__gte=timezone.now() - timedelta(days=7)
@@ -230,7 +204,6 @@ class EmailProviderConfigViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def health_status(self, request):
-        """Get health status of all providers"""
         providers = self.get_queryset()
         service = EmailProviderService()
         
@@ -250,28 +223,22 @@ class EmailProviderConfigViewSet(viewsets.ModelViewSet):
         return Response(health_data)
 
 
-class EmailProviderHealthLogViewSet(viewsets.ReadOnlyModelViewSet):
-    """ViewSet for viewing email provider health logs"""
-    
+class EmailProviderHealthLogViewSet(viewsets.ReadOnlyModelViewSet):    
     queryset = EmailProviderHealthLog.objects.all()
     serializer_class = EmailProviderHealthLogSerializer
     permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
-        """Filter health logs based on query parameters"""
         queryset = super().get_queryset()
         
-        # Filter by provider
         provider_id = self.request.query_params.get('provider_id')
         if provider_id:
             queryset = queryset.filter(provider_id=provider_id)
         
-        # Filter by health status
         is_healthy = self.request.query_params.get('is_healthy')
         if is_healthy is not None:
             queryset = queryset.filter(is_healthy=is_healthy.lower() == 'true')
         
-        # Filter by date range
         start_date = self.request.query_params.get('start_date')
         end_date = self.request.query_params.get('end_date')
         
@@ -281,25 +248,18 @@ class EmailProviderHealthLogViewSet(viewsets.ReadOnlyModelViewSet):
             queryset = queryset.filter(checked_at__lte=end_date)
         
         return queryset.order_by('-checked_at')
-
-
-class EmailProviderUsageLogViewSet(viewsets.ReadOnlyModelViewSet):
-    """ViewSet for viewing email provider usage logs"""
-    
+class EmailProviderUsageLogViewSet(viewsets.ReadOnlyModelViewSet):    
     queryset = EmailProviderUsageLog.objects.all()
     serializer_class = EmailProviderUsageLogSerializer
     permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
-        """Filter usage logs based on query parameters"""
         queryset = super().get_queryset()
         
-        # Filter by provider
         provider_id = self.request.query_params.get('provider_id')
         if provider_id:
             queryset = queryset.filter(provider_id=provider_id)
         
-        # Filter by date range
         start_date = self.request.query_params.get('start_date')
         end_date = self.request.query_params.get('end_date')
         
@@ -309,30 +269,22 @@ class EmailProviderUsageLogViewSet(viewsets.ReadOnlyModelViewSet):
             queryset = queryset.filter(logged_at__lte=end_date)
         
         return queryset.order_by('-logged_at')
-
-
-class EmailProviderTestResultViewSet(viewsets.ReadOnlyModelViewSet):
-    """ViewSet for viewing email provider test results"""
-    
+class EmailProviderTestResultViewSet(viewsets.ReadOnlyModelViewSet):    
     queryset = EmailProviderTestResult.objects.all()
     serializer_class = EmailProviderTestResultSerializer
     permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
-        """Filter test results based on query parameters"""
         queryset = super().get_queryset()
         
-        # Filter by provider
         provider_id = self.request.query_params.get('provider_id')
         if provider_id:
             queryset = queryset.filter(provider_id=provider_id)
         
-        # Filter by status
         status_filter = self.request.query_params.get('status')
         if status_filter:
             queryset = queryset.filter(status=status_filter)
         
-        # Filter by test email
         test_email = self.request.query_params.get('test_email')
         if test_email:
             queryset = queryset.filter(test_email__icontains=test_email)
@@ -341,9 +293,6 @@ class EmailProviderTestResultViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class EmailWebhookView(APIView):
-    """
-    Handle incoming webhooks from Email Providers (SendGrid, etc.) to update Billing Status.
-    """
     permission_classes = [AllowAny]
     authentication_classes = []
 
@@ -363,7 +312,6 @@ class EmailWebhookView(APIView):
                             new_status = 'failed'
                         
                         if new_status:
-                            # Update the log in Billing
                             CommunicationLog.objects.filter(
                                 provider_message_id__startswith=sg_message_id
                             ).update(status=new_status)

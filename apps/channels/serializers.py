@@ -4,8 +4,6 @@ from .models import Channel
 from apps.target_audience.models import TargetAudience
 
 class ChannelSerializer(serializers.ModelSerializer):
-    """Serializer for Channel model"""
-
     manager_name = serializers.CharField(source='get_manager_name', read_only=True)
     target_audience_name = serializers.CharField(source='get_target_audience_name', read_only=True)
     is_active = serializers.BooleanField(read_only=True)
@@ -40,19 +38,16 @@ class ChannelSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at']
     
     def validate_cost_per_lead(self, value):
-        """Validate cost per lead is not negative"""
         if value is not None and value < 0:
             raise serializers.ValidationError("Cost per lead cannot be negative.")
         return value
     
     def validate_budget(self, value):
-        """Validate budget is not negative"""
         if value is not None and value < 0:
             raise serializers.ValidationError("Budget cannot be negative.")
         return value
     
     def validate_max_capacity(self, value):
-        """Validate max capacity is positive"""
         if value is not None and value <= 0:
             raise serializers.ValidationError("Max capacity must be a positive number.")
         return value
@@ -111,9 +106,7 @@ class ChannelListSerializer(serializers.ModelSerializer):
         return data
 
 
-class ChannelCreateSerializer(serializers.ModelSerializer):
-    """Serializer for creating channels"""
-    
+class ChannelCreateSerializer(serializers.ModelSerializer):    
     class Meta:
         model = Channel
         fields = [
@@ -131,20 +124,17 @@ class ChannelCreateSerializer(serializers.ModelSerializer):
         ]
     
     def validate_cost_per_lead(self, value):
-        """Validate cost per lead is not negative"""
         if value is not None and value < 0:
             raise serializers.ValidationError("Cost per lead cannot be negative.")
         return value
     
     def validate_budget(self, value):
-        """Validate budget is not negative"""
         if value is not None and value < 0:
             raise serializers.ValidationError("Budget cannot be negative.")
         return value
 
 
 class ChannelCreateAPISerializer(serializers.ModelSerializer):
-    """Serializer specifically for the new channel creation API"""
 
     target_audience_id = serializers.PrimaryKeyRelatedField(
         queryset=TargetAudience.objects.all(),  
@@ -194,46 +184,39 @@ class ChannelCreateAPISerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at']
 
     def validate_name(self, value):
-        """Validate channel name is not empty"""
         if not value or not value.strip():
             raise serializers.ValidationError("Channel name cannot be empty.")
         return value.strip()
 
     def validate_manager_name(self, value):
-        """Validate manager name"""
         if value and not value.strip():
             raise serializers.ValidationError("Manager name cannot be empty.")
         return value.strip() if value else value
 
     def validate_description(self, value):
-        """Validate description field"""
         if value:
             return value.strip()
         return value
 
     def validate_channel_type(self, value):
-        """Validate channel type is valid"""
         valid_types = [choice[0] for choice in Channel.CHANNEL_TYPE_CHOICES]
         if value not in valid_types:
             raise serializers.ValidationError(f"Invalid channel type. Valid options are: {', '.join(valid_types)}")
         return value
 
     def validate_status(self, value):
-        """Validate status is one of allowed choices"""
         valid_status = [choice[0] for choice in Channel.STATUS_CHOICES]
         if value not in valid_status:
             raise serializers.ValidationError(f"Invalid status. Valid options are: {', '.join(valid_status)}")
         return value
 
     def validate_priority(self, value):
-        """Validate priority is one of allowed choices"""
         valid_priority = [choice[0] for choice in Channel.PRIORITY_CHOICES]
         if value not in valid_priority:
             raise serializers.ValidationError(f"Invalid priority. Valid options are: {', '.join(valid_priority)}")
         return value
 
     def validate(self, attrs):
-        """Custom validation to handle target_audience logic"""
         target_audience_id = attrs.get('target_audience')
         target_audience_name_input = attrs.get('target_audience_name_input')
 
@@ -245,7 +228,6 @@ class ChannelCreateAPISerializer(serializers.ModelSerializer):
         return attrs
 
     def to_internal_value(self, data):
-        """Handle legacy field names for backward compatibility"""
         if 'target_audience' in data and isinstance(data['target_audience'], str):
             data = data.copy()  
             data['target_audience_name_input'] = data.pop('target_audience')
@@ -290,19 +272,16 @@ class ChannelCreateAPISerializer(serializers.ModelSerializer):
 
 
     def validate_cost_per_lead(self, value):
-        """Validate cost per lead is not negative"""
         if value is not None and value < 0:
             raise serializers.ValidationError("Cost per lead cannot be negative.")
         return value
 
     def validate_budget(self, value):
-        """Validate budget is not negative"""
         if value is not None and value < 0:
             raise serializers.ValidationError("Budget cannot be negative.")
         return value
 
     def create(self, validated_data):
-        """Custom create method to handle target_audience creation"""
         target_audience_name_input = validated_data.pop('target_audience_name_input', None)
 
         if target_audience_name_input:
@@ -322,7 +301,6 @@ class ChannelCreateAPISerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
     def update(self, instance, validated_data):
-        """Custom update method to handle target_audience creation"""
         target_audience_name_input = validated_data.pop('target_audience_name_input', None)
 
         if target_audience_name_input:

@@ -41,7 +41,6 @@ class CaseAdmin(admin.ModelAdmin):
     )
     
     def get_title(self, obj):
-        """Get case title from customer and policy info"""
         if obj.customer and obj.policy:
             return f"Renewal for {obj.customer.full_name} - {obj.policy.policy_number}"
         elif obj.customer:
@@ -51,7 +50,6 @@ class CaseAdmin(admin.ModelAdmin):
     get_title.short_description = 'Title'
     
     def get_processing_days(self, obj):
-        """Calculate processing days"""
         if obj.created_at:
             from django.utils import timezone
             delta = timezone.now() - obj.created_at
@@ -60,14 +58,11 @@ class CaseAdmin(admin.ModelAdmin):
     get_processing_days.short_description = 'Processing Days'
     
     def get_queryset(self, request):
-        """Optimize queryset with select_related."""
         return super().get_queryset(request).select_related(
             'assigned_to', 'customer', 'policy', 'created_by', 'updated_by'
         )
 @admin.register(CaseHistory)
-class CaseHistoryAdmin(admin.ModelAdmin):
-    """Admin interface for CaseHistory model."""
-    
+class CaseHistoryAdmin(admin.ModelAdmin):    
     list_display = [
         'case', 'action', 'description_short', 'created_by', 'created_at'
     ]
@@ -99,14 +94,12 @@ class CaseHistoryAdmin(admin.ModelAdmin):
     )
     
     def description_short(self, obj):
-        """Display truncated description."""
         if len(obj.description) > 50:
             return f"{obj.description[:50]}..."
         return obj.description
     description_short.short_description = 'Description'
     
     def get_queryset(self, request):
-        """Optimize queryset with select_related."""
         return super().get_queryset(request).select_related(
             'case', 'created_by', 'updated_by'
         )

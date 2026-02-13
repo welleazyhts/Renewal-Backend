@@ -99,7 +99,6 @@ class CustomerFinancialProfile(BaseModel):
     
     @property
     def income_range(self):
-        """Return income range category"""
         if not self.annual_income:
             return 'Unknown'
         
@@ -115,7 +114,6 @@ class CustomerFinancialProfile(BaseModel):
     
     @property
     def capacity_status(self):
-        """Return capacity utilization status"""
         if self.policy_capacity_utilization is None:
             return 'Unknown'
         
@@ -129,7 +127,6 @@ class CustomerFinancialProfile(BaseModel):
             return 'Near Full Capacity'
     
     def calculate_recommended_premium(self):
-        """Calculate recommended annual premium based on income"""
         if not self.annual_income:
             return 0
         
@@ -148,7 +145,6 @@ class CustomerFinancialProfile(BaseModel):
         return round(recommended_premium, 2)
     
     def update_capacity_utilization(self):
-        """Update policy capacity utilization based on current policies"""
         if not self.annual_income:
             return
         

@@ -297,27 +297,22 @@ class PaymentSchedule(BaseModel):
     
     @property
     def customer(self):
-        """Get customer from renewal case"""
         return self.renewal_case.customer if self.renewal_case else None
     
     @property
     def customer_name(self):
-        """Get customer name"""
         return self.customer.full_name if self.customer else "Unknown"
     
     @property
     def policy_number(self):
-        """Get policy number from renewal case"""
         return self.renewal_case.policy.policy_number if self.renewal_case and self.renewal_case.policy else "Unknown"
     
     @property
     def case_number(self):
-        """Get case number from renewal case"""
         return self.renewal_case.case_number if self.renewal_case else "Unknown"
     
     @property
     def is_overdue(self):
-        """Check if payment is overdue"""
         from django.utils import timezone
         today = timezone.now().date()
         grace_end_date = self.due_date + timezone.timedelta(days=self.grace_period_days)
@@ -329,7 +324,6 @@ class PaymentSchedule(BaseModel):
     
     @property
     def days_overdue(self):
-        """Calculate days overdue"""
         if not self.is_overdue:
             return 0
         
@@ -341,13 +335,11 @@ class PaymentSchedule(BaseModel):
     
     @property
     def is_due_today(self):
-        """Check if payment is due today"""
         from django.utils import timezone
         return self.due_date == timezone.now().date()
     
     @property
     def days_until_due(self):
-        """Calculate days until due date"""
         from django.utils import timezone
         today = timezone.now().date()
         
@@ -358,7 +350,6 @@ class PaymentSchedule(BaseModel):
     
     @property
     def is_eligible_for_early_discount(self):
-        """Check if eligible for early payment discount"""
         if self.early_payment_discount <= 0 or self.early_payment_days <= 0:
             return False
         
@@ -370,7 +361,6 @@ class PaymentSchedule(BaseModel):
     
     @property
     def applicable_late_fee(self):
-        """Calculate applicable late fee"""
         if not self.late_fee_applicable or not self.is_overdue:
             return Decimal('0.00')
         
@@ -381,34 +371,28 @@ class PaymentSchedule(BaseModel):
     
     @property
     def total_amount_due(self):
-        """Calculate total amount due including late fees"""
         return self.amount_due + self.applicable_late_fee
     
     @property
     def discounted_amount(self):
-        """Calculate amount after early payment discount"""
         if self.is_eligible_for_early_discount:
             return self.amount_due - self.early_payment_discount
         return self.amount_due
     
     @property
     def remaining_amount(self):
-        """Calculate remaining amount to be paid"""
         return max(Decimal('0.00'), self.amount_due - self.processed_amount)
     
     @property
     def is_fully_paid(self):
-        """Check if payment is fully completed"""
         return self.processed_amount >= self.amount_due and self.status == 'completed'
     
     @property
     def is_partially_paid(self):
-        """Check if payment is partially completed"""
         return self.processed_amount > 0 and self.processed_amount < self.amount_due
     
     @property
     def payment_progress_percentage(self):
-        """Calculate payment progress percentage"""
         if self.amount_due <= 0:
             return 0
         
@@ -417,7 +401,6 @@ class PaymentSchedule(BaseModel):
     
     @property
     def can_retry(self):
-        """Check if payment can be retried"""
         return (
             self.status in ['failed', 'pending'] and
             self.retry_count < self.max_retry_attempts
@@ -425,12 +408,10 @@ class PaymentSchedule(BaseModel):
     
     @property
     def schedule_summary(self):
-        """Get schedule summary"""
         return f"Installment {self.installment_number}/{self.total_installments} - ₹{self.amount_due} due {self.due_date}"
     
     @property
     def status_display(self):
-        """Get formatted status display"""
         status_map = {
             'pending': '⏳ Pending',
             'scheduled': '📅 Scheduled',
@@ -446,7 +427,6 @@ class PaymentSchedule(BaseModel):
         return status_map.get(self.status, self.status.title())
     
     def mark_as_completed(self, processed_amount=None, transaction_reference=None):
-        """Mark payment schedule as completed"""
         from django.utils import timezone
         
         self.status = 'completed'
@@ -463,7 +443,6 @@ class PaymentSchedule(BaseModel):
         self.save()
     
     def mark_as_failed(self, failure_reason=None, failure_code=None):
-        """Mark payment schedule as failed"""
         self.status = 'failed'
         
         if failure_reason:
@@ -481,7 +460,6 @@ class PaymentSchedule(BaseModel):
         self.save()
     
     def reschedule_payment(self, new_due_date, reason=None):
-        """Reschedule payment to new due date"""
         if not self.original_due_date:
             self.original_due_date = self.due_date
         
@@ -495,7 +473,6 @@ class PaymentSchedule(BaseModel):
         self.save()
     
     def send_reminder(self):
-        """Mark reminder as sent"""
         from django.utils import timezone
         
         self.reminder_sent = True
@@ -504,7 +481,6 @@ class PaymentSchedule(BaseModel):
         self.save()
     
     def enable_auto_payment(self, payment_method, gateway=None, gateway_schedule_id=None):
-        """Enable auto payment for this schedule"""
         self.auto_payment_enabled = True
         self.auto_payment_method = payment_method
         
@@ -517,14 +493,12 @@ class PaymentSchedule(BaseModel):
         self.save()
     
     def disable_auto_payment(self):
-        """Disable auto payment for this schedule"""
         self.auto_payment_enabled = False
         self.auto_payment_method = ''
         self.gateway_schedule_id = ''
         self.save()
     
     def process_partial_payment(self, amount, transaction_reference=None):
-        """Process partial payment"""
         from django.utils import timezone
         
         self.processed_amount += amount
@@ -541,14 +515,12 @@ class PaymentSchedule(BaseModel):
         self.save()
     
     def calculate_installment_amount(self, total_amount, installment_count):
-        """Calculate amount for each installment"""
         if installment_count <= 0:
             return Decimal('0.00')
         
         return (total_amount / installment_count).quantize(Decimal('0.01'))
     
     def notify_customer(self):
-        """Mark customer as notified"""
         from django.utils import timezone
         
         self.customer_notified = True

@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from .models import CustomerInstallment
 class CustomerInstallmentSerializer(serializers.ModelSerializer):
-    """Serializer for CustomerInstallment model"""
     
     customer_name = serializers.CharField(
         source='customer.full_name', 
@@ -38,7 +37,6 @@ class CustomerInstallmentSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
 class CustomerInstallmentCreateSerializer(serializers.ModelSerializer):
-    """Serializer for creating CustomerInstallment records"""
     
     class Meta:
         model = CustomerInstallment
@@ -48,7 +46,6 @@ class CustomerInstallmentCreateSerializer(serializers.ModelSerializer):
         ]
 
 class CustomerInstallmentUpdateSerializer(serializers.ModelSerializer):
-    """Serializer for updating CustomerInstallment records"""
     
     class Meta:
         model = CustomerInstallment
@@ -66,7 +63,6 @@ class CustomerInstallmentUpdateSerializer(serializers.ModelSerializer):
 
 
 class OutstandingSummarySerializer(serializers.Serializer):
-    """Serializer for outstanding amounts summary"""
     total_outstanding = serializers.DecimalField(max_digits=15, decimal_places=2)
     total_installments = serializers.IntegerField()
     oldest_due_date = serializers.DateField(allow_null=True)
@@ -77,7 +73,6 @@ class OutstandingSummarySerializer(serializers.Serializer):
 
 
 class OutstandingInstallmentSerializer(serializers.ModelSerializer):
-    """Serializer for outstanding installments with additional calculated fields"""
     days_overdue = serializers.SerializerMethodField()
     is_overdue = serializers.SerializerMethodField()
     customer_name = serializers.CharField(source='customer.full_name', read_only=True)

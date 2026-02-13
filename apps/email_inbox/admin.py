@@ -41,17 +41,14 @@ class EmailFolderAdmin(admin.ModelAdmin):
     readonly_fields = ['id', 'created_at', 'updated_at', 'created_by', 'updated_by']
     
     def message_count(self, obj):
-        """Count of messages in this folder"""
         return obj.messages.filter(is_deleted=False).count()
     message_count.short_description = 'Messages'
     
     def unread_count(self, obj):
-        """Count of unread messages in this folder"""
         return obj.messages.filter(is_deleted=False, status='unread').count()
     unread_count.short_description = 'Unread'
     
     def get_queryset(self, request):
-        """Filter out soft-deleted folders"""
         return super().get_queryset(request).filter(is_deleted=False)
 
 
@@ -103,44 +100,37 @@ class EmailInboxMessageAdmin(admin.ModelAdmin):
     )
     
     def to_emails_display(self, obj):
-        """Display to_emails as a comma-separated list"""
         if obj.to_emails:
             return ', '.join(obj.to_emails[:3]) + ('...' if len(obj.to_emails) > 3 else '')
         return '-'
     to_emails_display.short_description = 'To'
     
     def get_queryset(self, request):
-        """Filter out soft-deleted messages"""
         return super().get_queryset(request).filter(is_deleted=False)
     
     actions = ['mark_as_read', 'mark_as_unread', 'star_emails', 'unstar_emails', 'archive_emails']
     
     def mark_as_read(self, request, queryset):
-        """Mark selected emails as read"""
         count = queryset.filter(status='unread').update(status='read', read_at=timezone.now())
         self.message_user(request, f"{count} emails marked as read.")
     mark_as_read.short_description = "Mark as read"
     
     def mark_as_unread(self, request, queryset):
-        """Mark selected emails as unread"""
         count = queryset.update(status='unread', read_at=None)
         self.message_user(request, f"{count} emails marked as unread.")
     mark_as_unread.short_description = "Mark as unread"
     
     def star_emails(self, request, queryset):
-        """Star selected emails"""
         count = queryset.update(is_starred=True)
         self.message_user(request, f"{count} emails starred.")
     star_emails.short_description = "Star emails"
     
     def unstar_emails(self, request, queryset):
-        """Unstar selected emails"""
         count = queryset.update(is_starred=False)
         self.message_user(request, f"{count} emails unstarred.")
     unstar_emails.short_description = "Unstar emails"
     
     def archive_emails(self, request, queryset):
-        """Archive selected emails"""
         count = queryset.update(status='archived')
         self.message_user(request, f"{count} emails archived.")
     archive_emails.short_description = "Archive emails"
@@ -197,19 +187,16 @@ class EmailFilterAdmin(admin.ModelAdmin):
     )
     
     def get_queryset(self, request):
-        """Filter out soft-deleted filters"""
         return super().get_queryset(request).filter(is_deleted=False)
     
     actions = ['activate_filters', 'deactivate_filters']
     
     def activate_filters(self, request, queryset):
-        """Activate selected filters"""
         count = queryset.update(is_active=True)
         self.message_user(request, f"{count} filters activated.")
     activate_filters.short_description = "Activate selected filters"
     
     def deactivate_filters(self, request, queryset):
-        """Deactivate selected filters"""
         count = queryset.update(is_active=False)
         self.message_user(request, f"{count} filters deactivated.")
     deactivate_filters.short_description = "Deactivate selected filters"
@@ -226,12 +213,10 @@ class EmailAttachmentAdmin(admin.ModelAdmin):
     readonly_fields = ['id', 'file_size', 'is_safe', 'scan_result', 'created_at', 'created_by']
     
     def email_message_subject(self, obj):
-        """Display email message subject"""
         return obj.email_message.subject
     email_message_subject.short_description = 'Email Subject'
     
     def file_size_display(self, obj):
-        """Format file size for display"""
         size = obj.file_size
         for unit in ['B', 'KB', 'MB', 'GB']:
             if size < 1024.0:
@@ -241,7 +226,6 @@ class EmailAttachmentAdmin(admin.ModelAdmin):
     file_size_display.short_description = 'File Size'
     
     def get_queryset(self, request):
-        """Optimize queryset"""
         return super().get_queryset(request).select_related('email_message', 'created_by')
 
 
@@ -277,19 +261,16 @@ class EmailSearchQueryAdmin(admin.ModelAdmin):
     )
     
     def get_queryset(self, request):
-        """Filter out soft-deleted search queries"""
         return super().get_queryset(request).filter(is_deleted=False)
     
     actions = ['activate_queries', 'deactivate_queries']
     
     def activate_queries(self, request, queryset):
-        """Activate selected search queries"""
         count = queryset.update(is_active=True)
         self.message_user(request, f"{count} search queries activated.")
     activate_queries.short_description = "Activate selected queries"
     
     def deactivate_queries(self, request, queryset):
-        """Deactivate selected search queries"""
         count = queryset.update(is_active=False)
         self.message_user(request, f"{count} search queries deactivated.")
     deactivate_queries.short_description = "Deactivate selected queries"

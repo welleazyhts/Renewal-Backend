@@ -1,8 +1,6 @@
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from apps.customers.models import Customer
-
-
 class Command(BaseCommand):
     help = 'Update policy counts for all customers'
 
@@ -22,7 +20,6 @@ class Command(BaseCommand):
         
         self.stdout.write(f'Starting to update policy counts for {total_customers} customers...')
         
-        # Process in batches to avoid memory issues
         for i in range(0, total_customers, batch_size):
             batch = customers[i:i + batch_size]
             

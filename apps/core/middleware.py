@@ -15,7 +15,6 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         return None
     
     def process_response(self, request, response):
-        """Log the request details"""
         try:
             duration = time.time() - getattr(request, 'start_time', time.time())
             
@@ -87,7 +86,6 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         return response
     
     def get_client_ip(self, request):
-        """Get the client's IP address"""
         x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
         if x_forwarded_for:
             ip = x_forwarded_for.split(',')[0]
@@ -98,7 +96,6 @@ class RequestLoggingMiddleware(MiddlewareMixin):
 
 class TimezoneMiddleware(MiddlewareMixin):
     def process_request(self, request):
-        """Set timezone for the request"""
         try:
             if hasattr(request, 'user') and request.user.is_authenticated:
                 user_timezone = getattr(request.user, 'timezone', 'UTC')
@@ -116,7 +113,6 @@ class TimezoneMiddleware(MiddlewareMixin):
         return None
 class SecurityHeadersMiddleware(MiddlewareMixin):
     def process_response(self, request, response):
-        """Add security headers"""
         response['Content-Security-Policy'] = (
             "default-src 'self'; "
             "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; "
@@ -178,7 +174,6 @@ class RateLimitMiddleware(MiddlewareMixin):
         return None
     
     def get_client_identifier(self, request):
-        """Get client identifier for rate limiting"""
         if hasattr(request, 'user') and request.user.is_authenticated:
             return f"user:{request.user.id}"
         else:

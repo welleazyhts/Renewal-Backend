@@ -4,7 +4,6 @@ from .models import CustomerInsight
 from apps.customers.models import Customer
 
 class CustomerBasicInfoSerializer(serializers.Serializer):
-    """Serializer for basic customer information"""
     id = serializers.IntegerField()
     customer_code = serializers.CharField()
     full_name = serializers.CharField()
@@ -18,20 +17,17 @@ class CustomerBasicInfoSerializer(serializers.Serializer):
     total_premium = serializers.DecimalField(max_digits=12, decimal_places=2)
 
 class ProfilePaymentStatsSerializer(serializers.Serializer):
-    """Matches the 'Payment History' row inside Customer Profiling"""
     on_time_percentage = serializers.IntegerField()
     customer_tenure = serializers.CharField()
     payment_rating = serializers.CharField()
     total_paid_ytd = serializers.DecimalField(max_digits=12, decimal_places=2)
 
 class PolicyInformationSerializer(serializers.Serializer):
-    """Matches the 'Policy Information' row inside Customer Profiling"""
     active_policies = serializers.IntegerField()
     family_policies = serializers.IntegerField()
     expired_policies = serializers.IntegerField()
 
 class PaymentScheduleSerializer(serializers.Serializer):
-    """Serializer for payment schedule data"""
     amount = serializers.DecimalField(max_digits=12, decimal_places=2)
     due_date = serializers.DateField()
     policy = serializers.CharField()
@@ -39,7 +35,6 @@ class PaymentScheduleSerializer(serializers.Serializer):
     status = serializers.CharField()
 
 class PaymentHistoryCardSerializer(serializers.Serializer):
-    """Serializer for individual payment cards in history list"""
     amount = serializers.DecimalField(max_digits=12, decimal_places=2)
     date = serializers.DateTimeField()
     status = serializers.CharField()
@@ -47,14 +42,12 @@ class PaymentHistoryCardSerializer(serializers.Serializer):
     policy = serializers.CharField()
 
 class YearlyPaymentSummarySerializer(serializers.Serializer):
-    """Serializer for yearly payment grouping"""
     year = serializers.IntegerField()
     total = serializers.DecimalField(max_digits=15, decimal_places=2)
     payments_count = serializers.IntegerField()
     payments = PaymentHistoryCardSerializer(many=True)
 
 class CommunicationHistorySerializer(serializers.Serializer):
-    """Serializer for communication history"""
     id = serializers.IntegerField()
     date = serializers.DateTimeField()
     channel = serializers.CharField()
@@ -75,7 +68,6 @@ class CommunicationHistorySerializer(serializers.Serializer):
     duration = serializers.IntegerField(required=False, allow_null=True)
 
 class ClaimHistorySerializer(serializers.Serializer):
-    """Serializer for claim history"""
     id = serializers.IntegerField()
     title = serializers.CharField()
     type = serializers.CharField()
@@ -92,23 +84,19 @@ class ClaimHistorySerializer(serializers.Serializer):
 
 
 class PaymentHistoryResponseSerializer(serializers.Serializer):
-    """Serializer for payment history response"""
     yearly_breakdown = YearlyPaymentSummarySerializer(many=True)
     summary = serializers.DictField()
 
 class CommunicationHistoryResponseSerializer(serializers.Serializer):
-    """Serializer for communication history response"""
     total_communications = serializers.IntegerField()
     by_channel = serializers.DictField()
     all_communications = CommunicationHistorySerializer(many=True) 
 
 class ClaimsHistoryResponseSerializer(serializers.Serializer):
-    """Serializer for claims history response"""
     claims = ClaimHistorySerializer(many=True)
     summary = serializers.DictField()
 
 class PaymentScheduleResponseSerializer(serializers.Serializer):
-    """Serializer for payment schedule response"""
     upcoming_payments = PaymentScheduleSerializer(many=True)
     next_payment = PaymentScheduleSerializer(required=False)
 
@@ -127,7 +115,6 @@ class CustomerInsightsResponseSerializer(serializers.Serializer):
     calculated_at = serializers.DateTimeField()
     is_cached = serializers.BooleanField()
 class CustomerInsightSerializer(serializers.ModelSerializer):
-    """Serializer for CustomerInsight model"""
     customer = CustomerBasicInfoSerializer(read_only=True)
     
     class Meta:
@@ -139,7 +126,6 @@ class CustomerInsightSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'created_at', 'updated_at', 'calculated_at']
 class CustomerInsightsSummarySerializer(serializers.Serializer):
-    """Serializer for dashboard summary"""
     customer_id = serializers.IntegerField()
     customer_name = serializers.CharField()
     customer_code = serializers.CharField()

@@ -32,10 +32,6 @@ class Survey(BaseModel):
         db_table = 'feedback_surveys'
 
 class SurveyQuestion(BaseModel):
-    """
-    Represents an Element on the Builder Canvas.
-    Updated to match the specific types shown in your video.
-    """
     ELEMENT_TYPES = [
         ('single_line', 'Single-line Text'),
         ('paragraph', 'Paragraph'),
@@ -102,9 +98,6 @@ class SubmissionAttachment(BaseModel):
     class Meta:
         db_table = 'feedback_submission_attachments'
 class SubmissionActivityLog(BaseModel):
-    """
-    Tracks history: "Received -> Assigned to John -> Marked Resolved"
-    """
     submission = models.ForeignKey(SurveySubmission, on_delete=models.CASCADE, related_name='activity_logs')
     actor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True) 
     action= models.CharField(max_length=255)
@@ -122,10 +115,6 @@ class QuestionAnswer(BaseModel):
     class Meta:
         db_table = 'feedback_question_answers'
 class AutomationTrigger(BaseModel):
-    """
-    Stores automation rules.
-    Example: When 'claim_closed', send 'Survey A' via 'Email'.
-    """
     TRIGGER_EVENTS = [
         ('policy_purchased', 'Policy Purchased'),
         ('claim_settled', 'Claim Settled'),

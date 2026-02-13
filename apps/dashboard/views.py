@@ -18,9 +18,6 @@ logger = logging.getLogger(__name__)
 
 
 def generate_related_suggestions(user_message, ai_response):
-    """
-    Generate 3 related suggestions based on the user's question and AI response
-    """
     all_suggestions = [
         "What is my renewal case status?",
         "Show me my payment history",
@@ -302,7 +299,6 @@ def ai_suggestions(request):
     try:
         suggestions = ai_service.get_quick_suggestions()
         
-        # Extract only titles from suggestions
         title_suggestions = []
         for suggestion in suggestions:
             if isinstance(suggestion, dict) and 'title' in suggestion:
@@ -528,11 +524,9 @@ def dashboard_filtered(request):
                 Q(policy__policy_type__category__iexact=policy_type)
             )
 
-        # Status filter (already correct)
         if status_filter and status_filter != 'all':
             renewal_cases = renewal_cases.filter(status__iexact=status_filter)
 
-        # Team filter
         if team and team != 'all':
             renewal_cases = renewal_cases.filter(channel__name__iexact=team)
 

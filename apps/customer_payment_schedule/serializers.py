@@ -116,7 +116,6 @@ class PaymentScheduleCreateSerializer(serializers.ModelSerializer):
         ]
     
     def validate(self, data):
-        """Validate the payment schedule data"""
         amount_due = data.get('amount_due')
         if amount_due and amount_due <= 0:
             raise serializers.ValidationError(
@@ -199,9 +198,7 @@ class PaymentScheduleCreateSerializer(serializers.ModelSerializer):
             )
         
         return data
-class PaymentScheduleUpdateSerializer(serializers.ModelSerializer):
-    """Serializer for updating PaymentSchedule"""
-    
+class PaymentScheduleUpdateSerializer(serializers.ModelSerializer):    
     class Meta:
         model = PaymentSchedule
         fields = [
@@ -234,7 +231,6 @@ class PaymentScheduleUpdateSerializer(serializers.ModelSerializer):
         ]
     
     def validate(self, data):
-        """Validate the payment schedule update data"""
         instance = self.instance
         
         amount_due = data.get('amount_due', instance.amount_due if instance else Decimal('0.00'))
@@ -281,9 +277,7 @@ class PaymentScheduleUpdateSerializer(serializers.ModelSerializer):
         
         return data
 
-class PaymentScheduleListSerializer(serializers.ModelSerializer):
-    """Serializer for listing PaymentSchedule with minimal data"""
-    
+class PaymentScheduleListSerializer(serializers.ModelSerializer):    
     customer_name = serializers.CharField(read_only=True)
     policy_number = serializers.CharField(read_only=True)
     case_number = serializers.CharField(read_only=True)
@@ -314,9 +308,7 @@ class PaymentScheduleListSerializer(serializers.ModelSerializer):
             'created_at',
         ]
 
-class PaymentScheduleSummarySerializer(serializers.ModelSerializer):
-    """Serializer for payment schedule summary and analytics"""
-    
+class PaymentScheduleSummarySerializer(serializers.ModelSerializer):    
     customer_name = serializers.CharField(read_only=True)
     policy_number = serializers.CharField(read_only=True)
     case_number = serializers.CharField(read_only=True)
@@ -341,9 +333,7 @@ class PaymentScheduleSummarySerializer(serializers.ModelSerializer):
         ]
 
 
-class PaymentProcessingSerializer(serializers.Serializer):
-    """Serializer for processing scheduled payments"""
-    
+class PaymentProcessingSerializer(serializers.Serializer):    
     processed_amount = serializers.DecimalField(
         max_digits=12,
         decimal_places=2,
@@ -365,7 +355,6 @@ class PaymentProcessingSerializer(serializers.Serializer):
     )
     
     def validate_processed_amount(self, value):
-        """Validate processed amount against scheduled amount"""
         schedule = self.context.get('schedule')
         if schedule and value > schedule.amount_due:
             raise serializers.ValidationError(
@@ -375,7 +364,6 @@ class PaymentProcessingSerializer(serializers.Serializer):
 
 
 class PaymentRescheduleSerializer(serializers.Serializer):
-    """Serializer for rescheduling payments"""
     
     new_due_date = serializers.DateField()
     reschedule_reason = serializers.CharField(
@@ -385,7 +373,6 @@ class PaymentRescheduleSerializer(serializers.Serializer):
     )
     
     def validate_new_due_date(self, value):
-        """Validate new due date"""
         if value < timezone.now().date():
             raise serializers.ValidationError(
                 "New due date cannot be in the past."
@@ -393,9 +380,7 @@ class PaymentRescheduleSerializer(serializers.Serializer):
         return value
 
 
-class PaymentFailureSerializer(serializers.Serializer):
-    """Serializer for marking payment as failed"""
-    
+class PaymentFailureSerializer(serializers.Serializer):    
     failure_reason = serializers.CharField(
         max_length=500,
         required=False,
@@ -412,7 +397,6 @@ class PaymentFailureSerializer(serializers.Serializer):
     )
 
 class AutoPaymentSerializer(serializers.Serializer):
-    """Serializer for auto payment settings"""
     
     auto_payment_enabled = serializers.BooleanField()
     auto_payment_method = serializers.ChoiceField(
@@ -432,7 +416,6 @@ class AutoPaymentSerializer(serializers.Serializer):
     )
     
     def validate(self, data):
-        """Validate auto payment settings"""
         auto_payment_enabled = data.get('auto_payment_enabled')
         auto_payment_method = data.get('auto_payment_method')
         
@@ -444,9 +427,7 @@ class AutoPaymentSerializer(serializers.Serializer):
         return data
 
 
-class BulkScheduleCreateSerializer(serializers.Serializer):
-    """Serializer for creating multiple payment schedules"""
-    
+class BulkScheduleCreateSerializer(serializers.Serializer):    
     renewal_case = serializers.IntegerField()
     total_amount = serializers.DecimalField(
         max_digits=12,
@@ -480,7 +461,6 @@ class BulkScheduleCreateSerializer(serializers.Serializer):
     )
     
     def validate_first_due_date(self, value):
-        """Validate first due date"""
         if value < timezone.now().date():
             raise serializers.ValidationError(
                 "First due date cannot be in the past."

@@ -5,11 +5,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 import uuid
 
 User = get_user_model()
-
-
-class EmailProviderConfig(models.Model):
-    """Configuration for email providers (SendGrid, AWS SES, SMTP)"""
-    
+class EmailProviderConfig(models.Model):    
     PROVIDER_CHOICES = [
         ('sendgrid', 'SendGrid'),
         ('aws_ses', 'AWS SES'),
@@ -27,19 +23,15 @@ class EmailProviderConfig(models.Model):
     name = models.CharField(max_length=100, help_text="Friendly name for this provider")
     provider_type = models.CharField(max_length=20, choices=PROVIDER_CHOICES)
     
-    # Provider-specific credentials (encrypted)
     api_key = models.TextField(blank=True, null=True, help_text="API key (encrypted)")
     api_secret = models.TextField(blank=True, null=True, help_text="API secret (encrypted)")
     access_key_id = models.CharField(max_length=255, blank=True, null=True, help_text="AWS Access Key ID (encrypted)")
     secret_access_key = models.CharField(max_length=255, blank=True, null=True, help_text="AWS Secret Access Key (encrypted)")
     
-    # AWS SES specific fields
     aws_region = models.CharField(max_length=50, blank=True, null=True, help_text="AWS region for SES")
     
-    # Mailgun specific fields
     domain = models.CharField(max_length=255, blank=True, null=True, help_text="Mailgun domain")
     
-    # SMTP specific fields
     smtp_host = models.CharField(max_length=255, blank=True, null=True, help_text="SMTP server host")
     smtp_port = models.PositiveIntegerField(blank=True, null=True, help_text="SMTP server port")
     smtp_username = models.CharField(max_length=255, blank=True, null=True, help_text="SMTP username (encrypted)")
@@ -47,22 +39,18 @@ class EmailProviderConfig(models.Model):
     smtp_use_tls = models.BooleanField(default=False, help_text="Use TLS for SMTP connection")
     smtp_use_ssl = models.BooleanField(default=False, help_text="Use SSL for SMTP connection")
 
-    # Email settings
     from_email = models.EmailField(help_text="Default from email address")
     from_name = models.CharField(max_length=100, blank=True, null=True)
     reply_to = models.EmailField(blank=True, null=True)
     
-    # Rate limiting
     daily_limit = models.PositiveIntegerField(default=1000, help_text="Daily email limit")
     monthly_limit = models.PositiveIntegerField(default=30000, help_text="Monthly email limit")
     rate_limit_per_minute = models.PositiveIntegerField(default=10, help_text="Rate limit per minute")
     
-    # Configuration
     priority = models.PositiveIntegerField(choices=PRIORITY_CHOICES, default=1)
     is_default = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     
-    # Health monitoring
     last_health_check = models.DateTimeField(blank=True, null=True)
     health_status = models.CharField(max_length=20, default='unknown', choices=[
         ('healthy', 'Healthy'),
@@ -70,13 +58,11 @@ class EmailProviderConfig(models.Model):
         ('unknown', 'Unknown'),
     ])
     
-    # Usage tracking
     emails_sent_today = models.PositiveIntegerField(default=0)
     emails_sent_this_month = models.PositiveIntegerField(default=0)
     last_reset_daily = models.DateField(default=timezone.now)
     last_reset_monthly = models.DateField(default=timezone.now)
     
-    # Metadata
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_email_providers')
@@ -95,12 +81,10 @@ class EmailProviderConfig(models.Model):
         return f"{self.name} ({self.get_provider_type_display()})"
     
     def update_health_status(self, is_healthy: bool, error_message: str = None, response_time: float = None):
-        """Update the health status of the provider"""
         self.last_health_check = timezone.now()
         self.health_status = 'healthy' if is_healthy else 'unhealthy'
         self.save(update_fields=['last_health_check', 'health_status'])
         
-        # Log the health check
         EmailProviderHealthLog.objects.create(
             provider=self,
             is_healthy=is_healthy,
@@ -111,28 +95,23 @@ class EmailProviderConfig(models.Model):
         )
     
     def can_send_email(self) -> bool:
-        """Check if provider can send email based on limits and health"""
         if not self.is_active or self.health_status != 'healthy':
             return False
         
-        # Check daily limit
         if self.emails_sent_today >= self.daily_limit:
             return False
         
-        # Check monthly limit
         if self.emails_sent_this_month >= self.monthly_limit:
             return False
         
         return True
     
     def increment_usage(self, count: int = 1):
-        """Increment email usage counters"""
         self.emails_sent_today += count
         self.emails_sent_this_month += count
         self.save(update_fields=['emails_sent_today', 'emails_sent_this_month'])
     
     def reset_daily_usage(self):
-        """Reset daily usage counter (called by scheduled task)"""
         self.emails_sent_today = 0
         self.last_reset_daily = timezone.now().date()
         self.save(update_fields=['emails_sent_today', 'last_reset_daily'])
@@ -148,19 +127,13 @@ class EmailProviderConfig(models.Model):
         self.deleted_at = timezone.now()
         self.is_active = False
         self.save(update_fields=['is_deleted', 'deleted_at', 'is_active'])
-
-
-class EmailProviderHealthLog(models.Model):
-    """Log of health check results for email providers"""
-    
+class EmailProviderHealthLog(models.Model):    
     id = models.BigAutoField(primary_key=True)
     provider = models.ForeignKey(EmailProviderConfig, on_delete=models.CASCADE, related_name='health_logs')
     is_healthy = models.BooleanField()
     error_message = models.TextField(blank=True, null=True)
     response_time = models.FloatField(default=0.0, help_text="Response time in seconds")
-    checked_at = models.DateTimeField(auto_now_add=True)
-    
-    # Additional fields that exist in database
+    checked_at = models.DateTimeField(auto_now_add=True)    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_deleted = models.BooleanField(default=False)
@@ -182,9 +155,7 @@ class EmailProviderHealthLog(models.Model):
         return f"{self.provider.name} - {status} ({self.checked_at})"
 
 
-class EmailProviderUsageLog(models.Model):
-    """Log of email sending usage for providers"""
-    
+class EmailProviderUsageLog(models.Model):    
     id = models.BigAutoField(primary_key=True)
     provider = models.ForeignKey(EmailProviderConfig, on_delete=models.CASCADE, related_name='usage_logs')
     emails_sent = models.PositiveIntegerField()
@@ -203,9 +174,7 @@ class EmailProviderUsageLog(models.Model):
         return f"{self.provider.name} - {self.emails_sent} emails ({self.logged_at})"
 
 
-class EmailProviderTestResult(models.Model):
-    """Test results for email provider configurations"""
-    
+class EmailProviderTestResult(models.Model):    
     STATUS_CHOICES = [
         ('pending', 'Pending'),
         ('success', 'Success'),

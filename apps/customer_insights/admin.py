@@ -38,7 +38,6 @@ class CustomerInsightAdmin(admin.ModelAdmin):
     )
     
     def cache_status(self, obj):
-        """Display cache status with color coding"""
         if obj.is_cached and not obj.is_expired:
             return format_html('<span style="color: green;">✓ Cached (Valid)</span>')
         elif obj.is_cached and obj.is_expired:
@@ -49,5 +48,4 @@ class CustomerInsightAdmin(admin.ModelAdmin):
     cache_status.short_description = 'Cache Status'
     
     def get_queryset(self, request):
-        """Optimize queryset with select_related"""
         return super().get_queryset(request).select_related('customer')

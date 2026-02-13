@@ -120,15 +120,12 @@ def generate_related_suggestions(user_message, ai_response):
     return final_suggestions[:3]
 
 
-class CaseTrackingChatbotView(View):
-    """Main view for case tracking chatbot functionality"""
-    
+class CaseTrackingChatbotView(View):    
     @method_decorator(csrf_exempt)
     def dispatch(self, *args, **kwargs):
         return super().dispatch(*args, **kwargs)
     
     def post(self, request):
-        """Handle chat messages"""
         try:
             data = json.loads(request.body)
             user_message = data.get('message', '').strip()
@@ -277,7 +274,6 @@ class CaseTrackingChatbotView(View):
             }, status=500)
     
     def _get_or_create_conversation(self, user, session_id, user_message):
-        """Get or create conversation for the user"""
         try:
             if session_id:
                 try:
@@ -302,7 +298,6 @@ class CaseTrackingChatbotView(View):
             return None
     
     def _get_conversation_history(self, conversation):
-        """Get conversation history"""
         if not conversation:
             return []
         
@@ -323,7 +318,6 @@ class CaseTrackingChatbotView(View):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def case_tracking_chatbot_quick_suggestions(request):
-    """Get quick suggestions for case tracking chatbot"""
     try:
         service = get_case_tracking_chatbot_service()
         suggestions = service.get_quick_suggestions()
@@ -351,7 +345,6 @@ def case_tracking_chatbot_quick_suggestions(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def case_tracking_chatbot_conversations(request):
-    """Get user's case tracking chatbot conversations"""
     try:
         conversations = CaseTrackingChatbotConversation.objects.filter(
             user=request.user,
@@ -376,7 +369,6 @@ def case_tracking_chatbot_conversations(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def case_tracking_chatbot_conversation_detail(request, conversation_id):
-    """Get detailed conversation with messages"""
     try:
         conversation = CaseTrackingChatbotConversation.objects.get(
             id=conversation_id,
@@ -407,7 +399,6 @@ def case_tracking_chatbot_conversation_detail(request, conversation_id):
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
 def case_tracking_chatbot_delete_conversation(request, conversation_id):
-    """Delete a conversation"""
     try:
         conversation = CaseTrackingChatbotConversation.objects.get(
             id=conversation_id,
@@ -438,7 +429,6 @@ def case_tracking_chatbot_delete_conversation(request, conversation_id):
 
 @api_view(['GET'])
 def case_tracking_chatbot_status(request):
-    """Check case tracking chatbot service status"""
     try:
         service = get_case_tracking_chatbot_service()
         is_available = service.is_available()

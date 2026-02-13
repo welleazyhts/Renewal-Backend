@@ -70,25 +70,21 @@ class ClaimSerializer(serializers.ModelSerializer):
         ]
     
     def get_customer_name(self, obj):
-        """Get customer full name"""
         if obj.customer:
             return f"{obj.customer.first_name} {obj.customer.last_name}".strip()
         return None
     
     def get_mobile_number(self, obj):
-        """Get customer mobile number"""
         if obj.customer:
             return obj.customer.phone
         return None
     
     def get_email_id(self, obj):
-        """Get customer email"""
         if obj.customer:
             return obj.customer.email
         return None
     
     def validate(self, data):
-        """Validate the data"""
         if 'policy' in data and data['policy'] and not data.get('policy_number'):
             data['policy_number'] = data['policy'].policy_number
         
@@ -101,9 +97,7 @@ class ClaimSerializer(serializers.ModelSerializer):
         
         return data
 
-class ClaimListSerializer(serializers.ModelSerializer):
-    """Serializer for listing claims (simplified)"""
-    
+class ClaimListSerializer(serializers.ModelSerializer):    
     customer_name = serializers.SerializerMethodField()
     mobile_number = serializers.SerializerMethodField()
     email_id = serializers.SerializerMethodField()
@@ -125,25 +119,21 @@ class ClaimListSerializer(serializers.ModelSerializer):
         ]
     
     def get_customer_name(self, obj):
-        """Get customer full name"""
         if obj.customer:
             return f"{obj.customer.first_name} {obj.customer.last_name}".strip()
         return None
     
     def get_mobile_number(self, obj):
-        """Get customer mobile number"""
         if obj.customer:
             return obj.customer.phone
         return None
     
     def get_email_id(self, obj):
-        """Get customer email"""
         if obj.customer:
             return obj.customer.email
         return None
 
 class ClaimCreateSerializer(serializers.ModelSerializer):
-    """Serializer for creating claims"""
     
     customer_id = serializers.PrimaryKeyRelatedField(
         queryset=Customer.objects.filter(is_deleted=False),
@@ -177,7 +167,6 @@ class ClaimCreateSerializer(serializers.ModelSerializer):
         ]
     
     def validate_customer_id(self, value):
-        """Validate that the customer exists and is not deleted"""
         if not value:
             raise serializers.ValidationError("Customer ID is required.")
         
@@ -188,7 +177,6 @@ class ClaimCreateSerializer(serializers.ModelSerializer):
         return value
     
     def validate_policy_id(self, value):
-        """Validate that the policy exists and is not deleted (if provided)"""
         if value:
             if not Policy.objects.filter(id=value.id, is_deleted=False).exists():
                 raise serializers.ValidationError(
@@ -197,7 +185,6 @@ class ClaimCreateSerializer(serializers.ModelSerializer):
         return value
     
     def validate(self, data):
-        """Validate the data"""
         if 'policy' in data and data['policy'] and not data.get('policy_number'):
             data['policy_number'] = data['policy'].policy_number
         

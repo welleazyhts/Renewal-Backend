@@ -79,7 +79,6 @@ def detailed_health_check(request):
             }
             health_data['status'] = 'unhealthy'
         
-        # Cache check
         try:
             test_key = 'health_check_detailed'
             cache.set(test_key, 'test_value', 10)
@@ -94,7 +93,6 @@ def detailed_health_check(request):
             }
             health_data['status'] = 'unhealthy'
         
-        # System metrics
         try:
             memory = psutil.virtual_memory()
             disk = psutil.disk_usage('/')
@@ -107,7 +105,6 @@ def detailed_health_check(request):
         except Exception as e:
             health_data['system'] = {'error': str(e)}
         
-        # Django info
         health_data['django'] = {
             'version': django.get_version(),
             'debug': settings.DEBUG,
@@ -166,7 +163,6 @@ def system_info(request):
 @permission_classes([IsAdminUser])
 def system_status(request):
     try:
-        # System metrics
         memory = psutil.virtual_memory()
         disk = psutil.disk_usage('/')
         
@@ -193,7 +189,6 @@ def system_status(request):
             'processes': len(psutil.pids())
         }
         
-        # Database stats
         try:
             with connection.cursor() as cursor:
                 cursor.execute("SELECT COUNT(*) FROM django_session WHERE expire_date > NOW()")
@@ -272,22 +267,18 @@ def audit_logs(request):
     try:
         logs = AuditLog.objects.all()
         
-        # Filter by user
         user_id = request.GET.get('user_id')
         if user_id:
             logs = logs.filter(user_id=user_id)
         
-        # Filter by action
         action = request.GET.get('action')
         if action:
             logs = logs.filter(action=action)
         
-        # Filter by model
         model_name = request.GET.get('model')
         if model_name:
             logs = logs.filter(model_name=model_name)
         
-        # Date range filtering
         date_from = request.GET.get('date_from')
         date_to = request.GET.get('date_to')
         if date_from:
@@ -295,7 +286,6 @@ def audit_logs(request):
         if date_to:
             logs = logs.filter(created_at__lte=date_to)
         
-        # Pagination
         page = int(request.GET.get('page', 1))
         page_size = int(request.GET.get('page_size', 20))
         offset = (page - 1) * page_size
@@ -330,9 +320,7 @@ def audit_logs(request):
         }, status=500)
 
 
-# Error handlers
 def bad_request(request, exception):
-    """400 Bad Request handler"""
     return JsonResponse({
         'error': 'Bad Request',
         'message': 'The request could not be understood by the server.'
@@ -340,7 +328,6 @@ def bad_request(request, exception):
 
 
 def permission_denied(request, exception):
-    """403 Permission Denied handler"""
     return JsonResponse({
         'error': 'Permission Denied',
         'message': 'You do not have permission to access this resource.'
@@ -348,7 +335,6 @@ def permission_denied(request, exception):
 
 
 def page_not_found(request, exception):
-    """404 Not Found handler"""
     return JsonResponse({
         'error': 'Not Found',
         'message': 'The requested resource was not found.'
@@ -356,7 +342,6 @@ def page_not_found(request, exception):
 
 
 def server_error(request):
-    """500 Server Error handler"""
     return JsonResponse({
         'error': 'Internal Server Error',
         'message': 'An unexpected error occurred. Please try again later.'

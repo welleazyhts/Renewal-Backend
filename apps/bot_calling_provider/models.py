@@ -4,8 +4,6 @@ from django.utils import timezone
 
 User = get_user_model()
 class BotCallingProviderConfig(models.Model):
-    """Configuration for bot-calling providers."""
-
     PROVIDER_CHOICES = [
         ("ubona_bot", "Ubona Bot Calling"),
         ("house_of_agents", "House of Agents"),

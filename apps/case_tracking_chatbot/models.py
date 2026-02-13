@@ -6,9 +6,7 @@ from django.utils import timezone
 
 User = get_user_model()
 
-class CaseTrackingChatbotConversation(BaseModel):
-    """Model to store conversation history for the case tracking chatbot."""
-    
+class CaseTrackingChatbotConversation(BaseModel):    
     user = models.ForeignKey(
         User, 
         on_delete=models.CASCADE, 
@@ -49,9 +47,7 @@ class CaseTrackingChatbotConversation(BaseModel):
         self.save(update_fields=['message_count'])
 
 
-class CaseTrackingChatbotMessage(BaseModel):
-    """Model to store individual messages within a case tracking chatbot conversation."""
-    
+class CaseTrackingChatbotMessage(BaseModel):    
     conversation = models.ForeignKey(
         CaseTrackingChatbotConversation, 
         on_delete=models.CASCADE, 

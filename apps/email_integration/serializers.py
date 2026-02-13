@@ -4,10 +4,7 @@ from .models import (
     EmailSLA, EmailTemplateVariable, EmailIntegrationAnalytics
 )
 
-
-class EmailWebhookSerializer(serializers.ModelSerializer):
-    """Serializer for EmailWebhook"""
-    
+class EmailWebhookSerializer(serializers.ModelSerializer):    
     provider_display = serializers.CharField(source='get_provider_display', read_only=True)
     event_type_display = serializers.CharField(source='get_event_type_display', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
@@ -27,9 +24,7 @@ class EmailWebhookSerializer(serializers.ModelSerializer):
         ]
 
 
-class EmailAutomationSerializer(serializers.ModelSerializer):
-    """Serializer for EmailAutomation"""
-    
+class EmailAutomationSerializer(serializers.ModelSerializer):    
     trigger_type_display = serializers.CharField(source='get_trigger_type_display', read_only=True)
     action_type_display = serializers.CharField(source='get_action_type_display', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
@@ -53,19 +48,15 @@ class EmailAutomationSerializer(serializers.ModelSerializer):
         ]
     
     def create(self, validated_data):
-        """Set created_by when creating a new automation"""
         validated_data['created_by'] = self.context['request'].user
         return super().create(validated_data)
     
     def update(self, instance, validated_data):
-        """Set updated_by when updating an automation"""
         validated_data['updated_by'] = self.context['request'].user
         return super().update(instance, validated_data)
 
 
-class EmailAutomationLogSerializer(serializers.ModelSerializer):
-    """Serializer for EmailAutomationLog"""
-    
+class EmailAutomationLogSerializer(serializers.ModelSerializer):    
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     automation_name = serializers.CharField(source='automation.name', read_only=True)
     executed_by_name = serializers.CharField(source='executed_by.get_full_name', read_only=True)
@@ -84,9 +75,7 @@ class EmailAutomationLogSerializer(serializers.ModelSerializer):
         ]
 
 
-class EmailIntegrationSerializer(serializers.ModelSerializer):
-    """Serializer for EmailIntegration"""
-    
+class EmailIntegrationSerializer(serializers.ModelSerializer):    
     integration_type_display = serializers.CharField(source='get_integration_type_display', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
@@ -109,19 +98,14 @@ class EmailIntegrationSerializer(serializers.ModelSerializer):
         ]
     
     def create(self, validated_data):
-        """Set created_by when creating a new integration"""
         validated_data['created_by'] = self.context['request'].user
         return super().create(validated_data)
     
     def update(self, instance, validated_data):
-        """Set updated_by when updating an integration"""
         validated_data['updated_by'] = self.context['request'].user
         return super().update(instance, validated_data)
 
-
-class EmailSLASerializer(serializers.ModelSerializer):
-    """Serializer for EmailSLA"""
-    
+class EmailSLASerializer(serializers.ModelSerializer):    
     sla_type_display = serializers.CharField(source='get_sla_type_display', read_only=True)
     priority_display = serializers.CharField(source='get_priority_display', read_only=True)
     created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
@@ -145,19 +129,15 @@ class EmailSLASerializer(serializers.ModelSerializer):
         ]
     
     def create(self, validated_data):
-        """Set created_by when creating a new SLA"""
         validated_data['created_by'] = self.context['request'].user
         return super().create(validated_data)
     
     def update(self, instance, validated_data):
-        """Set updated_by when updating an SLA"""
         validated_data['updated_by'] = self.context['request'].user
         return super().update(instance, validated_data)
 
 
-class EmailTemplateVariableSerializer(serializers.ModelSerializer):
-    """Serializer for EmailTemplateVariable"""
-    
+class EmailTemplateVariableSerializer(serializers.ModelSerializer):    
     variable_type_display = serializers.CharField(source='get_variable_type_display', read_only=True)
     created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
     updated_by_name = serializers.CharField(source='updated_by.get_full_name', read_only=True)
@@ -178,21 +158,16 @@ class EmailTemplateVariableSerializer(serializers.ModelSerializer):
         ]
     
     def create(self, validated_data):
-        """Set created_by when creating a new template variable"""
         validated_data['created_by'] = self.context['request'].user
         return super().create(validated_data)
     
     def update(self, instance, validated_data):
-        """Set updated_by when updating a template variable"""
         validated_data['updated_by'] = self.context['request'].user
         return super().update(instance, validated_data)
 
 
-class EmailIntegrationAnalyticsSerializer(serializers.ModelSerializer):
-    """Serializer for EmailIntegrationAnalytics"""
-    
+class EmailIntegrationAnalyticsSerializer(serializers.ModelSerializer):    
     period_type_display = serializers.CharField(source='get_period_type_display', read_only=True)
-    
     class Meta:
         model = EmailIntegrationAnalytics
         fields = [
@@ -210,24 +185,16 @@ class EmailIntegrationAnalyticsSerializer(serializers.ModelSerializer):
         ]
 
 
-class WebhookProcessSerializer(serializers.Serializer):
-    """Serializer for processing webhooks"""
-    
+class WebhookProcessSerializer(serializers.Serializer):    
     webhook_id = serializers.UUIDField()
     force_process = serializers.BooleanField(default=False)
 
-
-class AutomationExecuteSerializer(serializers.Serializer):
-    """Serializer for executing automations"""
-    
+class AutomationExecuteSerializer(serializers.Serializer):    
     automation_id = serializers.UUIDField()
     trigger_data = serializers.DictField(default=dict)
     force_execute = serializers.BooleanField(default=False)
 
-
-class IntegrationSyncSerializer(serializers.Serializer):
-    """Serializer for syncing integrations"""
-    
+class IntegrationSyncSerializer(serializers.Serializer):    
     integration_id = serializers.UUIDField()
     sync_type = serializers.ChoiceField(choices=[
         ('full', 'Full Sync'),
@@ -236,10 +203,7 @@ class IntegrationSyncSerializer(serializers.Serializer):
     ], default='incremental')
     force_sync = serializers.BooleanField(default=False)
 
-
-class DynamicTemplateCreateSerializer(serializers.Serializer):
-    """Serializer for creating dynamic templates"""
-    
+class DynamicTemplateCreateSerializer(serializers.Serializer):    
     template_name = serializers.CharField(max_length=200)
     subject_template = serializers.CharField(max_length=500)
     html_template = serializers.CharField()
@@ -255,10 +219,7 @@ class DynamicTemplateCreateSerializer(serializers.Serializer):
         default=list
     )
 
-
-class EmailScheduleSerializer(serializers.Serializer):
-    """Serializer for scheduling emails"""
-    
+class EmailScheduleSerializer(serializers.Serializer):    
     to_email = serializers.EmailField()
     subject = serializers.CharField(max_length=500)
     html_content = serializers.CharField(required=False, allow_blank=True)
@@ -282,9 +243,7 @@ class EmailScheduleSerializer(serializers.Serializer):
     )
 
 
-class EmailReminderSerializer(serializers.Serializer):
-    """Serializer for creating email reminders"""
-    
+class EmailReminderSerializer(serializers.Serializer):    
     email_id = serializers.UUIDField()
     reminder_type = serializers.ChoiceField(choices=[
         ('follow_up', 'Follow Up'),
@@ -301,9 +260,7 @@ class EmailReminderSerializer(serializers.Serializer):
     assigned_to = serializers.UUIDField(required=False, allow_null=True)
 
 
-class EmailSignatureSerializer(serializers.Serializer):
-    """Serializer for email signatures"""
-    
+class EmailSignatureSerializer(serializers.Serializer):    
     name = serializers.CharField(max_length=100)
     html_content = serializers.CharField()
     text_content = serializers.CharField(required=False, allow_blank=True)
@@ -312,9 +269,7 @@ class EmailSignatureSerializer(serializers.Serializer):
     user_id = serializers.UUIDField(required=False, allow_null=True)
 
 
-class SLAStatisticsSerializer(serializers.Serializer):
-    """Serializer for SLA statistics"""
-    
+class SLAStatisticsSerializer(serializers.Serializer):    
     sla_id = serializers.UUIDField()
     sla_name = serializers.CharField()
     sla_type = serializers.CharField()
@@ -332,9 +287,7 @@ class SLAStatisticsSerializer(serializers.Serializer):
     last_breach = serializers.DateTimeField()
 
 
-class IntegrationStatisticsSerializer(serializers.Serializer):
-    """Serializer for integration statistics"""
-    
+class IntegrationStatisticsSerializer(serializers.Serializer):    
     integration_id = serializers.UUIDField()
     integration_name = serializers.CharField()
     integration_type = serializers.CharField()

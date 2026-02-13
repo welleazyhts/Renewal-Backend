@@ -3,9 +3,6 @@ from .models import Survey, SurveyQuestion, SurveySubmission, QuestionAnswer, Su
 from apps.audience_manager.models import AudienceContact
 
 class SurveyQuestionSerializer(serializers.ModelSerializer):
-    """
-    Serializer for a single element on the canvas.
-    """
     id = serializers.IntegerField(required=False)
 
     class Meta:
@@ -13,9 +10,6 @@ class SurveyQuestionSerializer(serializers.ModelSerializer):
         fields = ['id', 'type', 'label', 'order', 'is_required', 'properties']
 
 class SurveySerializer(serializers.ModelSerializer):
-    """
-    Main Serializer for the Survey Builder.
-    """
     questions = SurveyQuestionSerializer(many=True, required=False)
     audience_name = serializers.CharField(source='audience.name', read_only=True)
     class Meta:
@@ -38,7 +32,6 @@ class SurveySerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         questions_data = validated_data.pop('questions', None)
         
-        # 1. Update basic fields
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
@@ -53,7 +46,6 @@ class SurveySerializer(serializers.ModelSerializer):
 
 class QuestionAnswerSerializer(serializers.ModelSerializer):
     question_label = serializers.CharField(source='question.label', read_only=True)
-    
     class Meta:
         model = QuestionAnswer
         fields = ['id', 'question', 'question_label', 'answer_value']
@@ -162,13 +154,10 @@ class InboxSubmissionSerializer(serializers.ModelSerializer):
     def get_assigned_to(self, obj):
         return obj.assigned_to.get_full_name() if obj.assigned_to else "Unassigned"
 class FeedbackDetailSerializer(serializers.ModelSerializer):
-    # 1. Customer Profile Section
     customer_profile = serializers.SerializerMethodField()
     
-    # 2. Feedback Content Section
     feedback_content = serializers.SerializerMethodField()
     
-    # 3. Action Logs Section
     action_logs = serializers.SerializerMethodField()
 
     class Meta:
@@ -176,7 +165,6 @@ class FeedbackDetailSerializer(serializers.ModelSerializer):
         fields = ['id', 'customer_profile', 'feedback_content', 'action_logs']
 
     def get_customer_profile(self, obj):
-        # Defaults
         name = "Anonymous"
         email = "N/A"
         phone = "N/A"
@@ -212,7 +200,6 @@ class FeedbackDetailSerializer(serializers.ModelSerializer):
         }
 
     def get_action_logs(self, obj):
-        # Returns the timeline logs
         logs = obj.activity_logs.all().order_by('-created_at')
         return [
             {
@@ -230,10 +217,6 @@ class ResponseAnswerSerializer(serializers.ModelSerializer):
         fields = ['question_text', 'answer_value']
 
 class SurveyResponseCardSerializer(serializers.ModelSerializer):
-    """
-    Serializer for the 'Survey Responses' Tab (Image 3).
-    Shows Survey Name, Customer, Date, and the Q&A list.
-    """
     survey_title = serializers.CharField(source='survey.title', read_only=True)
     customer_name = serializers.CharField(source='customer.name', default="Anonymous", read_only=True)
     date = serializers.DateTimeField(source='created_at', format="%Y-%m-%d %I:%M %p")
@@ -242,7 +225,6 @@ class SurveyResponseCardSerializer(serializers.ModelSerializer):
     class Meta:
         model = SurveySubmission
         fields = ['id', 'survey_title', 'customer_name', 'date', 'rating', 'comment', 'answers']
-
 
 class AudienceContactSerializer(serializers.ModelSerializer):
     class Meta:
@@ -257,11 +239,7 @@ class AudienceListSerializer(serializers.ModelSerializer):
 
 
 class AutomationRuleSerializer(serializers.ModelSerializer):
-    """
-    Serializer for 'Automation & Triggers' Tab.
-    """
     survey_title = serializers.CharField(source='survey.title', read_only=True)
-    
     class Meta:
         from .models import AutomationRule 
         model = AutomationRule

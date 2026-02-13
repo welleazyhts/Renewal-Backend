@@ -40,7 +40,6 @@ class NotificationChannel(BaseModel):
         return f"{self.name} ({self.channel_type})"
 
 class NotificationTemplate(BaseModel):
-    """Notification templates"""
     TEMPLATE_TYPE_CHOICES = [
         ('policy_renewal', 'Policy Renewal'),
         ('payment_due', 'Payment Due'),

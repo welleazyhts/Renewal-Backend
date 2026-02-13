@@ -5,10 +5,6 @@ from apps.core.models import BaseModel
 from decimal import Decimal
 
 class DistributionChannel(BaseModel):
-    """
-    Model to manage distribution partners, agents, and sales channels.
-    """
-    
     CHANNEL_TYPE_CHOICES = [
         ('Agent Network', 'Agent Network'),
         ('Insurance Broker', 'Insurance Broker'),
@@ -24,7 +20,6 @@ class DistributionChannel(BaseModel):
         ('Pending', 'Pending'),
     ]
     
-    # Basic Information
     name = models.CharField(
         max_length=255,
         help_text="Distribution channel name"
@@ -40,7 +35,6 @@ class DistributionChannel(BaseModel):
         help_text="Description of the distribution channel"
     )
     
-    # Foreign Key to channels table
     channel = models.ForeignKey(
         'business_channels.Channel',
         on_delete=models.SET_NULL,
@@ -50,7 +44,6 @@ class DistributionChannel(BaseModel):
         help_text="Related communication channel"
     )
     
-    # Contact Information
     contact_person = models.CharField(
         max_length=100,
         blank=True,
@@ -77,7 +70,6 @@ class DistributionChannel(BaseModel):
         help_text="Geographical region covered"
     )
     
-    # Financial Information
     commission_rate = models.DecimalField(
         max_digits=5,
         decimal_places=2,
@@ -95,7 +87,6 @@ class DistributionChannel(BaseModel):
         help_text="Target revenue in currency"
     )
     
-    # Status and Metadata
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
@@ -134,21 +125,17 @@ class DistributionChannel(BaseModel):
     
     @property
     def is_active(self):
-        """Check if distribution channel is currently active"""
         return self.status == 'Active'
     
     def clean(self):
-        """Additional model-level validation"""
         super().clean()
         
-        # Validate commission rate if provided
         if self.commission_rate is not None:
             if self.commission_rate < 0 or self.commission_rate > 100:
                 raise ValidationError({
                     'commission_rate': 'Commission rate must be between 0 and 100.'
                 })
         
-        # Validate target revenue if provided
         if self.target_revenue is not None and self.target_revenue < 0:
             raise ValidationError({
                 'target_revenue': 'Target revenue cannot be negative.'

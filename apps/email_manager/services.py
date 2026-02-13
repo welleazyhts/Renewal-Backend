@@ -59,7 +59,6 @@ class EmailManagerService:
                 except Exception as e:
                     logger.error(f"Error rendering email for {email_manager.id}: {e}")
 
-            # Email fields
             to_emails = [str(email_manager.to)]
             cc_emails = EmailManagerService.parse_email_list(str(email_manager.cc or ''))
             bcc_emails = EmailManagerService.parse_email_list(str(email_manager.bcc or ''))
@@ -76,7 +75,6 @@ class EmailManagerService:
                 headers={'Message-ID': custom_msg_id}  
             )
 
-            # Send email
             msg.send(fail_silently=False)
 
             real_msg_id = custom_msg_id.strip("<>")

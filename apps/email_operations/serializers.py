@@ -1,11 +1,7 @@
 from rest_framework import serializers
 from .models import EmailMessage, EmailQueue, EmailTracking, EmailDeliveryReport, EmailAnalytics
 from django.utils import timezone
-
-
-class EmailMessageSerializer(serializers.ModelSerializer):
-    """Serializer for EmailMessage"""
-    
+class EmailMessageSerializer(serializers.ModelSerializer):    
     priority_display = serializers.CharField(source='get_priority_display', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
@@ -30,9 +26,7 @@ class EmailMessageSerializer(serializers.ModelSerializer):
         ]
 
 
-class EmailMessageCreateSerializer(serializers.ModelSerializer):
-    """Serializer for creating EmailMessage"""
-    
+class EmailMessageCreateSerializer(serializers.ModelSerializer):    
     class Meta:
         model = EmailMessage
         fields = [
@@ -42,16 +36,13 @@ class EmailMessageCreateSerializer(serializers.ModelSerializer):
         ]
     
     def create(self, validated_data):
-        """Create a new email message"""
         import uuid
         validated_data['message_id'] = str(uuid.uuid4())
         validated_data['created_by'] = self.context['request'].user
         return super().create(validated_data)
 
 
-class EmailMessageUpdateSerializer(serializers.ModelSerializer):
-    """Serializer for updating EmailMessage"""
-    
+class EmailMessageUpdateSerializer(serializers.ModelSerializer):    
     class Meta:
         model = EmailMessage
         fields = [
@@ -66,9 +57,7 @@ class EmailMessageUpdateSerializer(serializers.ModelSerializer):
         return super().update(instance, validated_data)
 
 
-class EmailQueueSerializer(serializers.ModelSerializer):
-    """Serializer for EmailQueue"""
-    
+class EmailQueueSerializer(serializers.ModelSerializer):    
     priority_display = serializers.CharField(source='get_priority_display', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     email_message_data = EmailMessageSerializer(source='email_message', read_only=True)
@@ -86,9 +75,7 @@ class EmailQueueSerializer(serializers.ModelSerializer):
         ]
 
 
-class EmailTrackingSerializer(serializers.ModelSerializer):
-    """Serializer for EmailTracking"""
-    
+class EmailTrackingSerializer(serializers.ModelSerializer):    
     event_type_display = serializers.CharField(source='get_event_type_display', read_only=True)
     email_message_subject = serializers.CharField(source='email_message.subject', read_only=True)
     email_message_to = serializers.CharField(source='email_message.to_emails', read_only=True)
@@ -103,9 +90,7 @@ class EmailTrackingSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'event_time']
 
 
-class EmailDeliveryReportSerializer(serializers.ModelSerializer):
-    """Serializer for EmailDeliveryReport"""
-    
+class EmailDeliveryReportSerializer(serializers.ModelSerializer):    
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     email_message_subject = serializers.CharField(source='email_message.subject', read_only=True)
     email_message_to = serializers.CharField(source='email_message.to_emails', read_only=True)
@@ -120,9 +105,7 @@ class EmailDeliveryReportSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'reported_at']
 
 
-class EmailAnalyticsSerializer(serializers.ModelSerializer):
-    """Serializer for EmailAnalytics"""
-    
+class EmailAnalyticsSerializer(serializers.ModelSerializer):    
     period_type_display = serializers.CharField(source='get_period_type_display', read_only=True)
     
     class Meta:
@@ -141,9 +124,7 @@ class EmailAnalyticsSerializer(serializers.ModelSerializer):
         ]
 
 
-class BulkEmailSerializer(serializers.Serializer):
-    """Serializer for bulk email sending"""
-    
+class BulkEmailSerializer(serializers.Serializer):    
     to_emails = serializers.ListField(
         child=serializers.EmailField(),
         help_text="List of recipient email addresses"
@@ -183,9 +164,7 @@ class BulkEmailSerializer(serializers.Serializer):
     )
 
 
-class ScheduledEmailSerializer(serializers.Serializer):
-    """Serializer for scheduling emails"""
-    
+class ScheduledEmailSerializer(serializers.Serializer):    
     to_emails = serializers.EmailField()
     subject = serializers.CharField(max_length=500)
     html_content = serializers.CharField(required=False, allow_blank=True)
@@ -222,9 +201,7 @@ class ScheduledEmailSerializer(serializers.Serializer):
     )
 
 
-class EmailStatsSerializer(serializers.Serializer):
-    """Serializer for email statistics"""
-    
+class EmailStatsSerializer(serializers.Serializer):    
     total_emails = serializers.IntegerField()
     sent_emails = serializers.IntegerField()
     delivered_emails = serializers.IntegerField()
@@ -241,9 +218,7 @@ class EmailStatsSerializer(serializers.Serializer):
     recent_activity = serializers.ListField()
 
 
-class EmailCampaignStatsSerializer(serializers.Serializer):
-    """Serializer for email campaign statistics"""
-    
+class EmailCampaignStatsSerializer(serializers.Serializer):    
     campaign_id = serializers.CharField()
     campaign_name = serializers.CharField()
     total_emails = serializers.IntegerField()
@@ -265,24 +240,14 @@ class EmailCampaignStatsSerializer(serializers.Serializer):
     end_date = serializers.DateTimeField()
 
 
-class SentEmailListSerializer(serializers.ModelSerializer):
-    """Clean serializer for sent emails list - shows only essential information"""
-    
-    # Format the sent_at time to be more readable
+class SentEmailListSerializer(serializers.ModelSerializer):    
     sent_time = serializers.SerializerMethodField()
-    # Format the created_at time to be more readable
     created_time = serializers.SerializerMethodField()
-    # Get a preview of the email content (first 100 characters)
     content_preview = serializers.SerializerMethodField()
-    # Get the status in a more readable format
     status_text = serializers.SerializerMethodField()
-    # Get priority in a more readable format
     priority_text = serializers.SerializerMethodField()
-    # Get the sender name or email
     sender_info = serializers.SerializerMethodField()
-    # Get the recipient count (including CC and BCC)
     recipient_count = serializers.SerializerMethodField()
-    
     class Meta:
         model = EmailMessage
         fields = [
@@ -292,27 +257,22 @@ class SentEmailListSerializer(serializers.ModelSerializer):
         ]
     
     def get_sent_time(self, obj):
-        """Format sent time to readable format"""
         if obj.sent_at:
             return obj.sent_at.strftime('%Y-%m-%d %H:%M:%S')
         return None
     
     def get_created_time(self, obj):
-        """Format created time to readable format"""
         if obj.created_at:
             return obj.created_at.strftime('%Y-%m-%d %H:%M:%S')
         return None
     
     def get_content_preview(self, obj):
-        """Get a preview of the email content"""
         content = obj.text_content or obj.html_content or ''
-        # Remove HTML tags and get first 100 characters
         import re
         clean_content = re.sub(r'<[^>]+>', '', content)
         return clean_content[:100] + '...' if len(clean_content) > 100 else clean_content
     
     def get_status_text(self, obj):
-        """Get status in readable format"""
         status_map = {
             'sent': 'Sent Successfully',
             'delivered': 'Delivered',
@@ -324,7 +284,6 @@ class SentEmailListSerializer(serializers.ModelSerializer):
         return status_map.get(obj.status, obj.status.title())
     
     def get_priority_text(self, obj):
-        """Get priority in readable format"""
         priority_map = {
             'low': 'Low Priority',
             'normal': 'Normal Priority',
@@ -334,14 +293,12 @@ class SentEmailListSerializer(serializers.ModelSerializer):
         return priority_map.get(obj.priority, obj.priority.title())
     
     def get_sender_info(self, obj):
-        """Get sender information in readable format"""
         if obj.from_name:
             return f"{obj.from_name} <{obj.from_email}>"
         return obj.from_email
     
     def get_recipient_count(self, obj):
-        """Get total recipient count including CC and BCC"""
-        count = 1  # Main recipient
+        count = 1  
         if obj.cc_emails:
             count += len(obj.cc_emails)
         if obj.bcc_emails:

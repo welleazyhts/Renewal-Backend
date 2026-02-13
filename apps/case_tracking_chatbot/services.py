@@ -25,9 +25,7 @@ User = get_user_model()
 logger = logging.getLogger(__name__)
 
 
-class CaseTrackingChatbotService:
-    """Service for handling case tracking and customer-related chatbot queries"""
-    
+class CaseTrackingChatbotService:    
     def __init__(self):
         self.openai_client = None
         self._initialize_openai()
@@ -51,11 +49,9 @@ class CaseTrackingChatbotService:
             return False
     
     def is_available(self) -> bool:
-        """Check if the service is available"""
         return self.openai_client is not None
     
     def get_case_tracking_data(self) -> Dict[str, Any]:
-        """Get comprehensive data for case tracking analysis"""
         try:
             cases = RenewalCase.objects.filter(is_deleted=False)
             
@@ -199,7 +195,6 @@ class CaseTrackingChatbotService:
             }
     
     def _classify_query(self, user_message: str) -> str:
-        """Classify the type of query to determine what data to fetch"""
         message_lower = user_message.lower()
         
         case_keywords = [
@@ -316,7 +311,6 @@ class CaseTrackingChatbotService:
             return 'non_case_tracking'
     
     def _get_specialized_data(self, query_type: str, user_message: str) -> Dict[str, Any]:
-        """Fetch specialized data based on query type"""
         try:
             if query_type == 'case_performance':
                 return self._get_case_performance_data()
@@ -345,7 +339,6 @@ class CaseTrackingChatbotService:
             return {}
     
     def _get_case_performance_data(self) -> Dict[str, Any]:
-        """Get detailed case performance data"""
         try:
             from datetime import datetime, timedelta
             today = datetime.now().date()
@@ -387,7 +380,6 @@ class CaseTrackingChatbotService:
             return {'case_performance': {}}
     
     def _get_case_workflow_data(self) -> Dict[str, Any]:
-        """Get case workflow data"""
         try:
             cases = RenewalCase.objects.filter(is_deleted=False)
             
@@ -416,7 +408,6 @@ class CaseTrackingChatbotService:
             return {'case_workflow': {}}
     
     def _get_case_general_data(self) -> Dict[str, Any]:
-        """Get general case data"""
         try:
             cases = RenewalCase.objects.filter(is_deleted=False)
             
@@ -445,7 +436,6 @@ class CaseTrackingChatbotService:
             return {'case_general': {}}
     
     def _get_customer_analysis_data(self) -> Dict[str, Any]:
-        """Get customer analysis data"""
         try:
             customers = Customer.objects.filter(is_deleted=False)
             
@@ -473,7 +463,6 @@ class CaseTrackingChatbotService:
             return {'customer_analysis': {}}
     
     def _get_individual_customer_data(self, user_message: str) -> Dict[str, Any]:
-        """Get individual customer details based on the query"""
         try:
             customers = Customer.objects.filter(is_deleted=False)
             message_lower = user_message.lower()
@@ -549,7 +538,6 @@ class CaseTrackingChatbotService:
             return {'individual_customer': {}}
     
     def _get_document_analysis_data(self, user_message: str) -> Dict[str, Any]:
-        """Get customer document analysis data"""
         try:
             from apps.customers_files.models import CustomerFile
             
@@ -635,7 +623,6 @@ class CaseTrackingChatbotService:
             return {'document_analysis': {}}
     
     def _get_policy_analysis_data(self) -> Dict[str, Any]:
-        """Get policy analysis data"""
         try:
             cases = RenewalCase.objects.filter(is_deleted=False)
             
@@ -660,7 +647,6 @@ class CaseTrackingChatbotService:
             return {'policy_analysis': {}}
     
     def _get_payment_analysis_data(self) -> Dict[str, Any]:
-        """Get payment analysis data"""
         try:
             cases = RenewalCase.objects.filter(is_deleted=False)
             
@@ -681,7 +667,6 @@ class CaseTrackingChatbotService:
             return {'payment_analysis': {}}
     
     def _get_communication_analysis_data(self) -> Dict[str, Any]:
-        """Get communication analysis data"""
         try:
             communications = CommunicationLog.objects.all()
             
@@ -701,9 +686,7 @@ class CaseTrackingChatbotService:
             logger.error(f"Error in communication analysis data: {str(e)}")
             return {'communication_analysis': {}}
     
-    def _create_system_prompt(self, dashboard_data: Dict[str, Any], user=None, query_type: str = 'general') -> str:
-        """Create system prompt for case tracking chatbot"""
-        
+    def _create_system_prompt(self, dashboard_data: Dict[str, Any], user=None, query_type: str = 'general') -> str:        
         specialized_context = self._build_specialized_context(dashboard_data, query_type)
         
         if query_type == 'non_case_tracking':
@@ -788,7 +771,6 @@ RESPONSE FORMAT:
 """
     
     def _build_specialized_context(self, dashboard_data: Dict[str, Any], query_type: str) -> str:
-        """Build specialized context based on query type"""
         if query_type == 'case_performance':
             return self._build_case_performance_context(dashboard_data.get('case_performance', {}))
         elif query_type == 'case_workflow':
@@ -813,7 +795,6 @@ RESPONSE FORMAT:
             return ""
     
     def _build_case_performance_context(self, case_data: Dict[str, Any]) -> str:
-        """Build context for case performance analysis"""
         if not case_data:
             return ""
         
@@ -840,7 +821,6 @@ RESPONSE FORMAT:
         return context
     
     def _build_case_workflow_context(self, workflow_data: Dict[str, Any]) -> str:
-        """Build context for case workflow"""
         if not workflow_data:
             return ""
         
@@ -855,7 +835,6 @@ RESPONSE FORMAT:
         return context
     
     def _build_case_general_context(self, case_data: Dict[str, Any]) -> str:
-        """Build context for general case questions"""
         if not case_data:
             return ""
         
@@ -888,7 +867,6 @@ RESPONSE FORMAT:
         return context
     
     def _build_customer_analysis_context(self, customer_data: Dict[str, Any]) -> str:
-        """Build context for customer analysis"""
         if not customer_data:
             return ""
         
@@ -909,7 +887,6 @@ RESPONSE FORMAT:
         return context
     
     def _build_individual_customer_context(self, customer_data: Dict[str, Any]) -> str:
-        """Build context for individual customer queries"""
         if not customer_data:
             return ""
         
@@ -964,7 +941,6 @@ RESPONSE FORMAT:
         return context
     
     def _build_document_analysis_context(self, document_data: Dict[str, Any]) -> str:
-        """Build context for document analysis"""
         if not document_data:
             return ""
         
@@ -1009,7 +985,6 @@ RESPONSE FORMAT:
         return context
     
     def _build_policy_analysis_context(self, policy_data: Dict[str, Any]) -> str:
-        """Build context for policy analysis"""
         if not policy_data:
             return ""
         
@@ -1043,7 +1018,6 @@ RESPONSE FORMAT:
         return context
     
     def _build_payment_analysis_context(self, payment_data: Dict[str, Any]) -> str:
-        """Build context for payment analysis"""
         if not payment_data:
             return ""
         
@@ -1063,7 +1037,6 @@ RESPONSE FORMAT:
         return context
     
     def _build_communication_analysis_context(self, comm_data: Dict[str, Any]) -> str:
-        """Build context for communication analysis"""
         if not comm_data:
             return ""
         
@@ -1082,11 +1055,9 @@ RESPONSE FORMAT:
         return context
     
     def _build_non_case_tracking_context(self) -> str:
-        """Build context for non-case tracking questions"""
         return "\n\nIMPORTANT: This question is not related to case tracking or customer management. Please respond with the standard non-case tracking message."
     
     def get_quick_suggestions(self) -> List[Dict[str, str]]:
-        """Get quick suggestions for case tracking queries"""
         return [
             {
                 "id": "analyze_case_performance",
@@ -1122,5 +1093,4 @@ RESPONSE FORMAT:
 
 
 def get_case_tracking_chatbot_service():
-    """Get the case tracking chatbot service instance"""
     return CaseTrackingChatbotService()

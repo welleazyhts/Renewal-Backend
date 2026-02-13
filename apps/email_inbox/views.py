@@ -540,7 +540,6 @@ class EmailInboxMessageViewSet(viewsets.ModelViewSet):
         email = self.get_object()
         junk_folder = EmailFolder.objects.filter(name__icontains="Junk").first()
         
-        # Fallback if not found
         if not junk_folder:
              junk_folder, _ = EmailFolder.objects.get_or_create(
                 name="Junk Email", 
@@ -554,8 +553,6 @@ class EmailInboxMessageViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def mark_spam(self, request, pk=None):  
         email = self.get_object()
-        
-        # 1. Find or Create a Spam/Junk Folder
         spam_folder = EmailFolder.objects.filter(folder_type__in=['spam', 'junk']).first()
         if not spam_folder:
              spam_folder, _ = EmailFolder.objects.get_or_create(
@@ -580,23 +577,17 @@ class EmailInboxMessageViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post', 'patch'])
     def save_draft(self, request):
-        """
-        URL: /api/email-inbox/messages/save_draft/
-        """
-        # 1. Validate Data (Partial allows missing fields like subject)
         serializer = EmailComposeSerializer(data=request.data, partial=True)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             
         data = serializer.validated_data
         
-        # 2. Get 'Drafts' Folder
         draft_folder, _ = EmailFolder.objects.get_or_create(
             folder_type='drafts', 
             defaults={'name': 'Drafts', 'is_system': True}
         )
 
-        # 3. Auto-detect Sender (Same logic as send_new)
         from apps.email_settings.models import EmailAccount
         sender_account = EmailAccount.objects.filter(
             user=request.user,
@@ -609,7 +600,6 @@ class EmailInboxMessageViewSet(viewsets.ModelViewSet):
         
         from_email = sender_account.email_address if sender_account else settings.DEFAULT_FROM_EMAIL
 
-        # 4. Create the Draft
         email_message = EmailInboxMessage.objects.create(
             from_email=from_email,
             to_emails=data.get('to_emails', []),
@@ -778,35 +768,26 @@ class EmailInboxMessageViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def restore(self, request, pk=None):
-        """
-        Restores a deleted email from Trash to Inbox.
-        """
         try:
-            # We query .all() directly because get_object() uses the 
-            # default queryset which filters out is_deleted=True items.
             email = EmailInboxMessage.objects.get(pk=pk)
         except EmailInboxMessage.DoesNotExist:
             return Response({'error': 'Email not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        # 1. Check if it actually needs restoring
         if not email.is_deleted:
             return Response({'message': 'Email is not in Trash'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # 2. Get Inbox Folder
         inbox_folder, _ = EmailFolder.objects.get_or_create(
             folder_type='inbox',
             defaults={'name': 'Inbox', 'is_system': True}
         )
 
-        # 3. Restore Logic
         email.is_deleted = False
         email.deleted_at = None
         email.deleted_by = None
-        email.folder = inbox_folder # Move back to Inbox
+        email.folder = inbox_folder 
         email.updated_by = request.user
         email.save()
 
-        # 4. Audit Log
         EmailAuditLog.objects.create(
             email_message=email,
             action="Restored",
@@ -882,7 +863,6 @@ class EmailInboxMessageViewSet(viewsets.ModelViewSet):
             email.updated_by = request.user
             email.save(update_fields=['folder', 'updated_by'])
             
-            # Add Audit Log for history tracking
             EmailAuditLog.objects.create(
                 email_message=email,
                 action="Moved Folder",
@@ -1125,13 +1105,11 @@ class BulkEmailCampaignViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def send(self, request, pk=None):
-        """Manually triggers the sending of a campaign (e.g. from Draft)."""
         campaign = self.get_object()
         
         if campaign.status in ['processing', 'completed']:
             return Response({'error': 'Campaign is already processing or completed.'}, status=400)
             
-        # Update status immediately for UI feedback
         campaign.status = 'processing'
         campaign.save(update_fields=['status'])
         

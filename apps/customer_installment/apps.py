@@ -7,5 +7,4 @@ class CustomerInstallmentConfig(AppConfig):
     verbose_name = 'Customer Installments'
     
     def ready(self):
-        """Import signals when the app is ready"""
         import apps.customer_installment.signals

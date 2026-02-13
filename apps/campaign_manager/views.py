@@ -107,7 +107,6 @@ class CampaignViewSet(viewsets.ModelViewSet):
         campaign.status = Campaign.CampaignStatus.PAUSED
         campaign.save()
         
-        # This is the actual "pause" logic
         pending_tasks = PendingTask.objects.filter(campaign=campaign)
         revoked_count = 0
         for task in pending_tasks:

@@ -10,18 +10,11 @@ from apps.email_provider.services import EmailProviderService
 
 logger = logging.getLogger(__name__)
 
-
-class EmailOperationsService:
-    """Service for managing email operations"""
-    
+class EmailOperationsService:    
     def __init__(self):
         self.provider_service = EmailProviderService()
     
     def _enhance_email_content_for_deliverability(self, html_content: str, text_content: str, subject: str) -> tuple:
-        """
-        Enhance email content to improve deliverability and avoid spam filters
-        Always enhance content to make it look professional and avoid spam
-        """
         if not html_content or html_content.strip() == '':
             html_content = f"""
             <!DOCTYPE html>
@@ -192,7 +185,6 @@ Privacy Policy: https://welleazy.com/privacy
                 created_by=None
             )
             
-            # If scheduled for future, add to queue
             if scheduled_at and timezone.datetime.fromisoformat(scheduled_at.replace('Z', '+00:00')) > timezone.now():
                 EmailQueue.objects.create(
                     email_message=email_message,
@@ -332,7 +324,6 @@ Privacy Policy: https://welleazy.com/privacy
             Dict with success status and scheduling details
         """
         try:
-            # Create email message record
             email_message = EmailMessage.objects.create(
                 to_emails=to_emails,
                 cc_emails=cc_emails or [],
@@ -352,7 +343,6 @@ Privacy Policy: https://welleazy.com/privacy
                 created_by=None
             )
             
-            # Add to queue
             EmailQueue.objects.create(
                 email_message=email_message,
                 priority=priority,
@@ -374,9 +364,7 @@ Privacy Policy: https://welleazy.com/privacy
             }
     
     def _send_email_message(self, email_message: EmailMessage) -> Dict[str, Any]:
-        """Send an email message using the provider service"""
         try:
-            # Try to send via provider service first
             result = self.provider_service.send_email(
                 to_emails=[email_message.to_emails],
                 subject=email_message.subject,
@@ -390,14 +378,12 @@ Privacy Policy: https://welleazy.com/privacy
             )
             
             if result['success']:
-                # Update email message
                 email_message.status = 'sent'
                 email_message.sent_at = timezone.now()
                 email_message.provider_name = result.get('provider_name')
                 email_message.provider_message_id = result.get('message_id')
                 email_message.save()
                 
-                # Create tracking event
                 EmailTracking.objects.create(
                     email_message=email_message,
                     event_type='sent',
@@ -406,7 +392,6 @@ Privacy Policy: https://welleazy.com/privacy
                 
                 return result
             else:
-                # Update email message with error (no fallback)
                 email_message.status = 'failed'
                 email_message.error_message = result.get('error', 'Unknown error')
                 email_message.retry_count += 1
@@ -416,8 +401,6 @@ Privacy Policy: https://welleazy.com/privacy
                 
         except Exception as e:
             logger.error(f"Provider service failed: {str(e)}")
-            
-            # Update email message with error (no fallback)
             email_message.status = 'failed'
             email_message.error_message = str(e)
             email_message.retry_count += 1
@@ -430,11 +413,7 @@ Privacy Policy: https://welleazy.com/privacy
             }
     
     def _send_via_django_fallback(self, email_message: EmailMessage) -> Dict[str, Any]:
-        """
-        Fallback method using Django's built-in email backend
-        """
         try:
-            # Create email message
             msg = EmailMultiAlternatives(
                 subject=email_message.subject,
                 body=email_message.text_content or email_message.html_content,
@@ -444,11 +423,9 @@ Privacy Policy: https://welleazy.com/privacy
                 bcc=email_message.bcc_emails or []
             )
 
-            # Add HTML content if available
             if email_message.html_content:
                 msg.attach_alternative(email_message.html_content, "text/html")
 
-            # Send email
             msg.send()
 
             return {
@@ -467,9 +444,7 @@ Privacy Policy: https://welleazy.com/privacy
             }
     
     def process_email_queue(self) -> Dict[str, Any]:
-        """Process pending emails in the queue"""
         try:
-            # Get pending emails that are ready to be sent
             pending_emails = EmailQueue.objects.filter(
                 status='queued',
                 scheduled_for__lte=timezone.now()
@@ -481,12 +456,10 @@ Privacy Policy: https://welleazy.com/privacy
             
             for queue_entry in pending_emails:
                 try:
-                    # Update queue status
                     queue_entry.status = 'processing'
                     queue_entry.attempts += 1
                     queue_entry.save()
                     
-                    # Send email
                     result = self._send_email_message(queue_entry.email_message)
                     
                     if result['success']:
@@ -499,7 +472,6 @@ Privacy Policy: https://welleazy.com/privacy
                             queue_entry.last_error = result.get('error', 'Max retries exceeded')
                             failure_count += 1
                         else:
-                            # Reschedule for retry
                             queue_entry.status = 'queued'
                             queue_entry.scheduled_for = timezone.now() + timezone.timedelta(minutes=5)
                     
@@ -531,9 +503,7 @@ Privacy Policy: https://welleazy.com/privacy
     
     def get_email_statistics(self, start_date: str = None, end_date: str = None,
                            campaign_id: str = None) -> Dict[str, Any]:
-        """Get email statistics for a given period"""
         try:
-            # Build filter
             filters = {}
             if start_date:
                 filters['created_at__gte'] = start_date
@@ -542,7 +512,6 @@ Privacy Policy: https://welleazy.com/privacy
             if campaign_id:
                 filters['campaign_id'] = campaign_id
             
-            # Get email counts
             emails = EmailMessage.objects.filter(**filters)
             
             total_emails = emails.count()
@@ -551,10 +520,8 @@ Privacy Policy: https://welleazy.com/privacy
             failed_emails = emails.filter(status='failed').count()
             pending_emails = emails.filter(status__in=['pending', 'sending']).count()
             
-            # Calculate rates
             delivery_rate = (delivered_emails / sent_emails * 100) if sent_emails > 0 else 0
             
-            # Get tracking data
             tracking_events = EmailTracking.objects.filter(
                 email_message__in=emails
             )
@@ -567,7 +534,6 @@ Privacy Policy: https://welleazy.com/privacy
             click_rate = (clicked_emails / delivered_emails * 100) if delivered_emails > 0 else 0
             bounce_rate = (bounced_emails / sent_emails * 100) if sent_emails > 0 else 0
             
-            # Get average response time
             delivery_reports = EmailDeliveryReport.objects.filter(
                 email_message__in=emails,
                 response_time__isnull=False
@@ -576,21 +542,18 @@ Privacy Policy: https://welleazy.com/privacy
                 avg_time=models.Avg('response_time')
             )['avg_time'] or 0
             
-            # Get emails by status
             emails_by_status = {}
             for status, _ in EmailMessage.STATUS_CHOICES:
                 count = emails.filter(status=status).count()
                 if count > 0:
                     emails_by_status[status] = count
             
-            # Get emails by priority
             emails_by_priority = {}
             for priority, _ in EmailMessage.PRIORITY_CHOICES:
                 count = emails.filter(priority=priority).count()
                 if count > 0:
                     emails_by_priority[priority] = count
             
-            # Get emails by campaign
             emails_by_campaign = {}
             campaign_data = emails.values('campaign_id').annotate(
                 count=models.Count('id')
@@ -598,7 +561,6 @@ Privacy Policy: https://welleazy.com/privacy
             for item in campaign_data:
                 emails_by_campaign[item['campaign_id']] = item['count']
             
-            # Get recent activity
             recent_activity = emails.order_by('-created_at')[:10].values(
                 'id', 'subject', 'to_emails', 'status', 'created_at'
             )
@@ -628,11 +590,9 @@ Privacy Policy: https://welleazy.com/privacy
     
     def update_email_status(self, email_id: str, status: str, 
                           provider_message_id: str = None, error_message: str = None) -> Dict[str, Any]:
-        """Update email status (typically called by webhooks)"""
         try:
             email_message = EmailMessage.objects.get(id=email_id)
             
-            # Update status
             email_message.status = status
             if provider_message_id:
                 email_message.provider_message_id = provider_message_id
@@ -643,7 +603,6 @@ Privacy Policy: https://welleazy.com/privacy
             
             email_message.save()
             
-            # Create tracking event
             EmailTracking.objects.create(
                 email_message=email_message,
                 event_type=status,

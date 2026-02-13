@@ -114,8 +114,6 @@ class KnowledgeDocumentSerializer(serializers.ModelSerializer):
 
         return value
 
-
-
 class KnowledgeWebsiteSerializer(serializers.ModelSerializer):
     added_by = serializers.SerializerMethodField()
 

@@ -154,7 +154,6 @@ class CaseLogSerializer(serializers.ModelSerializer):
         return None
 
 class CommentHistorySerializer(serializers.ModelSerializer):
-    """Simplified serializer for comment history - only essential fields: status, sub_status, work step, next follow-up, next action plan"""
     status = serializers.CharField(source='renewal_case.status', read_only=True)
     status_display = serializers.SerializerMethodField()
     sub_status = serializers.CharField(source='get_sub_status_display', read_only=True)
@@ -174,13 +173,11 @@ class CommentHistorySerializer(serializers.ModelSerializer):
         read_only_fields = []
 
     def get_status_display(self, obj):
-        """Get the display name for the status"""
         if obj.renewal_case:
             return obj.renewal_case.get_status_display()
         return None
 
     def get_next_follow_up_date(self, obj):
-        """Format next follow-up date as DD/MM/YYYY"""
         if obj.next_follow_up_date:
             return obj.next_follow_up_date.strftime('%d/%m/%Y')
         return None
@@ -214,7 +211,6 @@ class EditCaseDetailsSerializer(serializers.Serializer):
     assigned_agent = serializers.IntegerField(required=False, allow_null=True, help_text="User ID for assigned agent from dropdown")
 
     def validate_policy_type(self, value):
-        """Validate that policy type exists"""
         if value:
             try:
                 PolicyType.objects.get(id=value, is_active=True)
@@ -223,7 +219,6 @@ class EditCaseDetailsSerializer(serializers.Serializer):
         return value
 
     def validate_assigned_agent(self, value):
-        """Validate that assigned agent exists"""
         if value:
             try:
                 User.objects.get(id=value, is_active=True)
@@ -232,13 +227,11 @@ class EditCaseDetailsSerializer(serializers.Serializer):
         return value
 
     def validate_email(self, value):
-        """Validate email format and uniqueness within reasonable scope"""
         if value:
             pass
         return value
 
     def validate_phone(self, value):
-        """Validate phone number format"""
         if value:
             if len(value.strip()) < 10:
                 raise serializers.ValidationError("Phone number must be at least 10 digits.")
@@ -246,21 +239,18 @@ class EditCaseDetailsSerializer(serializers.Serializer):
 
 
 class PolicyTypeDropdownSerializer(serializers.Serializer):
-    """Serializer for policy type dropdown options"""
     id = serializers.IntegerField()
     name = serializers.CharField()
     category = serializers.CharField()
 
 
 class AgentDropdownSerializer(serializers.Serializer):
-    """Serializer for agent dropdown options"""
     id = serializers.IntegerField()
     name = serializers.CharField()
     email = serializers.EmailField()
 
 
 class CaseEditFormDataSerializer(serializers.Serializer):
-    """Serializer for complete case edit form data including dropdowns"""
     case_details = CaseDetailsSerializer()
     policy_types = PolicyTypeDropdownSerializer(many=True)
     agents = AgentDropdownSerializer(many=True)
@@ -344,7 +334,6 @@ class CaseTrackingSerializer(serializers.ModelSerializer):
         return None
     
     def get_category(self, obj):
-        """Alias for policy_category for frontend compatibility"""
         return self.get_policy_category(obj)
     
     def get_channel_name(self, obj):
@@ -353,7 +342,6 @@ class CaseTrackingSerializer(serializers.ModelSerializer):
         return None
     
     def get_current_communication_channel(self, obj):
-        """Get the latest communication channel from CommunicationLog"""
         try:
             from apps.customer_communication_preferences.models import CommunicationLog
             latest_communication = CommunicationLog.objects.filter(
@@ -377,7 +365,6 @@ class CaseTrackingSerializer(serializers.ModelSerializer):
 
     
     def get_priority(self, obj):
-        """Get priority display value"""
         return obj.priority if hasattr(obj, 'priority') else 'medium'
     
     def get_last_action(self, obj):

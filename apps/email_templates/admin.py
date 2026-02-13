@@ -1,8 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
 from .models import EmailTemplate, EmailTemplateTag, EmailTemplateVersion
-
-
 @admin.register(EmailTemplateTag)
 class EmailTemplateTagAdmin(admin.ModelAdmin):
     list_display = ['name', 'color_display', 'is_active', 'template_count', 'created_at']
@@ -11,7 +9,6 @@ class EmailTemplateTagAdmin(admin.ModelAdmin):
     readonly_fields = ['id', 'created_at', 'updated_at', 'created_by', 'updated_by']
     
     def color_display(self, obj):
-        """Display color as a colored square"""
         return format_html(
             '<span style="display: inline-block; width: 20px; height: 20px; background-color: {}; border: 1px solid #ccc;"></span> {}',
             obj.color, obj.color
@@ -19,12 +16,10 @@ class EmailTemplateTagAdmin(admin.ModelAdmin):
     color_display.short_description = 'Color'
     
     def template_count(self, obj):
-        """Count of templates with this tag"""
         return obj.templates.filter(is_deleted=False).count()
     template_count.short_description = 'Templates'
     
     def get_queryset(self, request):
-        """Filter out soft-deleted tags"""
         return super().get_queryset(request).filter(is_deleted=False)
 
 
@@ -75,25 +70,21 @@ class EmailTemplateAdmin(admin.ModelAdmin):
     )
     
     def get_queryset(self, request):
-        """Filter out soft-deleted templates"""
         return super().get_queryset(request).filter(is_deleted=False)
     
     actions = ['activate_templates', 'deactivate_templates', 'archive_templates']
     
     def activate_templates(self, request, queryset):
-        """Activate selected templates"""
         count = queryset.update(status='active')
         self.message_user(request, f"{count} templates activated successfully.")
     activate_templates.short_description = "Activate selected templates"
     
     def deactivate_templates(self, request, queryset):
-        """Deactivate selected templates"""
         count = queryset.update(status='inactive')
         self.message_user(request, f"{count} templates deactivated successfully.")
     deactivate_templates.short_description = "Deactivate selected templates"
     
     def archive_templates(self, request, queryset):
-        """Archive selected templates"""
         count = queryset.update(status='archived')
         self.message_user(request, f"{count} templates archived successfully.")
     archive_templates.short_description = "Archive selected templates"
@@ -123,5 +114,4 @@ class EmailTemplateVersionAdmin(admin.ModelAdmin):
     )
     
     def get_queryset(self, request):
-        """Optimize queryset"""
         return super().get_queryset(request).select_related('template', 'created_by')

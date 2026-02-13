@@ -1,9 +1,7 @@
 from rest_framework import serializers
 from .models import CustomerVehicle
 from apps.customer_assets.models import CustomerAssets
-class CustomerVehicleSerializer(serializers.ModelSerializer):
-    """Serializer for CustomerVehicle model"""
-    
+class CustomerVehicleSerializer(serializers.ModelSerializer):    
     customer_name = serializers.CharField(source='customer_assets.customer.full_name', read_only=True)
     customer_code = serializers.CharField(source='customer_assets.customer.customer_code', read_only=True)
     vehicle_summary = serializers.CharField(read_only=True)
@@ -37,9 +35,7 @@ class CustomerVehicleSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
 
-class CustomerVehicleCreateSerializer(serializers.ModelSerializer):
-    """Serializer for creating CustomerVehicle"""
-    
+class CustomerVehicleCreateSerializer(serializers.ModelSerializer):    
     class Meta:
         model = CustomerVehicle
         fields = [
@@ -57,9 +53,7 @@ class CustomerVehicleCreateSerializer(serializers.ModelSerializer):
         ]
 
 
-class CustomerVehicleUpdateSerializer(serializers.ModelSerializer):
-    """Serializer for updating CustomerVehicle"""
-    
+class CustomerVehicleUpdateSerializer(serializers.ModelSerializer):    
     class Meta:
         model = CustomerVehicle
         fields = [
@@ -76,9 +70,7 @@ class CustomerVehicleUpdateSerializer(serializers.ModelSerializer):
         ]
 
 
-class CustomerVehicleListSerializer(serializers.ModelSerializer):
-    """Serializer for listing CustomerVehicle with minimal data"""
-    
+class CustomerVehicleListSerializer(serializers.ModelSerializer):    
     customer_name = serializers.CharField(source='customer_assets.customer.full_name', read_only=True)
     customer_code = serializers.CharField(source='customer_assets.customer.customer_code', read_only=True)
     customer_email = serializers.CharField(source='customer_assets.customer.email', read_only=True)

@@ -76,13 +76,11 @@ class SurveyViewSet(viewsets.ModelViewSet):
         
         writer = csv.writer(response)
         
-        # Dynamic Headers based on Questions
         question_labels = [q.label for q in survey.questions.all().order_by('order')]
         headers = ['Date', 'Customer', 'Rating', 'Comment'] + question_labels
         writer.writerow(headers)
         
         for sub in submissions:
-            # Basic Info
             row = [
                 sub.created_at.strftime("%Y-%m-%d"),
                 sub.customer.name if sub.customer else sub.customer_name or "Anonymous",
@@ -117,29 +115,23 @@ class SurveyViewSet(viewsets.ModelViewSet):
         response = HttpResponse(content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename="{survey.title}_report.pdf"'
         
-        # Setup PDF Document
         doc = SimpleDocTemplate(response, pagesize=letter)
         elements = []
         styles = getSampleStyleSheet()
         
-        # 1. Title
         elements.append(Paragraph(f"Survey Report: {survey.title}", styles['Title']))
         elements.append(Spacer(1, 12))
         
-        # 2. Stats Section
         total = submissions.count()
         avg = submissions.aggregate(Avg('rating'))['rating__avg'] or 0
         stats_text = f"Total Responses: {total}  |  Average Rating: {round(avg, 1)} / 5"
         elements.append(Paragraph(stats_text, styles['Heading2']))
         elements.append(Spacer(1, 12))
         
-        # 3. Table of Recent Responses
-        data = [['Date', 'Customer', 'Rating', 'Comment']] # Header
+        data = [['Date', 'Customer', 'Rating', 'Comment']]
         
-        # Add top 20 rows (to avoid crashing PDF with 10k rows)
         for sub in submissions[:20]:
             name = sub.customer.name if sub.customer else "Anonymous"
-            # Truncate long comments
             comment = (sub.comment[:50] + '...') if sub.comment and len(sub.comment) > 50 else sub.comment or ""
             data.append([
                 sub.created_at.strftime("%Y-%m-%d"),
@@ -148,7 +140,6 @@ class SurveyViewSet(viewsets.ModelViewSet):
                 comment
             ])
             
-        # Table Styling
         table = Table(data, colWidths=[80, 100, 50, 250])
         table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
@@ -188,17 +179,14 @@ class FeedbackDashboardView(APIView):
         else:
             completion_rate = 0.0
 
-        # --- Attention Widget Stats ---
         status_counts = user_submissions.values('status').annotate(count=Count('status'))
         unaddressed = next((item['count'] for item in status_counts if item['status'] == 'unaddressed'), 0)
         flagged = user_submissions.filter(rating__lte=2).count() 
         negative = detractors
 
-        # --- Charts Data ---
         recent_trends = user_submissions.order_by('-created_at')[:10].values('created_at', 'rating')
         categories = user_submissions.values('category').annotate(count=Count('category'))
 
-        # --- Recent Feedback Table ---
         recent_items = user_submissions.order_by('-created_at')[:5]
         table_serializer = DashboardFeedbackTableSerializer(recent_items, many=True)
 
@@ -221,9 +209,6 @@ class FeedbackDashboardView(APIView):
             "recent_feedback": table_serializer.data 
         })
 class CampaignViewSet(viewsets.ModelViewSet):
-    """
-    API for 'Survey Campaigns' Tab.
-    """
     serializer_class = SurveyCampaignSerializer 
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
@@ -257,9 +242,6 @@ class SubmissionViewSet(viewsets.ModelViewSet):
     ]
 
     def get_queryset(self):
-        """
-        Return only submissions for surveys owned by the logged-in user.
-        """
         user = self.request.user
         if user.is_anonymous:
             return SurveySubmission.objects.none()
@@ -346,7 +328,6 @@ class SubmissionViewSet(viewsets.ModelViewSet):
 
   
     def _log_activity(self, submission, user, text):
-        """Helper to create log entry"""
         SubmissionActivityLog.objects.create(
             submission=submission,
             actor=user,
@@ -497,11 +478,9 @@ class FeedbackAnalyticsView(APIView):
         avg_csat = queryset.aggregate(Avg('rating'))['rating__avg'] or 0
         flagged_count = queryset.filter(is_flagged=True).count() 
         negative_count = queryset.filter(rating__lte=2).count()           
-        # NPS Calculation (Keep existing)
         promoters = queryset.filter(rating__gte=9).count()
         detractors = queryset.filter(rating__lte=6).count()
         nps_score = ((promoters - detractors) / total_responses * 100) if total_responses > 0 else 0
-        # 3. Charts Data (Keep existing)
         sentiment_stats = queryset.aggregate(
             positive=Count(Case(When(sentiment_score__gt=0.3, then=1))),
             neutral=Count(Case(When(sentiment_score__range=(-0.3, 0.3), then=1))),
@@ -532,7 +511,6 @@ class FeedbackAnalyticsView(APIView):
             }
         })
 class DistributionChannelViewSet(viewsets.ViewSet):
-   
     permission_classes = [permissions.IsAuthenticated]
 
     def list(self, request):
@@ -564,7 +542,6 @@ class PublicSurveyView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request, survey_id, format=None):
-        # ... (Keep your existing GET logic) ...
         survey = get_object_or_404(Survey, id=survey_id)
         serializer = SurveySerializer(survey)
         return Response(serializer.data)
@@ -572,18 +549,15 @@ class PublicSurveyView(APIView):
     def post(self, request, survey_id, format=None):
         survey = get_object_or_404(Survey, id=survey_id)
         
-        # 1. Get the Contact ID from URL (?c=9)
         contact_id = request.query_params.get('c')
         customer_obj = None
 
-        # 2. Look up the AudienceContact
         if contact_id:
             try:
                 customer_obj = AudienceContact.objects.get(id=contact_id).customer
             except (AudienceContact.DoesNotExist, ValueError, AttributeError):
                 pass
         
-        # 3. Create Submission with the Customer
         data = request.data
         submission = SurveySubmission.objects.create(
             survey=survey,
@@ -632,9 +606,6 @@ class ResponseListViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=False, methods=['get'])
     def export_pdf(self, request):
-        """
-        Global Export PDF for the 'Survey Responses' tab.
-        """
         queryset = self.filter_queryset(self.get_queryset())
         
         response = HttpResponse(content_type='application/pdf')

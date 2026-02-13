@@ -16,7 +16,6 @@ class CustomerDocumentSerializer(serializers.ModelSerializer):
         exclude = ['customer']
     
     def get_customer_name(self, obj):
-        """Get customer name instead of customer ID"""
         if obj.customer:
             name = f"{obj.customer.first_name} {obj.customer.last_name}".strip()
             return name if name else obj.customer.customer_code
@@ -62,7 +61,6 @@ class PolicyTypeSerializer(serializers.ModelSerializer):
         fields = '__all__'
     
     def get_policy_features(self, obj):
-        """Get only mandatory active policy features for this specific policy"""
         policy = self.context.get('policy', None)
         
         features = PolicyFeature.objects.filter(
@@ -90,7 +88,6 @@ class ChannelSerializer(serializers.ModelSerializer):
 
 
 class PolicyAgentSerializer(serializers.ModelSerializer):
-    """Serializer for PolicyAgent details"""
     agent_code = serializers.CharField(read_only=True)
     agent_name = serializers.CharField(read_only=True)
     contact_number = serializers.CharField(read_only=True)
@@ -111,7 +108,6 @@ class PolicySerializer(serializers.ModelSerializer):
         exclude = ['customer', 'agent']
     
     def get_policy_type(self, obj):
-        """Get policy type with policy context for filtering features"""
         serializer = PolicyTypeSerializer(obj.policy_type, context={'policy': obj})
         return serializer.data
 

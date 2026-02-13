@@ -5,9 +5,7 @@ from apps.customers.models import Customer
 from apps.policies.models import Policy
 
 User = get_user_model()
-class Claim(BaseModel):
-    """Model for insurance claims"""
-    
+class Claim(BaseModel):    
     CLAIM_STATUS_CHOICES = [
         ('pending', 'Pending'),
         ('in_progress', 'In Progress'),
@@ -151,7 +149,6 @@ class Claim(BaseModel):
         super().save(*args, **kwargs)
     
     def generate_claim_number(self):
-        """Generate a unique claim number in format CLM0001"""
         prefix = "CLM"
         
         existing_claims = Claim.objects.filter(
@@ -173,27 +170,23 @@ class Claim(BaseModel):
     
     @property
     def customer_name(self):
-        """Get customer full name"""
         if self.customer:
             return f"{self.customer.first_name} {self.customer.last_name}".strip()
         return None
     
     @property
     def mobile_number(self):
-        """Get customer mobile number"""
         if self.customer:
             return self.customer.phone
         return None
     
     @property
     def email_id(self):
-        """Get customer email"""
         if self.customer:
             return self.customer.email
         return None
     
 class ClaimTimelineEvent(models.Model):
-    """Stores individual events that make up the claims processing timeline."""
     claim = models.ForeignKey(
         Claim, 
         on_delete=models.CASCADE,

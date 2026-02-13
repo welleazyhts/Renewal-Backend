@@ -1,13 +1,8 @@
 from django.utils import timezone
 from rest_framework import serializers
 from .models import EmailTemplate, EmailTemplateTag, EmailTemplateVersion
-
-
-class EmailTemplateTagSerializer(serializers.ModelSerializer):
-    """Serializer for EmailTemplateTag"""
-    
-    template_count = serializers.SerializerMethodField()
-    
+class EmailTemplateTagSerializer(serializers.ModelSerializer):    
+    template_count = serializers.SerializerMethodField()    
     class Meta:
         model = EmailTemplateTag
         fields = [
@@ -21,23 +16,18 @@ class EmailTemplateTagSerializer(serializers.ModelSerializer):
         ]
     
     def get_template_count(self, obj):
-        """Get count of templates with this tag"""
         return obj.templates.filter(is_deleted=False).count()
     
     def create(self, validated_data):
-        """Set created_by when creating a new tag"""
         validated_data['created_by'] = self.context['request'].user
         return super().create(validated_data)
     
     def update(self, instance, validated_data):
-        """Set updated_by when updating a tag"""
         validated_data['updated_by'] = self.context['request'].user
         return super().update(instance, validated_data)
 
 
-class EmailTemplateSerializer(serializers.ModelSerializer):
-    """Serializer for EmailTemplate"""
-    
+class EmailTemplateSerializer(serializers.ModelSerializer):    
     tags_data = EmailTemplateTagSerializer(source='tags', many=True, read_only=True)
     tag_names = serializers.ListField(
         child=serializers.CharField(),
@@ -65,18 +55,15 @@ class EmailTemplateSerializer(serializers.ModelSerializer):
         ]
     
     def create(self, validated_data):
-        """Create a new email template"""
         tag_names = validated_data.pop('tag_names', [])
         validated_data['created_by'] = self.context['request'].user
         
         template = super().create(validated_data)
         
-        # Assign tags
         if tag_names:
             tags = EmailTemplateTag.objects.filter(name__in=tag_names, is_deleted=False)
             template.tags.set(tags)
         
-        # Create initial version
         EmailTemplateVersion.objects.create(
             template=template,
             name=template.name,
@@ -92,17 +79,14 @@ class EmailTemplateSerializer(serializers.ModelSerializer):
         return template
     
     def update(self, instance, validated_data):
-        """Update an email template"""
         tag_names = validated_data.pop('tag_names', None)
         validated_data['updated_by'] = self.context['request'].user
         
-        # Create new version if content changed
         content_changed = any(field in validated_data for field in [
             'name', 'subject', 'html_content', 'text_content', 'template_type', 'variables'
         ])
         
         if content_changed:
-            # Create new version
             EmailTemplateVersion.objects.create(
                 template=instance,
                 name=instance.name,
@@ -117,7 +101,6 @@ class EmailTemplateSerializer(serializers.ModelSerializer):
         
         template = super().update(instance, validated_data)
         
-        # Update tags if provided
         if tag_names is not None:
             tags = EmailTemplateTag.objects.filter(name__in=tag_names, is_deleted=False)
             template.tags.set(tags)
@@ -126,10 +109,7 @@ class EmailTemplateSerializer(serializers.ModelSerializer):
 
 
 class EmailTemplateCreateSerializer(serializers.ModelSerializer):
-    """Serializer for creating EmailTemplate (simplified)"""
-
     tags = serializers.CharField(required=False, allow_blank=True, help_text="Comma separated tags for this template")
-
     class Meta:
         model = EmailTemplate
         fields = [
@@ -139,7 +119,6 @@ class EmailTemplateCreateSerializer(serializers.ModelSerializer):
         ]
 
     def create(self, validated_data):
-        """Create a new email template respecting the legacy schema"""
         from django.db import connection
         import json
 
@@ -205,9 +184,7 @@ class EmailTemplateCreateSerializer(serializers.ModelSerializer):
         return template
 
 
-class EmailTemplateUpdateSerializer(serializers.ModelSerializer):
-    """Serializer for updating EmailTemplate"""
-    
+class EmailTemplateUpdateSerializer(serializers.ModelSerializer):    
     tag_names = serializers.ListField(
         child=serializers.CharField(),
         required=False,
@@ -223,17 +200,14 @@ class EmailTemplateUpdateSerializer(serializers.ModelSerializer):
         ]
     
     def update(self, instance, validated_data):
-        """Update an email template"""
         tag_names = validated_data.pop('tag_names', None)
         validated_data['updated_by'] = self.context['request'].user
         
-        # Create new version if content changed
         content_changed = any(field in validated_data for field in [
             'name', 'subject', 'html_content', 'text_content', 'template_type', 'variables'
         ])
         
         if content_changed:
-            # Create new version
             EmailTemplateVersion.objects.create(
                 template=instance,
                 name=instance.name,
@@ -248,7 +222,6 @@ class EmailTemplateUpdateSerializer(serializers.ModelSerializer):
         
         template = super().update(instance, validated_data)
         
-        # Update tags if provided
         if tag_names is not None:
             tags = EmailTemplateTag.objects.filter(name__in=tag_names, is_deleted=False)
             template.tags.set(tags)
@@ -256,9 +229,7 @@ class EmailTemplateUpdateSerializer(serializers.ModelSerializer):
         return template
 
 
-class EmailTemplateVersionSerializer(serializers.ModelSerializer):
-    """Serializer for EmailTemplateVersion"""
-    
+class EmailTemplateVersionSerializer(serializers.ModelSerializer):    
     template_name = serializers.CharField(source='template.name', read_only=True)
     created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
     template_type_display = serializers.CharField(source='get_template_type_display', read_only=True)
@@ -273,10 +244,7 @@ class EmailTemplateVersionSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'version_number', 'created_at', 'created_by']
 
-
-class EmailTemplateRenderSerializer(serializers.Serializer):
-    """Serializer for rendering email templates with context"""
-    
+class EmailTemplateRenderSerializer(serializers.Serializer):    
     template_id = serializers.IntegerField()
     context = serializers.DictField(
         child=serializers.CharField(),
@@ -286,7 +254,6 @@ class EmailTemplateRenderSerializer(serializers.Serializer):
     )
     
     def validate_template_id(self, value):
-        """Validate that template exists and is active"""
         try:
             template = EmailTemplate.objects.get(id=value, is_deleted=False)
             if template.status != 'active':
@@ -296,9 +263,7 @@ class EmailTemplateRenderSerializer(serializers.Serializer):
             raise serializers.ValidationError("Template not found")
 
 
-class EmailTemplateStatsSerializer(serializers.Serializer):
-    """Serializer for email template statistics"""
-    
+class EmailTemplateStatsSerializer(serializers.Serializer):    
     template_id = serializers.IntegerField()
     template_name = serializers.CharField()
     status = serializers.CharField()

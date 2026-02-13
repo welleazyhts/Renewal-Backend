@@ -254,7 +254,6 @@ class CaseStatusUpdateSerializer(serializers.ModelSerializer):
         fields = ['status']
     
     def update(self, instance, validated_data):
-        """Update case status and create history entry."""
         old_status = instance.status
         instance.status = validated_data['status']
         instance.save()
@@ -376,19 +375,16 @@ class CaseTimelineHistorySerializer(serializers.ModelSerializer):
         ]
     
     def get_event_date(self, obj):
-        """Format date as DD/MM/YYYY"""
         if obj.created_at:
             return obj.created_at.strftime('%d/%m/%Y')
         return None
     
     def get_event_time(self, obj):
-        """Format time as HH:MM:SS"""
         if obj.created_at:
             return obj.created_at.strftime('%H:%M:%S')
         return None
     
     def get_performed_by(self, obj):
-        """Get user who performed the action"""
         if obj.created_by:
             return obj.created_by.get_full_name() or obj.created_by.username
         return "System"

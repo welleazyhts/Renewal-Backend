@@ -16,10 +16,7 @@ from .serializers import (
 )
 from .services import EmailOperationsService
 
-
-class EmailMessageViewSet(viewsets.ModelViewSet):
-    """ViewSet for managing email messages"""
-    
+class EmailMessageViewSet(viewsets.ModelViewSet):    
     queryset = EmailMessage.objects.filter(is_deleted=False)
     permission_classes = [IsAuthenticated]
     
@@ -31,40 +28,32 @@ class EmailMessageViewSet(viewsets.ModelViewSet):
         return EmailMessageSerializer
     
     def get_queryset(self):
-        """Filter email messages based on query parameters"""
         queryset = super().get_queryset()
         
-        # Filter by status
         status_filter = self.request.query_params.get('status')
         if status_filter:
             queryset = queryset.filter(status=status_filter)
         
-        # Filter by priority
         priority = self.request.query_params.get('priority')
         if priority:
             queryset = queryset.filter(priority=priority)
         
-        # Filter by campaign
         campaign_id = self.request.query_params.get('campaign_id')
         if campaign_id:
             queryset = queryset.filter(campaign_id=campaign_id)
         
-        # Filter by template
         template_id = self.request.query_params.get('template_id')
         if template_id:
             queryset = queryset.filter(template_id=template_id)
         
-        # Filter by recipient
         to_email = self.request.query_params.get('to_email')
         if to_email:
             queryset = queryset.filter(to_emails__icontains=to_email)
         
-        # Filter by sender
         from_email = self.request.query_params.get('from_email')
         if from_email:
             queryset = queryset.filter(from_email__icontains=from_email)
         
-        # Filter by date range
         start_date = self.request.query_params.get('start_date')
         end_date = self.request.query_params.get('end_date')
         
@@ -73,7 +62,6 @@ class EmailMessageViewSet(viewsets.ModelViewSet):
         if end_date:
             queryset = queryset.filter(created_at__lte=end_date)
         
-        # Search by subject
         search = self.request.query_params.get('search')
         if search:
             queryset = queryset.filter(subject__icontains=search)
@@ -81,21 +69,17 @@ class EmailMessageViewSet(viewsets.ModelViewSet):
         return queryset.order_by('-created_at')
     
     def perform_create(self, serializer):
-        """Set created_by when creating a new email message"""
         serializer.save(created_by=self.request.user)
     
     def create(self, request, *args, **kwargs):
-        """Override create to return simple success response"""
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         
         service = EmailOperationsService()
         service.context = {'user': request.user}
         
-        # Send the email using the service
         result = service.send_email(**serializer.validated_data)
         
-        # Debug logging
         import logging
         logger = logging.getLogger(__name__)
         logger.info(f"Email service result: {result}")
@@ -111,7 +95,6 @@ class EmailMessageViewSet(viewsets.ModelViewSet):
                 }
             }, status=status.HTTP_201_CREATED)
         else:
-            # Get the actual error message from the result
             error_message = result.get('error', 'Unknown error')
             if not error_message or error_message == 'Unknown error':
                 error_message = result.get('message', 'Failed to send email')
@@ -123,18 +106,15 @@ class EmailMessageViewSet(viewsets.ModelViewSet):
             }, status=status.HTTP_400_BAD_REQUEST)
     
     def perform_update(self, serializer):
-        """Set updated_by when updating an email message"""
         serializer.save(updated_by=self.request.user)
     
     def perform_destroy(self, instance):
-        """Soft delete the email message"""
         instance.soft_delete()
         instance.deleted_by = self.request.user
         instance.save(update_fields=['deleted_by'])
     
     @action(detail=False, methods=['post'])
     def send_bulk(self, request):
-        """Send bulk emails"""
         serializer = BulkEmailSerializer(data=request.data)
         
         if not serializer.is_valid():
@@ -152,7 +132,6 @@ class EmailMessageViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['post'])
     def send(self, request):
-        """Send a single email immediately"""
         serializer = EmailMessageCreateSerializer(data=request.data)
         
         if not serializer.is_valid():
@@ -161,7 +140,6 @@ class EmailMessageViewSet(viewsets.ModelViewSet):
         service = EmailOperationsService()
         service.context = {'user': request.user}
         
-        # Send the email using the service
         result = service.send_email(**serializer.validated_data)
         
         if result['success']:
@@ -171,14 +149,11 @@ class EmailMessageViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['post'])
     def send_simple(self, request):
-        """Send a simple email with minimal required fields"""
-        # Extract only the essential fields
         to_emails = request.data.get('to_emails')
         subject = request.data.get('subject')
         html_content = request.data.get('html_content')
         text_content = request.data.get('text_content')
         
-        # Validate required fields
         if not to_emails:
             return Response(
                 {'error': 'to_emails is required'}, 
@@ -197,7 +172,6 @@ class EmailMessageViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Prepare email data with defaults (only supported parameters)
         email_data = {
             'to_emails': to_emails,
             'subject': subject,
@@ -218,7 +192,6 @@ class EmailMessageViewSet(viewsets.ModelViewSet):
         service = EmailOperationsService()
         service.context = {'user': request.user}
         
-        # Send the email using the service
         result = service.send_email(**email_data)
         
         if result['success']:
@@ -240,21 +213,16 @@ class EmailMessageViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'])
     def reply(self, request, pk=None):
-        """Reply to an existing email with standard contact information"""
         try:
-            # Get the original email
             original_email = self.get_object()
             
-            # Get reply content from request
             reply_content = request.data.get('reply_content', '')
             custom_message = request.data.get('custom_message', '')
             
-            # Create reply subject
             reply_subject = f"Re: {original_email.subject}"
             if not reply_subject.startswith('Re: '):
                 reply_subject = f"Re: {reply_subject}"
             
-            # Create standard reply content
             standard_reply_html = f"""
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
                 <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
@@ -316,7 +284,6 @@ Best regards,
 Your Support Team
             """
             
-            # Prepare reply email data
             reply_data = {
                 'to_emails': original_email.from_email,  
                 'subject': reply_subject,
@@ -339,7 +306,6 @@ Your Support Team
             service = EmailOperationsService()
             service.context = {'user': request.user}
             
-            # Send the reply email
             result = service.send_email(**reply_data)
             
             if result['success']:
@@ -376,7 +342,6 @@ Your Support Team
     
     @action(detail=False, methods=['post'])
     def send_scheduled(self, request):
-        """Schedule an email for future sending"""
         serializer = ScheduledEmailSerializer(data=request.data)
         
         if not serializer.is_valid():
@@ -394,7 +359,6 @@ Your Support Team
     
     @action(detail=True, methods=['post'])
     def resend(self, request, pk=None):
-        """Resend a failed email"""
         email_message = self.get_object()
         
         if email_message.status not in ['failed', 'bounced']:
@@ -406,7 +370,6 @@ Your Support Team
         service = EmailOperationsService()
         service.context = {'user': request.user}
         
-        # Reset status and retry
         email_message.status = 'pending'
         email_message.retry_count = 0
         email_message.error_message = None
@@ -424,7 +387,6 @@ Your Support Team
     
     @action(detail=True, methods=['post'])
     def cancel(self, request, pk=None):
-        """Cancel a pending email"""
         email_message = self.get_object()
         
         if email_message.status not in ['pending', 'sending']:
@@ -436,7 +398,6 @@ Your Support Team
         email_message.status = 'cancelled'
         email_message.save()
         
-        # Update queue if exists
         try:
             queue_entry = EmailQueue.objects.get(email_message=email_message)
             queue_entry.status = 'cancelled'
@@ -448,7 +409,6 @@ Your Support Team
     
     @action(detail=False, methods=['get'])
     def statistics(self, request):
-        """Get email statistics"""
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
         campaign_id = request.query_params.get('campaign_id')
@@ -465,7 +425,6 @@ Your Support Team
     
     @action(detail=False, methods=['get'])
     def campaign_stats(self, request):
-        """Get campaign statistics"""
         campaign_id = request.query_params.get('campaign_id')
         
         if not campaign_id:
@@ -474,18 +433,15 @@ Your Support Team
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Get campaign emails
         emails = EmailMessage.objects.filter(
             campaign_id=campaign_id,
             is_deleted=False
         )
         
-        # Calculate statistics
         total_emails = emails.count()
         sent_emails = emails.filter(status='sent').count()
         delivered_emails = emails.filter(status='delivered').count()
         
-        # Get tracking data
         tracking_events = EmailTracking.objects.filter(
             email_message__in=emails
         )
@@ -496,7 +452,6 @@ Your Support Team
         complained_emails = tracking_events.filter(event_type='complained').values('email_message').distinct().count()
         unsubscribed_emails = tracking_events.filter(event_type='unsubscribed').values('email_message').distinct().count()
         
-        # Calculate rates
         delivery_rate = (delivered_emails / sent_emails * 100) if sent_emails > 0 else 0
         open_rate = (opened_emails / delivered_emails * 100) if delivered_emails > 0 else 0
         click_rate = (clicked_emails / delivered_emails * 100) if delivered_emails > 0 else 0
@@ -504,7 +459,6 @@ Your Support Team
         complaint_rate = (complained_emails / sent_emails * 100) if sent_emails > 0 else 0
         unsubscribe_rate = (unsubscribed_emails / sent_emails * 100) if sent_emails > 0 else 0
         
-        # Get date range
         start_date = emails.aggregate(start=models.Min('created_at'))['start']
         end_date = emails.aggregate(end=models.Max('created_at'))['end']
         
@@ -531,8 +485,6 @@ Your Support Team
     
     @action(detail=False, methods=['get'])
     def sent_emails(self, request):
-        """List all sent emails with optional filtering"""
-        # Get query parameters for filtering
         page = int(request.query_params.get('page', 1))
         page_size = int(request.query_params.get('page_size', 20))
         status_filter = request.query_params.get('status', 'sent')
@@ -542,13 +494,11 @@ Your Support Team
         from_email = request.query_params.get('from_email')
         search = request.query_params.get('search')
         
-        # Build queryset for sent emails
         queryset = EmailMessage.objects.filter(
             is_deleted=False,
             status=status_filter
         ).order_by('-sent_at', '-created_at')
         
-        # Apply additional filters
         if start_date:
             queryset = queryset.filter(sent_at__gte=start_date)
         if end_date:
@@ -560,18 +510,14 @@ Your Support Team
         if search:
             queryset = queryset.filter(subject__icontains=search)
         
-        # Get total count
         total_count = queryset.count()
         
-        # Apply pagination
         start_index = (page - 1) * page_size
         end_index = start_index + page_size
         emails = queryset[start_index:end_index]
         
-        # Serialize the emails with clean format
         serializer = SentEmailListSerializer(emails, many=True)
         
-        # Calculate pagination info
         total_pages = (total_count + page_size - 1) // page_size
         has_next = page < total_pages
         has_previous = page > 1
@@ -598,28 +544,22 @@ Your Support Team
         })
 
 
-class EmailQueueViewSet(viewsets.ReadOnlyModelViewSet):
-    """ViewSet for viewing email queue"""
-    
+class EmailQueueViewSet(viewsets.ReadOnlyModelViewSet):    
     queryset = EmailQueue.objects.all()
     serializer_class = EmailQueueSerializer
     permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
-        """Filter queue entries based on query parameters"""
         queryset = super().get_queryset()
         
-        # Filter by status
         status_filter = self.request.query_params.get('status')
         if status_filter:
             queryset = queryset.filter(status=status_filter)
         
-        # Filter by priority
         priority = self.request.query_params.get('priority')
         if priority:
             queryset = queryset.filter(priority=priority)
         
-        # Filter by scheduled time
         scheduled_after = self.request.query_params.get('scheduled_after')
         scheduled_before = self.request.query_params.get('scheduled_before')
         
@@ -632,7 +572,6 @@ class EmailQueueViewSet(viewsets.ReadOnlyModelViewSet):
     
     @action(detail=False, methods=['post'])
     def process(self, request):
-        """Process pending emails in the queue"""
         service = EmailOperationsService()
         service.context = {'user': request.user}
         
@@ -645,7 +584,6 @@ class EmailQueueViewSet(viewsets.ReadOnlyModelViewSet):
     
     @action(detail=True, methods=['post'])
     def retry(self, request, pk=None):
-        """Retry a failed queue entry"""
         queue_entry = self.get_object()
         
         if queue_entry.status != 'failed':
@@ -654,7 +592,6 @@ class EmailQueueViewSet(viewsets.ReadOnlyModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Reset status and reschedule
         queue_entry.status = 'queued'
         queue_entry.scheduled_for = timezone.now()
         queue_entry.last_error = None
@@ -663,28 +600,22 @@ class EmailQueueViewSet(viewsets.ReadOnlyModelViewSet):
         return Response({'message': 'Queue entry scheduled for retry'})
 
 
-class EmailTrackingViewSet(viewsets.ReadOnlyModelViewSet):
-    """ViewSet for viewing email tracking events"""
-    
+class EmailTrackingViewSet(viewsets.ReadOnlyModelViewSet):    
     queryset = EmailTracking.objects.all()
     serializer_class = EmailTrackingSerializer
     permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
-        """Filter tracking events based on query parameters"""
         queryset = super().get_queryset()
         
-        # Filter by email message
         email_message_id = self.request.query_params.get('email_message_id')
         if email_message_id:
             queryset = queryset.filter(email_message_id=email_message_id)
         
-        # Filter by event type
         event_type = self.request.query_params.get('event_type')
         if event_type:
             queryset = queryset.filter(event_type=event_type)
         
-        # Filter by date range
         start_date = self.request.query_params.get('start_date')
         end_date = self.request.query_params.get('end_date')
         
@@ -695,34 +626,26 @@ class EmailTrackingViewSet(viewsets.ReadOnlyModelViewSet):
         
         return queryset.order_by('-event_time')
 
-
-class EmailDeliveryReportViewSet(viewsets.ReadOnlyModelViewSet):
-    """ViewSet for viewing email delivery reports"""
-    
+class EmailDeliveryReportViewSet(viewsets.ReadOnlyModelViewSet):    
     queryset = EmailDeliveryReport.objects.all()
     serializer_class = EmailDeliveryReportSerializer
     permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
-        """Filter delivery reports based on query parameters"""
         queryset = super().get_queryset()
         
-        # Filter by email message
         email_message_id = self.request.query_params.get('email_message_id')
         if email_message_id:
             queryset = queryset.filter(email_message_id=email_message_id)
         
-        # Filter by provider
         provider_name = self.request.query_params.get('provider_name')
         if provider_name:
             queryset = queryset.filter(provider_name=provider_name)
         
-        # Filter by status
         status_filter = self.request.query_params.get('status')
         if status_filter:
             queryset = queryset.filter(status=status_filter)
         
-        # Filter by date range
         start_date = self.request.query_params.get('start_date')
         end_date = self.request.query_params.get('end_date')
         
@@ -734,18 +657,14 @@ class EmailDeliveryReportViewSet(viewsets.ReadOnlyModelViewSet):
         return queryset.order_by('-reported_at')
 
 
-class EmailAnalyticsViewSet(viewsets.ReadOnlyModelViewSet):
-    """ViewSet for viewing email analytics"""
-    
+class EmailAnalyticsViewSet(viewsets.ReadOnlyModelViewSet):    
     queryset = EmailAnalytics.objects.all()
     serializer_class = EmailAnalyticsSerializer
     permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
-        """Filter analytics based on query parameters"""
         queryset = super().get_queryset()
         
-        # Filter by date range
         start_date = self.request.query_params.get('start_date')
         end_date = self.request.query_params.get('end_date')
         
@@ -754,17 +673,14 @@ class EmailAnalyticsViewSet(viewsets.ReadOnlyModelViewSet):
         if end_date:
             queryset = queryset.filter(date__lte=end_date)
         
-        # Filter by period type
         period_type = self.request.query_params.get('period_type')
         if period_type:
             queryset = queryset.filter(period_type=period_type)
         
-        # Filter by campaign
         campaign_id = self.request.query_params.get('campaign_id')
         if campaign_id:
             queryset = queryset.filter(campaign_id=campaign_id)
         
-        # Filter by template
         template_id = self.request.query_params.get('template_id')
         if template_id:
             queryset = queryset.filter(template_id=template_id)

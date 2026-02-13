@@ -6,7 +6,6 @@ router = DefaultRouter()
 router.register(r'file-uploads', FileUploadViewSet, basename='fileupload')
 
 urlpatterns = [
-    # path('', include(router.urls)),
     path('api/', include(router.urls)),
 
 ]

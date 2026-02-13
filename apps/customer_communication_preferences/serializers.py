@@ -48,7 +48,6 @@ class CustomerCommunicationPreferenceSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at']
     
     def get_enabled_channels(self, obj):
-        """Get list of enabled communication channels"""
         return obj.get_enabled_channels()
 
 
@@ -82,13 +81,11 @@ class CustomerCommunicationPreferenceCreateSerializer(serializers.ModelSerialize
         ]
     
     def validate_customer(self, value):
-        """Validate that customer exists"""
         if not Customer.objects.filter(id=value.id, is_deleted=False).exists():
             raise serializers.ValidationError("Customer does not exist or has been deleted.")
         return value
     
     def validate(self, data):
-        """Custom validation for communication preferences"""
         customer = data.get('customer')
         communication_type = data.get('communication_type')
         
@@ -129,9 +126,7 @@ class CustomerCommunicationPreferenceCreateSerializer(serializers.ModelSerialize
         return data
 
 
-class CustomerCommunicationPreferenceListSerializer(serializers.ModelSerializer):
-    """Serializer for listing Customer Communication Preferences"""
-    
+class CustomerCommunicationPreferenceListSerializer(serializers.ModelSerializer):    
     customer_name = serializers.CharField(source='customer.full_name', read_only=True)
     customer_code = serializers.CharField(source='customer.customer_code', read_only=True)
     customer_email = serializers.CharField(source='customer.email', read_only=True)
@@ -176,9 +171,7 @@ class CustomerCommunicationPreferenceListSerializer(serializers.ModelSerializer)
         ]
 
 
-class CustomerCommunicationPreferenceUpdateSerializer(serializers.ModelSerializer):
-    """Serializer for updating Customer Communication Preferences"""
-    
+class CustomerCommunicationPreferenceUpdateSerializer(serializers.ModelSerializer):    
     class Meta:
         model = CustomerCommunicationPreference
         fields = [
@@ -206,7 +199,6 @@ class CustomerCommunicationPreferenceUpdateSerializer(serializers.ModelSerialize
         ]
     
     def validate(self, data):
-        """Custom validation for updating communication preferences"""
         dnd_start = data.get('dnd_start_time')
         dnd_end = data.get('dnd_end_time')
         do_not_disturb = data.get('do_not_disturb', self.instance.do_not_disturb)

@@ -4,9 +4,7 @@ from apps.case_tracking_chatbot.models import (
     CaseTrackingChatbotMessage
 )
 
-class CaseTrackingChatbotMessageSerializer(serializers.ModelSerializer):
-    """Serializer for CaseTrackingChatbotMessage"""
-    
+class CaseTrackingChatbotMessageSerializer(serializers.ModelSerializer):    
     class Meta:
         model = CaseTrackingChatbotMessage
         fields = [
@@ -16,9 +14,7 @@ class CaseTrackingChatbotMessageSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at']
 
 
-class CaseTrackingChatbotConversationSerializer(serializers.ModelSerializer):
-    """Serializer for CaseTrackingChatbotConversation"""
-    
+class CaseTrackingChatbotConversationSerializer(serializers.ModelSerializer):    
     messages = CaseTrackingChatbotMessageSerializer(many=True, read_only=True)
     
     class Meta:

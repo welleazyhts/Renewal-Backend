@@ -5,9 +5,7 @@ from django.conf import settings
 import uuid
 
 User = get_user_model()
-class EmailFolder(models.Model):
-    """Email folders for organizing messages"""
-    
+class EmailFolder(models.Model):    
     FOLDER_TYPES = [
         ('inbox', 'Inbox'),
         ('sent', 'Sent'),
@@ -49,16 +47,13 @@ class EmailFolder(models.Model):
         return self.name
     
     def soft_delete(self):
-        """Soft delete the folder"""
         self.is_deleted = True
         self.deleted_at = timezone.now()
         self.is_active = False
         self.save(update_fields=['is_deleted', 'deleted_at', 'is_active'])
 
 
-class EmailInboxMessage(models.Model):
-    """Incoming email messages"""
-    
+class EmailInboxMessage(models.Model):    
     PRIORITY_CHOICES = [
         ('low', 'Low'),
         ('normal', 'Normal'),
@@ -201,7 +196,6 @@ class EmailInboxMessage(models.Model):
         related_name='replies'
     )
     
-    # Customer Type (Required for the dashboard filters)
     CUSTOMER_TYPE_CHOICES = [
         ('normal', 'Normal'),
         ('hni', 'HNI'),
@@ -234,55 +228,44 @@ class EmailInboxMessage(models.Model):
         super().save(*args, **kwargs)
         if is_new and not self.custom_id:
             self.custom_id = f"EMAIL-{self.id:04d}"
-            # Update DB directly to avoid recursion or double signals
             EmailInboxMessage.objects.filter(id=self.id).update(custom_id=self.custom_id)
 
     def mark_as_read(self):
-        """Mark message as read"""
         if self.status == 'unread':
             self.status = 'read'
             self.read_at = timezone.now()
             self.save(update_fields=['status', 'read_at'])
     
     def mark_as_replied(self):
-        """Mark message as replied"""
         self.status = 'replied'
         self.replied_at = timezone.now()
         self.save(update_fields=['status', 'replied_at'])
     
     def mark_as_forwarded(self):
-        """Mark message as forwarded"""
         self.status = 'forwarded'
         self.forwarded_at = timezone.now()
         self.save(update_fields=['status', 'forwarded_at'])
     
     def soft_delete(self):
-        """Soft delete the message"""
         self.is_deleted = True
         self.deleted_at = timezone.now()
         self.status = 'deleted'
         self.save(update_fields=['is_deleted', 'deleted_at', 'status'])
 
 
-class EmailConversation(models.Model):
-    """Email conversation threads"""
-    
+class EmailConversation(models.Model):    
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     thread_id = models.CharField(max_length=255, unique=True)
     subject = models.CharField(max_length=500)
     
-    # Participants
     participants = models.JSONField(default=list, help_text="List of email addresses in conversation")
     
-    # Statistics
     message_count = models.PositiveIntegerField(default=0)
     unread_count = models.PositiveIntegerField(default=0)
     
-    # Latest activity
     last_message_at = models.DateTimeField(blank=True, null=True)
     last_message_from = models.EmailField(blank=True, null=True)
     
-    # Metadata
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -296,9 +279,7 @@ class EmailConversation(models.Model):
         return f"Conversation: {self.subject}"
 
 
-class EmailFilter(models.Model):
-    """Email filters for automatic organization"""
-    
+class EmailFilter(models.Model):    
     FILTER_TYPES = [
         ('subject', 'Subject'),
         ('from', 'From'),
@@ -332,25 +313,20 @@ class EmailFilter(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
     
-    # Filter conditions
     filter_type = models.CharField(max_length=20, choices=FILTER_TYPES)
     operator = models.CharField(max_length=20, choices=OPERATORS)
     value = models.CharField(max_length=500)
     
-    # Actions
     action = models.CharField(max_length=20, choices=ACTIONS)
     action_value = models.CharField(max_length=500, blank=True, null=True, help_text="Action parameter (folder name, tag, etc.)")
     
-    # Settings
     is_active = models.BooleanField(default=True)
     is_system = models.BooleanField(default=False, help_text="System-created filter")
     priority = models.PositiveIntegerField(default=0, help_text="Filter priority (higher = processed first)")
     
-    # Statistics
     match_count = models.PositiveIntegerField(default=0)
     last_matched = models.DateTimeField(blank=True, null=True)
     
-    # Metadata
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_email_filters')
@@ -369,30 +345,24 @@ class EmailFilter(models.Model):
         return self.name
     
     def soft_delete(self):
-        """Soft delete the filter"""
         self.is_deleted = True
         self.deleted_at = timezone.now()
         self.is_active = False
         self.save(update_fields=['is_deleted', 'deleted_at', 'is_active'])
 
 
-class EmailAttachment(models.Model):
-    """Email attachments"""
-    
+class EmailAttachment(models.Model):    
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     email_message = models.ForeignKey(EmailInboxMessage, on_delete=models.CASCADE, related_name='email_attachments')
     
-    # File information
     filename = models.CharField(max_length=255)
     content_type = models.CharField(max_length=100)
     file_size = models.PositiveIntegerField(help_text="File size in bytes")
     file_path = models.CharField(max_length=500, help_text="Path to stored file")
     
-    # Security
     is_safe = models.BooleanField(default=True, help_text="File passed security scan")
     scan_result = models.JSONField(default=dict, blank=True, help_text="Security scan results")
     
-    # Metadata
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_email_attachments')
     
@@ -406,25 +376,19 @@ class EmailAttachment(models.Model):
         return f"{self.filename} ({self.email_message.subject})"
 
 
-class EmailSearchQuery(models.Model):
-    """Saved email search queries"""
-    
+class EmailSearchQuery(models.Model):    
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
     
-    # Search parameters
     query_params = models.JSONField(default=dict, help_text="Search parameters")
     
-    # Settings
     is_public = models.BooleanField(default=False, help_text="Available to all users")
     is_active = models.BooleanField(default=True)
     
-    # Usage statistics
     usage_count = models.PositiveIntegerField(default=0)
     last_used = models.DateTimeField(blank=True, null=True)
     
-    # Metadata
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_email_search_queries')
@@ -443,13 +407,11 @@ class EmailSearchQuery(models.Model):
         return self.name
     
     def increment_usage(self):
-        """Increment usage count"""
         self.usage_count += 1
         self.last_used = timezone.now()
         self.save(update_fields=['usage_count', 'last_used'])
     
     def soft_delete(self):
-        """Soft delete the search query"""
         self.is_deleted = True
         self.deleted_at = timezone.now()
         self.is_active = False
@@ -466,9 +428,6 @@ class EmailAuditLog(models.Model):
         ordering = ['-timestamp']
 
 class EmailInternalNote(models.Model):
-    """
-    Internal notes for collaboration (matches the 'Add Note' feature in video)
-    """
     email_message = models.ForeignKey(EmailInboxMessage, on_delete=models.CASCADE, related_name='internal_notes')
     author = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     note = models.TextField()
@@ -493,24 +452,20 @@ class BulkEmailCampaign(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=200)
     
-    # Template Snapshot Fields (Subject/Body from template_id)
     subject_template = models.CharField(max_length=500, help_text="Base subject from template")
     body_html_template = models.TextField(help_text="Base HTML from template")
     
     custom_subject = models.CharField(max_length=500, blank=True, null=True, help_text="User's custom subject override")
     additional_message = models.TextField(blank=True, null=True, help_text="User's additional note")    
-    # Recipient data
     recipients_data = models.JSONField(
         default=list, 
         help_text="List of dicts: [{'email': 'x', 'name': 'y', 'company': 'z'}]"
     )
     
-    # Scheduling
     scheduled_at = models.DateTimeField(null=True, blank=True)
     sent_at = models.DateTimeField(null=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
     
-    # Tracking
     total_recipients = models.IntegerField(default=0)
     successful_sends = models.IntegerField(default=0)
     failed_sends = models.IntegerField(default=0)

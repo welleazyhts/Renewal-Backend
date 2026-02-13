@@ -26,10 +26,6 @@ def broadcast_new_email(sender, instance, created, **kwargs):
 
 @receiver(post_migrate)
 def create_default_folders(sender, **kwargs):
-    """
-    Automatically creates the standard system folders after database migration.
-    """
-
     if sender.label != 'email_inbox':
         return
 

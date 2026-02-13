@@ -267,7 +267,6 @@ class OtherInsurancePolicy(BaseModel):
     
     @property
     def is_expiring_soon(self):
-        """Check if policy is expiring within 90 days"""
         from datetime import date, timedelta
         if self.end_date:
             return self.end_date <= date.today() + timedelta(days=90)

@@ -23,10 +23,6 @@ class EmailAccountViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated, IsOwner]
     @action(detail=True, methods=['post'], url_path='set-sync')
     def set_sync_status(self, request, pk=None):
-        """
-        Dedicated endpoint to turn auto-sync ON or OFF.
-        Expects JSON: { "enabled": true } or { "enabled": false }
-        """
         account = self.get_object()
         enable_sync = request.data.get('enabled')
         
@@ -124,13 +120,9 @@ class ProviderDefaultsAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        # Return the dictionary defined in utils.py
         return Response(PROVIDER_DEFAULTS)
 
 class GlobalTestConnectionAPIView(APIView):
-    """
-    Tests the connection for the FIRST active email account found in the DB.
-    """
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
@@ -154,9 +146,6 @@ class GlobalTestConnectionAPIView(APIView):
 
         return Response(test_results)
 class ManualSyncAPIView(APIView):
-    """
-    Manually triggers the sync for a specific account.
-    """
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, pk):

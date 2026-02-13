@@ -68,7 +68,6 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                 minutes=settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'].total_seconds() / 60
             )
 
-            # Get session key safely
             session_key = getattr(request, 'session', None)
             session_key = getattr(session_key, 'session_key', None) or str(uuid.uuid4())
 
@@ -107,7 +106,6 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                 "message": str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     def get_client_ip(self, request):
-        """Get client IP address"""
         x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
         if x_forwarded_for:
             ip = x_forwarded_for.split(',')[0]
@@ -115,9 +113,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
             ip = request.META.get('REMOTE_ADDR')
         return ip
     
-class LogoutView(APIView):
-    """User logout view"""
-    
+class LogoutView(APIView):    
     permission_classes = [permissions.IsAuthenticated]
     
     @extend_schema(
@@ -228,9 +224,7 @@ class PasswordChangeView(APIView):
             'errors': serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
 
-class PasswordResetRequestView(APIView):
-    """Password reset request view"""
-    
+class PasswordResetRequestView(APIView):    
     permission_classes = [permissions.AllowAny]
     
     @extend_schema(

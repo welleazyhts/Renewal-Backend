@@ -234,7 +234,6 @@ class CustomerPayment(BaseModel):
    
     @property
     def is_overdue(self):
-        """Check if payment is overdue"""
         if not self.due_date:
             return False
         
@@ -249,7 +248,6 @@ class CustomerPayment(BaseModel):
     
     @property
     def days_overdue(self):
-        """Calculate days overdue"""
         if not self.is_overdue:
             return 0
         
@@ -261,42 +259,34 @@ class CustomerPayment(BaseModel):
     
     @property
     def is_successful(self):
-        """Check if payment was successful"""
         return self.payment_status == 'completed'
     
     @property
     def is_failed(self):
-        """Check if payment failed"""
         return self.payment_status in ['failed', 'cancelled']
     
     @property
     def is_pending(self):
-        """Check if payment is pending"""
         return self.payment_status in ['pending', 'processing']
     
     @property
     def is_refunded(self):
-        """Check if payment was refunded"""
         return self.payment_status == 'refunded' or self.refund_amount > 0
     
     @property
     def total_amount_with_fees(self):
-        """Calculate total amount including fees and taxes"""
         return self.payment_amount + self.processing_fee + self.tax_amount
     
     @property
     def effective_amount(self):
-        """Calculate effective amount after discount"""
         return self.payment_amount - self.discount_amount
     
     @property
     def payment_summary(self):
-        """Get payment summary"""
         return f"{self.get_payment_mode_display()} - {self.get_payment_status_display()} - ₹{self.payment_amount}"
     
     @property
     def transaction_summary(self):
-        """Get transaction summary"""
         parts = []
         parts.append(f"TXN: {self.transaction_id}")
         if self.reference_number:
@@ -306,7 +296,6 @@ class CustomerPayment(BaseModel):
         return " | ".join(parts)
     
     def calculate_net_amount(self):
-        """Calculate and update net amount"""
         self.net_amount = (
             self.payment_amount + 
             self.processing_fee + 
@@ -316,7 +305,6 @@ class CustomerPayment(BaseModel):
         return self.net_amount
     
     def mark_as_completed(self, transaction_id=None, reference_number=None):
-        """Mark payment as completed"""
         self.payment_status = 'completed'
         if transaction_id:
             self.transaction_id = transaction_id
@@ -325,7 +313,6 @@ class CustomerPayment(BaseModel):
         self.save()
     
     def mark_as_failed(self, failure_reason=None, failure_code=None):
-        """Mark payment as failed"""
         self.payment_status = 'failed'
         if failure_reason:
             self.failure_reason = failure_reason
@@ -334,7 +321,6 @@ class CustomerPayment(BaseModel):
         self.save()
     
     def process_refund(self, refund_amount, refund_reference=None):
-        """Process refund for the payment"""
         from django.utils import timezone
         
         if refund_amount > self.payment_amount:
@@ -353,7 +339,6 @@ class CustomerPayment(BaseModel):
         self.save()
     
     def generate_receipt_number(self):
-        """Generate receipt number"""
         if not self.receipt_number:
             from django.utils import timezone
             date_str = timezone.now().strftime('%Y%m%d')

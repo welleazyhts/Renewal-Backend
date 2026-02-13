@@ -85,7 +85,6 @@ class CaseLog(BaseModel):
     
     @property
     def is_follow_up_due(self):
-        """Check if follow-up is due"""
         if not self.next_follow_up_date:
             return False
         from django.utils import timezone
@@ -93,7 +92,6 @@ class CaseLog(BaseModel):
     
     @property
     def days_until_follow_up(self):
-        """Calculate days until next follow-up"""
         if not self.next_follow_up_date:
             return None
         from django.utils import timezone

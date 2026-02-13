@@ -2,7 +2,6 @@ from rest_framework import serializers
 
 
 class DashboardSummarySerializer(serializers.Serializer):
-    """Serializer for dashboard summary data"""
     total_cases = serializers.IntegerField()
     in_progress = serializers.IntegerField()
     renewed = serializers.IntegerField()

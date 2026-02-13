@@ -65,31 +65,26 @@ class CustomerInstallment(BaseModel):
         ]
 
     def mark_as_paid(self, payment):
-        """Link payment and mark installment as paid"""
         self.payment = payment
         self.status = "paid"
         self.save()
 
     def days_overdue(self):
-        """Calculate days overdue for an installment"""
         if self.status in ['pending', 'overdue'] and self.due_date < timezone.now().date():
             today = timezone.now().date()
             return (today - self.due_date).days
         return 0
 
     def is_overdue(self):
-        """Check if installment is overdue"""
         return self.days_overdue() > 0
 
     def update_status_based_on_due_date(self):
-        """Automatically update status based on due date"""
         if self.status == 'pending' and self.is_overdue():
             self.status = 'overdue'
             self.save(update_fields=['status'])
 
     @classmethod
     def get_outstanding_installments(cls, customer_id=None, case_id=None):
-        """Get all outstanding installments (pending + overdue)"""
         from django.db import models
         queryset = cls.objects.filter(
             Q(status='pending') | Q(status='overdue')
@@ -104,7 +99,6 @@ class CustomerInstallment(BaseModel):
 
     @classmethod
     def get_outstanding_summary(cls, customer_id=None, case_id=None):
-        """Get outstanding amounts summary statistics"""
         outstanding = cls.get_outstanding_installments(customer_id, case_id)
         
         if not outstanding.exists():

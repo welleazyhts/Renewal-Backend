@@ -9,7 +9,6 @@ from cryptography.fernet import Fernet, InvalidToken
 from django.conf import settings
 from django.utils import timezone
 
-# Provider auto-configuration
 PROVIDER_DEFAULTS = {
     'gmail': {
         'imap_server': 'imap.gmail.com',
@@ -141,7 +140,6 @@ class EmailTransport:
 def test_account_connection(account_instance) -> Dict[str, Any]:
     apply_provider_defaults(account_instance)
     
-    # Decrypt credential
     credential = normalize_and_get_credential(account_instance, decrypt=True)
     
     if not credential:

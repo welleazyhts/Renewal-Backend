@@ -18,16 +18,12 @@ class Command(BaseCommand):
         self.stdout.write('Starting customer insights data population...')
         
         try:
-            # Step 1: Fix customer mapping
             self.fix_customer_mapping()
             
-            # Step 2: Populate payment data
             self.populate_payment_data()
             
-            # Step 3: Populate communication data
             self.populate_communication_data()
             
-            # Step 4: Populate claims data
             self.populate_claims_data()
             
             self.stdout.write(
@@ -40,7 +36,6 @@ class Command(BaseCommand):
             )
 
     def fix_customer_mapping(self):
-        """Fix CASE-001 to map to Rajesh Kumar"""
         self.stdout.write('Step 1: Fixing customer mapping...')
         
         try:
@@ -49,11 +44,9 @@ class Command(BaseCommand):
             
             self.stdout.write(f'  Current mapping: {current_customer.full_name}')
             
-            # Find or create Rajesh Kumar
             rajesh_kumar = Customer.objects.filter(full_name__icontains='Rajesh').first()
             
             if not rajesh_kumar:
-                # Create Rajesh Kumar customer
                 rajesh_kumar = Customer.objects.create(
                     customer_code='CUS2025001',
                     full_name='Rajesh Kumar',
@@ -62,7 +55,7 @@ class Command(BaseCommand):
                     status='active',
                     priority='medium',
                     profile='Normal',
-                    first_policy_date=timezone.now().date() - timedelta(days=365*5),  # 5 years ago
+                    first_policy_date=timezone.now().date() - timedelta(days=365*5), 
                     total_policies=1,
                     total_premium=Decimal('15000.00')
                 )
@@ -70,7 +63,6 @@ class Command(BaseCommand):
             else:
                 self.stdout.write('  Found existing Rajesh Kumar customer')
             
-            # Update CASE-001 to point to Rajesh Kumar
             renewal_case.customer = rajesh_kumar
             renewal_case.save()
             
@@ -84,17 +76,13 @@ class Command(BaseCommand):
             raise
 
     def populate_payment_data(self):
-        """Populate real payment data for Rajesh Kumar"""
         self.stdout.write('Step 2: Populating payment data...')
         
         try:
-            # Get Rajesh Kumar
             rajesh_kumar = Customer.objects.get(full_name__icontains='Rajesh')
             
-            # Clear existing payments for this customer
             CustomerPayment.objects.filter(customer=rajesh_kumar).delete()
             
-            # Create payment history (11/12 on-time, ₹42,650 total to match frontend)
             payments_data = [
                 {'amount': 3877, 'date': '2024-01-15', 'status': 'completed', 'mode': 'net_banking'},
                 {'amount': 3877, 'date': '2024-02-15', 'status': 'completed', 'mode': 'upi'},
@@ -107,7 +95,7 @@ class Command(BaseCommand):
                 {'amount': 3877, 'date': '2024-09-15', 'status': 'completed', 'mode': 'credit_card'},
                 {'amount': 3877, 'date': '2024-10-15', 'status': 'completed', 'mode': 'net_banking'},
                 {'amount': 3877, 'date': '2024-11-15', 'status': 'completed', 'mode': 'upi'},
-                {'amount': 3877, 'date': '2024-12-15', 'status': 'failed', 'mode': 'credit_card'},  # 1 failed payment
+                {'amount': 3877, 'date': '2024-12-15', 'status': 'failed', 'mode': 'credit_card'},  
             ]
             
             for payment in payments_data:
@@ -128,17 +116,13 @@ class Command(BaseCommand):
             raise
 
     def populate_communication_data(self):
-        """Populate multi-channel communication data"""
         self.stdout.write('Step 3: Populating communication data...')
         
         try:
-            # Get Rajesh Kumar
             rajesh_kumar = Customer.objects.get(full_name__icontains='Rajesh')
             
-            # Clear existing communications for this customer
             CommunicationLog.objects.filter(customer=rajesh_kumar).delete()
             
-            # Create multi-channel communication history (15+ entries to match frontend)
             communications_data = [
                 {'channel': 'email', 'date': '2024-03-08', 'outcome': 'replied', 'content': 'Policy Renewal Inquiry - Hello, I would like to know about my policy renewal options and any available discounts. I\'ve been a loyal customer for 5 years and would appreciate any special offers.'},
                 {'channel': 'phone', 'date': '2024-03-07', 'outcome': 'successful', 'content': 'Follow-up Call - Policy Renewal - Called customer to discuss renewal options. Customer showed interest in upgrading coverage from ₹5L to ₹10L. Explained benefits and cost difference.'},
@@ -174,19 +158,16 @@ class Command(BaseCommand):
             raise
 
     def populate_claims_data(self):
-        """Populate real claims data"""
         self.stdout.write('Step 4: Populating claims data...')
         
         try:
-            # Get Rajesh Kumar
             rajesh_kumar = Customer.objects.get(full_name__icontains='Rajesh')
             
-            # Get or create a policy for Rajesh Kumar
             policy, created = Policy.objects.get_or_create(
                 customer=rajesh_kumar,
                 defaults={
                     'policy_number': 'POL-2024-001',
-                    'policy_type_id': 1,  # Assuming Auto Insurance
+                    'policy_type_id': 1,
                     'premium_amount': Decimal('15000.00'),
                     'status': 'active',
                     'start_date': timezone.now().date() - timedelta(days=365),
@@ -197,10 +178,8 @@ class Command(BaseCommand):
             if created:
                 self.stdout.write('  Created policy for Rajesh Kumar')
             
-            # Clear existing claims for this policy
             PolicyClaim.objects.filter(policy=policy).delete()
             
-            # Create real claims data (5 claims: 4 approved, 1 rejected)
             claims_data = [
                 {
                     'claim_number': 'CLM-2024-001234',

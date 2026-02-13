@@ -128,7 +128,6 @@ class CustomerVehicle(BaseModel):
     
     @property
     def vehicle_summary(self):
-        """Return a summary of vehicle information"""
         parts = [self.vehicle_name]
         if self.model_year:
             parts.append(str(self.model_year))
@@ -138,7 +137,6 @@ class CustomerVehicle(BaseModel):
     
     @property
     def depreciation_rate(self):
-        """Calculate depreciation rate if purchase price is available"""
         if self.purchase_price and self.purchase_price > 0:
             depreciation = float(self.purchase_price) - float(self.value)
             return round((depreciation / float(self.purchase_price)) * 100, 2)
@@ -146,14 +144,12 @@ class CustomerVehicle(BaseModel):
     
     @property
     def vehicle_age(self):
-        """Calculate vehicle age in years"""
         from datetime import datetime
         current_year = datetime.now().year
         return current_year - self.model_year
     
     @property
     def vehicle_score(self):
-        """Calculate a vehicle score based on various factors"""
         score = 0
         
         type_scores = {
@@ -169,7 +165,6 @@ class CustomerVehicle(BaseModel):
         }
         score += type_scores.get(self.vehicle_type, 5)
         
-        # Score based on condition
         condition_scores = {
             'excellent': 10,
             'very_good': 8,
@@ -191,7 +186,6 @@ class CustomerVehicle(BaseModel):
         else:
             score += 2
         
-        # Score based on value
         if self.value >= 1000000:  
             score += 10
         elif self.value >= 500000:  
