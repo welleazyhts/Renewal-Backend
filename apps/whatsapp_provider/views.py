@@ -340,7 +340,6 @@ class WhatsAppAnalyticsViewSet(viewsets.ViewSet):
     
     @action(detail=False, methods=['get'], url_path='dashboard')
     def dashboard(self, request):
-        """Get dashboard analytics."""
         user = request.user
         
         if user.is_staff:

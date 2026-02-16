@@ -7,7 +7,6 @@ class UploadChatbotConfig(AppConfig):
     verbose_name = 'Upload Chatbot'
     
     def ready(self):
-        """Import signals when the app is ready"""
         try:
             import apps.upload_chatbot.signals
         except ImportError:

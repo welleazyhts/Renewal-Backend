@@ -1,7 +1,3 @@
-"""
-Development settings for Intelipro Insurance Policy Renewal System.
-"""
-
 from .base import *
 from decouple import config
 from django.conf import settings

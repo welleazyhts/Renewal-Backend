@@ -1,8 +1,3 @@
-"""
-Base settings for Intelipro Insurance Policy Renewal System.
-This contains common settings shared across all environments.
-"""
-
 import os
 from pathlib import Path
 from decouple import config

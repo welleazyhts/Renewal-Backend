@@ -1,7 +1,3 @@
-"""
-Production settings for Intelipro Insurance Policy Renewal System.
-"""
-
 from .base import *
 from decouple import config
 import sentry_sdk

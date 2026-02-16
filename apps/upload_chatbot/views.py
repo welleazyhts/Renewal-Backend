@@ -121,7 +121,6 @@ class UploadChatbotView(View):
         return super().dispatch(*args, **kwargs)
     
     def post(self, request):
-        """Handle chat messages"""
         try:
             data = json.loads(request.body)
             user_message = data.get('message', '').strip()

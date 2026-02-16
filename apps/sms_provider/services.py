@@ -15,26 +15,19 @@ class SmsApiException(Exception):
     pass
 
 class BaseSmsService:
-    """
-    Abstract base class for all SMS provider services.
-    """
     def __init__(self, provider_model: SmsProvider):
         self.provider = provider_model
-        # In a real implementation, you would decrypt credentials here
         self.credentials = provider_model.credentials
 
     def send_sms(self, to_phone: str, message: str, from_number: str = None, check_notifications: bool = False, **kwargs) -> Dict[str, Any]:
-        """Send an SMS message."""
         raise NotImplementedError("This method must be implemented by a subclass.")
 
     def _is_sms_blocked(self, to_phone: str) -> bool:
-        """Check if the user with this phone number has disabled SMS notifications."""
         from django.contrib.auth import get_user_model
         User = get_user_model()
         return User.objects.filter(phone=to_phone, sms_notifications=False).exists()
 
     def _log_message(self, sid: str, to_phone: str, from_number: str, content: str, status: str, **kwargs):
-        """Helper to log the sent message."""
         SmsMessage.objects.create(
             provider=self.provider,
             message_sid=sid,
@@ -46,7 +39,6 @@ class BaseSmsService:
             contact=kwargs.get('contact')
         )
         
-        # --- BILLING INTEGRATION ---
         log_communication(
             vendor_name=self.provider.name,
             service_type='sms',
@@ -61,12 +53,10 @@ class BaseSmsService:
 
 class TwilioSmsService(BaseSmsService):
     def send_sms(self, to_phone: str, message: str, from_number: str = None, check_notifications: bool = False, **kwargs) -> Dict[str, Any]:
-        # --- REAL-TIME NOTIFICATION CHECK ---
         if check_notifications and self._is_sms_blocked(to_phone):
             logger.info(f"SMS blocked for {to_phone} due to user settings.")
             return {'sid': None, 'status': 'blocked', 'error': 'User disabled SMS notifications'}
 
-        # Use the 'From' number from credentials if not provided
         sender = from_number or self.credentials.get('twilio_from_number')
         messaging_service_sid = self.credentials.get('twilio_messaging_service_sid')
         account_sid = self.credentials.get('twilio_account_sid')
@@ -87,7 +77,6 @@ class TwilioSmsService(BaseSmsService):
             else:
                 raise SmsApiException("Twilio provider requires a 'From Number' or a 'Messaging Service SID'.")
 
-            # Try to capture cost if available
             cost = None
             if response.price:
                 try:
@@ -104,7 +93,6 @@ class TwilioSmsService(BaseSmsService):
             raise SmsApiException(f"Twilio Error: {e.msg}")
 
     def health_check(self):
-        """Verifies Twilio credentials by fetching account info."""
         try:
             client = Client(self.credentials.get('twilio_account_sid'), self.credentials.get('twilio_auth_token'))
             client.api.v2010.accounts(self.credentials.get('twilio_account_sid')).fetch()
@@ -116,22 +104,18 @@ class TwilioSmsService(BaseSmsService):
 
 class Msg91SmsService(BaseSmsService):
     def send_sms(self, to_phone: str, message: str, from_number: str = None, check_notifications: bool = False, **kwargs) -> Dict[str, Any]:
-        # --- REAL-TIME NOTIFICATION CHECK ---
         if check_notifications and self._is_sms_blocked(to_phone):
             logger.info(f"SMS blocked for {to_phone} due to user settings.")
             return {'sid': None, 'status': 'blocked', 'error': 'User disabled SMS notifications'}
 
-        # 1. Get Credentials
         auth_key = self.credentials.get('msg91_auth_key')
         sender_id = self.credentials.get('msg91_sender_id')
-        route = self.credentials.get('msg91_route', '4') # Default to transactional
+        route = self.credentials.get('msg91_route', '4') 
         country = self.credentials.get('msg91_country_code', '91')
         
         if not auth_key or not sender_id:
             raise SmsApiException("MSG91 Auth Key or Sender ID missing.")
 
-        # 2. Prepare Data
-        # MSG91 V4 API URL
         url = "https://api.msg91.com/api/v2/sendsms"
         
         payload = {
@@ -141,7 +125,7 @@ class Msg91SmsService(BaseSmsService):
             "sms": [
                 {
                     "message": message,
-                    "to": [to_phone.replace('+', '')] # MSG91 prefers numbers without +
+                    "to": [to_phone.replace('+', '')] 
                 }
             ]
         }
@@ -169,7 +153,6 @@ class Msg91SmsService(BaseSmsService):
             raise SmsApiException(str(e))
 
     def health_check(self):
-        """Verifies MSG91 by checking balance (or just validating auth key)."""
         url = "https://api.msg91.com/api/balance.php"
         params = {"authkey": self.credentials.get('msg91_auth_key'), "type": "4"}
         try:
@@ -182,12 +165,10 @@ class Msg91SmsService(BaseSmsService):
 
 class AwsSnsSmsService(BaseSmsService):
     def send_sms(self, to_phone: str, message: str, from_number: str = None, check_notifications: bool = False, **kwargs) -> Dict[str, Any]:
-        # --- REAL-TIME NOTIFICATION CHECK ---
         if check_notifications and self._is_sms_blocked(to_phone):
             logger.info(f"SMS blocked for {to_phone} due to user settings.")
             return {'sid': None, 'status': 'blocked', 'error': 'User disabled SMS notifications'}
 
-        # 1. Get Credentials
         access_key = self.credentials.get('aws_sns_access_key_id')
         secret_key = self.credentials.get('aws_sns_secret_access_key')
         region = self.credentials.get('aws_sns_region', 'us-east-1')
@@ -196,7 +177,6 @@ class AwsSnsSmsService(BaseSmsService):
             raise SmsApiException("AWS Credentials missing.")
 
         try:
-            # 2. Initialize Boto3 Client
             client = boto3.client(
                 'sns',
                 aws_access_key_id=access_key,
@@ -204,7 +184,6 @@ class AwsSnsSmsService(BaseSmsService):
                 region_name=region
             )
 
-            # 3. Send
             logger.info(f"🚀 Sending Real AWS SNS to {to_phone}...")
             response = client.publish(
                 PhoneNumber=to_phone,
@@ -212,7 +191,7 @@ class AwsSnsSmsService(BaseSmsService):
                 MessageAttributes={
                     'AWS.SNS.SMS.SMSType': {
                         'DataType': 'String',
-                        'StringValue': 'Transactional' # Critical for OTPs/Alerts
+                        'StringValue': 'Transactional'
                     }
                 }
             )
@@ -225,7 +204,6 @@ class AwsSnsSmsService(BaseSmsService):
             raise SmsApiException(str(e))
 
     def health_check(self):
-        """Verifies AWS SNS access."""
         try:
             client = boto3.client(
                 'sns',
@@ -233,7 +211,6 @@ class AwsSnsSmsService(BaseSmsService):
                 aws_secret_access_key=self.credentials.get('aws_sns_secret_access_key'),
                 region_name=self.credentials.get('aws_sns_region', 'us-east-1')
             )
-            # Try listing topics or getting SMS attributes to verify access
             client.get_sms_attributes()
             return {'status': 'connected', 'details': 'AWS Access Valid'}
         except Exception as e:
@@ -241,22 +218,19 @@ class AwsSnsSmsService(BaseSmsService):
 
 class TextLocalSmsService(BaseSmsService):
     def send_sms(self, to_phone: str, message: str, from_number: str = None, check_notifications: bool = False, **kwargs) -> Dict[str, Any]:
-        # --- REAL-TIME NOTIFICATION CHECK ---
         if check_notifications and self._is_sms_blocked(to_phone):
             logger.info(f"SMS blocked for {to_phone} due to user settings.")
             return {'sid': None, 'status': 'blocked', 'error': 'User disabled SMS notifications'}
 
-        # 1. Get Credentials
         api_key = self.credentials.get('textlocal_api_key')
         sender = self.credentials.get('textlocal_sender', 'TXTLCL')
         
         if not api_key:
             raise SmsApiException("TextLocal API Key missing.")
 
-        # 2. Prepare Data
         data = {
             'apikey': api_key,
-            'numbers': to_phone.replace('+', ''), # TextLocal prefers no +
+            'numbers': to_phone.replace('+', ''), 
             'message': message,
             'sender': sender
         }
@@ -280,7 +254,6 @@ class TextLocalSmsService(BaseSmsService):
             raise SmsApiException(str(e))
 
     def health_check(self):
-        """Verifies TextLocal by getting balance."""
         data = {'apikey': self.credentials.get('textlocal_api_key')}
         try:
             response = requests.post('https://api.textlocal.in/balance/', data=data, timeout=5)
@@ -291,12 +264,7 @@ class TextLocalSmsService(BaseSmsService):
         except Exception as e:
             return {'status': 'disconnected', 'error': str(e)}
 
-
-
 class SmsService:
-    """
-    Factory class to get the correct SMS provider service.
-    """
     PROVIDER_MAP: Dict[str, Type[BaseSmsService]] = {
         'twilio': TwilioSmsService,
         'msg91': Msg91SmsService,
@@ -305,14 +273,9 @@ class SmsService:
     }
 
     def _get_provider_class(self, provider_type: str) -> Optional[Type[BaseSmsService]]:
-        """Returns the correct service class based on the provider type."""
         return self.PROVIDER_MAP.get(provider_type)
 
     def get_service_instance(self, provider_id: int = None) -> BaseSmsService:
-        """
-        Gets an instance of the correct provider service.
-        If provider_id is None, it fetches the 'default' provider.
-        """
         try:
             if provider_id:
                 provider_model = SmsProvider.objects.get(id=provider_id, is_active=True)
